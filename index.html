@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Me Kerko</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--ink:#0d3b45;--sea:#13a3a8;--foam:#eaf7f6;--card:#ffffff;--line:#c9e3e2;--mut:#58797d;--warn:#b3402a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--foam);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:var(--ink);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+h1{margin:0;font-size:24px;letter-spacing:.2px} h1 b{color:#7fe3e0}
+#map{height:55vh;min-height:320px;width:100%}
+main{max-width:720px;margin:0 auto;padding:14px 14px 40px;display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+h2{margin:0 0 10px;font-size:17px}
+label{display:block;font-size:13px;color:var(--mut);margin-bottom:3px}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;color:var(--ink);background:#fff}
+input:focus,select:focus,button:focus-visible{outline:3px solid #7fe3e0;outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+button{border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;background:var(--sea);color:#fff;cursor:pointer}
+button.alt{background:var(--foam);color:var(--ink);border:1px solid var(--line)}
+header button{background:#7fe3e0;color:var(--ink)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.msg{font-size:14px;color:var(--mut);margin:8px 0 0;min-height:1.2em} .msg.err{color:var(--warn)}
+.item{padding:10px 0;border-top:1px solid var(--line)} .item:first-child{border-top:0}
+.meta{font-size:13px;color:var(--mut)}
+a{color:#0a7d82}
+.del{background:transparent;color:var(--warn);padding:2px 8px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Me <b>Kerko</b></h1>
+  <div class="bar"><span id="who"></span><button id="out" class="hide" type="button">Dil</button></div>
+</header>
+<div id="map" role="application" aria-label="Harta e bizneseve"></div>
+<main>
+  <section class="card" id="authBox">
+    <h2>Hyrje</h2>
+    <div class="row"><div><label for="em">Email</label><input id="em" type="email" autocomplete="email"></div>
+    <div><label for="pw">Fjalëkalimi</label><input id="pw" type="password" autocomplete="current-password"></div></div>
+    <div class="row"><div><label for="un">Emri i përdoruesit (vetëm për regjistrim)</label><input id="un" maxlength="30" autocomplete="username"></div><div></div></div>
+    <div class="bar"><button id="login" type="button">Hyr</button><button id="signup" type="button" class="alt">Regjistrohu</button></div>
+    <p class="msg" id="amsg"></p>
+  </section>
+
+  <section class="card hide" id="addBox">
+    <h2>Shto biznes</h2>
+    <p class="meta">Prek hartën ose përdor vendndodhjen tënde për të zgjedhur pikën.</p>
+    <div class="row"><div><label for="n">Emri i biznesit</label><input id="n" maxlength="80"></div>
+    <div><label for="c">Kategoria</label><select id="c"><option>Ujë i pijshëm</option><option>Pikë shitjeje</option><option>Depo</option><option>Shërbim</option><option>Tjetër</option></select></div></div>
+    <div class="row"><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div>
+    <div><label for="t">Shënim</label><input id="t" maxlength="120"></div></div>
+    <p class="meta" id="coords">Pika nuk është zgjedhur.</p>
+    <div class="bar"><button id="loc" type="button" class="alt">Vendndodhja ime</button><button id="add" type="button">Ruaj biznesin</button></div>
+    <p class="msg" id="msg"></p>
+  </section>
+
+  <section class="card">
+    <h2>Bizneset (<span id="count">0</span>)</h2>
+    <div id="list"></div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ====== SHKRUAJ KËTU KODET E SUPABASE (shih SETUP.md) ======
+const SUPABASE_URL = "SHKRUAJ_URL_KETU";
+const SUPABASE_KEY = "SHKRUAJ_CELESIN_PUBLIK_KETU";
+// ==========================================================
+
+const $ = id => document.getElementById(id);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let me = null, picked = null, pickMarker = null, layer = null, rows = [];
+
+const map = L.map("map").setView([41.15, 20.05], 7);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: "&copy; OpenStreetMap"}).addTo(map);
+layer = L.layerGroup().addTo(map);
+
+function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
+function say(id, t, err){const e=$(id);e.textContent=t||"";e.className="msg"+(err?" err":"");}
+
+function setPick(lat, lng){
+  picked = {lat, lng};
+  if (pickMarker) pickMarker.setLatLng([lat, lng]); else pickMarker = L.marker([lat, lng], {opacity:.6}).addTo(map);
+  $("coords").textContent = "Pika e zgjedhur: " + lat.toFixed(5) + ", " + lng.toFixed(5);
+}
+map.on("click", e => { if (me) setPick(e.latlng.lat, e.latlng.lng); else say("amsg", "Hyr ose regjistrohu për të shtuar biznese.", true); });
+
+function render(){
+  $("count").textContent = rows.length;
+  layer.clearLayers();
+  rows.forEach(b => {
+    L.marker([b.lat, b.lng]).addTo(layer).bindPopup(
+      "<b>" + esc(b.name) + "</b><br>" + esc(b.category) + (b.phone ? "<br>" + esc(b.phone) : "") +
+      (b.note ? "<br>" + esc(b.note) : "") +
+      '<br><a target="_blank" rel="noopener" href="https://www.google.com/maps?q=' + b.lat + "," + b.lng + '">Hap në Google Maps</a>');
+  });
+  $("list").innerHTML = rows.length ? rows.map(b =>
+    '<div class="item"><b>' + esc(b.name) + "</b> · " + esc(b.category) +
+    '<div class="meta">nga ' + esc(b.owner_name || "përdorues") + (b.phone ? " · " + esc(b.phone) : "") + "</div>" +
+    (b.note ? "<div>" + esc(b.note) + "</div>" : "") +
+    '<a href="#" data-go="' + b.id + '">Shfaq në hartë</a>' +
+    (me && b.owner === me.id ? ' <button class="del" data-del="' + b.id + '" type="button">Fshij</button>' : "") + "</div>"
+  ).join("") : '<p class="meta">Asnjë biznes ende.</p>';
+}
+
+async function load(){
+  const {data, error} = await sb.from("businesses").select("*").order("created_at", {ascending:false});
+  if (error) { $("list").innerHTML = '<p class="msg err">S’u lexuan të dhënat. Kontrollo kodet e Supabase.</p>'; return; }
+  rows = data; render();
+}
+
+function applyUser(u){
+  me = u;
+  $("authBox").classList.toggle("hide", !!u);
+  $("addBox").classList.toggle("hide", !u);
+  $("out").classList.toggle("hide", !u);
+  $("who").textContent = u ? "👤 " + ((u.user_metadata && u.user_metadata.username) || u.email) : "";
+  render();
+}
+
+$("login").onclick = async () => {
+  say("amsg", "Duke hyrë…");
+  const {error} = await sb.auth.signInWithPassword({email: $("em").value.trim(), password: $("pw").value});
+  if (error) say("amsg", "Email ose fjalëkalim i gabuar.", true);
+};
+$("signup").onclick = async () => {
+  const username = $("un").value.trim();
+  if (!username) return say("amsg", "Shkruaj emrin e përdoruesit.", true);
+  if ($("pw").value.length < 6) return say("amsg", "Fjalëkalimi duhet të ketë të paktën 6 shkronja.", true);
+  const {data, error} = await sb.auth.signUp({email: $("em").value.trim(), password: $("pw").value, options: {data: {username}}});
+  if (error) return say("amsg", "Regjistrimi dështoi: " + error.message, true);
+  say("amsg", data.session ? "Regjistrimi u krye." : "Kontrollo email-in për të konfirmuar llogarinë, pastaj hyr.");
+};
+$("out").onclick = () => sb.auth.signOut();
+
+$("loc").onclick = () => {
+  if (!navigator.geolocation) return say("msg", "Pajisja nuk mbështet vendndodhjen.", true);
+  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); map.setView([p.coords.latitude, p.coords.longitude], 15); },
+    () => say("msg", "Vendndodhja nuk u lejua. Prek hartën.", true));
+};
+
+$("add").onclick = async () => {
+  const name = $("n").value.trim();
+  if (!name) return say("msg", "Shkruaj emrin e biznesit.", true);
+  if (!picked) return say("msg", "Zgjidh një pikë në hartë.", true);
+  const {error} = await sb.from("businesses").insert({
+    name, category: $("c").value, phone: $("p").value.trim(), note: $("t").value.trim(),
+    lat: picked.lat, lng: picked.lng, owner: me.id, owner_name: (me.user_metadata && me.user_metadata.username) || me.email
+  });
+  if (error) return say("msg", "S’u ruajt: " + error.message, true);
+  ["n","p","t"].forEach(i => $(i).value = ""); picked = null;
+  if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
+  $("coords").textContent = "Pika nuk është zgjedhur."; say("msg", "U ruajt.");
+  load();
+};
+
+$("list").onclick = async e => {
+  const go = e.target.getAttribute("data-go"), del = e.target.getAttribute("data-del");
+  if (go) { e.preventDefault(); const b = rows.find(x => String(x.id) === go); if (b) { map.setView([b.lat, b.lng], 16); window.scrollTo({top:0, behavior:"smooth"}); } }
+  if (del && confirm("Ta fshij këtë biznes?")) { const {error} = await sb.from("businesses").delete().eq("id", del); if (error) say("msg", "S’u fshi.", true); else load(); }
+};
+
+sb.auth.onAuthStateChange((_ev, session) => applyUser(session ? session.user : null));
+sb.auth.getSession().then(({data}) => applyUser(data.session ? data.session.user : null));
+load();
+</script>
+</body>
+</html>
