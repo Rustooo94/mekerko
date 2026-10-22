@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sq">
+<html lang="sq"> 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -33,7 +33,7 @@ a{color:#0a7d82}
 </head>
 <body>
 <header>
-  <h1>Me <b>BLUE POINT </b></h1>
+  <h1>Me <b>mekerko</b></h1>
   <div class="bar"><span id="who"></span><button id="out" class="hide" type="button">Dil</button></div>
 </header>
 <div id="map" role="application" aria-label="Harta e bizneseve"></div>
@@ -110,10 +110,16 @@ function render(){
   ).join("") : '<p class="meta">Asnjë biznes ende.</p>';
 }
 
-async function load(){
+let allRows = [];
+function filterRows(){
+  const t = $("q").value.trim().toLowerCase();
+  rows = t ? allRows.filter(b => ((b.name||"")+" "+(b.category||"")+" "+(b.note||"")+" "+(b.owner_name||"")).toLowerCase().includes(t)) : allRows;
+  render();
+}
+$("q").addEventListener("input", filterRows); async function load(){
   const {data, error} = await sb.from("businesses").select("*").order("created_at", {ascending:false});
   if (error) { $("list").innerHTML = '<p class="msg err">S’u lexuan të dhënat. Kontrollo kodet e Supabase.</p>'; return; }
-  rows = data; render();
+  allRows = data; filterRows();
 }
 
 function applyUser(u){
