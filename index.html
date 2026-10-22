@@ -177,7 +177,7 @@ function applyUser(u){
 async function doLogin(){
   say("amsg", "Duke hyrë…");
   const {error} = await sb.auth.signInWithPassword({email: $("em").value.trim(), password: $("pw").value});
-  if (error) say("amsg", "Email ose fjalëkalim i gabuar.", true); else say("amsg", "");
+if (error) say("amsg", "Gabim: " + error.message, true); else say("amsg", "");
 }
 $("login").onclick = doLogin;
 $("pw").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
