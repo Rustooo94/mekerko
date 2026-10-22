@@ -27,6 +27,7 @@ input:focus,select:focus,button:focus-visible{outline:3px solid #7fe3e0;outline-
 .row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 button{border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;background:var(--sea);color:#fff;cursor:pointer}
 button.alt{background:var(--foam);color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.6}
 .login button{width:100%;margin-top:14px}
 header button{background:#7fe3e0;color:var(--ink);padding:8px 12px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -35,6 +36,7 @@ header button{background:#7fe3e0;color:var(--ink);padding:8px 12px}
 .meta{font-size:13px;color:var(--mut)}
 a{color:#0a7d82;font-weight:600}
 .del{background:transparent;color:var(--warn);padding:2px 8px}
+img.thumb{display:block;width:100%;max-width:240px;border-radius:8px;margin:6px 0}
 </style>
 </head>
 <body>
@@ -61,9 +63,11 @@ a{color:#0a7d82;font-weight:600}
       <h2>Shto biznes</h2>
       <p class="meta">Prek hartën ose përdor vendndodhjen tënde për të zgjedhur pikën.</p>
       <div class="row"><div><label for="n">Emri i biznesit</label><input id="n" maxlength="80"></div>
-      <div><label for="c">Kategoria</label><select id="c"><option>Ujë i pijshëm</option><option>Pikë shitjeje</option><option>Depo</option><option>Shërbim</option><option>Tjetër</option></select></div></div>
+      <div><label for="c">Kategoria</label><select id="c"><option>Ujë i pijshëm</option><option>Pikë shitjeje</option><option>Depo</option><option>Shërbim</option><option>Lokal</option><option>Institucion</option><option>Bashki</option><option>Tjetër</option></select></div></div>
       <div class="row"><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div>
       <div><label for="t">Shënim</label><input id="t" maxlength="120"></div></div>
+      <label for="f">Foto e biznesit (opsionale)</label>
+      <input id="f" type="file" accept="image/*">
       <p class="meta" id="coords">Pika nuk është zgjedhur.</p>
       <div class="bar"><button id="loc" type="button" class="alt">Vendndodhja ime</button><button id="add" type="button">Ruaj biznesin</button></div>
       <p class="msg" id="msg"></p>
@@ -102,6 +106,23 @@ const layer = L.layerGroup().addTo(map);
 function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
 function say(id, t, err){const e=$(id);e.textContent=t||"";e.className="msg"+(err?" err":"");}
 function dirUrl(b){return "https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng;}
+function imgTag(b){return b.photoUrl ? '<img class="thumb" alt="Foto e biznesit" src="' + esc(b.photoUrl) + '">' : "";}
+
+function shrink(file){
+  return new Promise((res, rej) => {
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, 1280 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u);
+      c.toBlob(b => b ? res(b) : rej(new Error("Foto nuk u përpunua.")), "image/jpeg", 0.8);
+    };
+    img.onerror = () => rej(new Error("Foto nuk u hap."));
+    img.src = u;
+  });
+}
 
 function setPick(lat, lng){
   picked = {lat, lng};
@@ -116,13 +137,13 @@ function render(){
   rows.forEach(b => {
     L.marker([b.lat, b.lng]).addTo(layer).bindPopup(
       "<b>" + esc(b.name) + "</b><br>" + esc(b.category) + (b.phone ? "<br>" + esc(b.phone) : "") +
-      (b.note ? "<br>" + esc(b.note) : "") +
-      '<br><a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a>');
+      (b.note ? "<br>" + esc(b.note) : "") + imgTag(b) +
+      '<br><a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a>', {maxWidth: 260});
   });
   $("list").innerHTML = rows.length ? rows.map(b =>
     '<div class="item"><b>' + esc(b.name) + "</b> · " + esc(b.category) +
     '<div class="meta">nga ' + esc(b.owner_name || "përdorues") + (b.phone ? " · " + esc(b.phone) : "") + "</div>" +
-    (b.note ? "<div>" + esc(b.note) + "</div>" : "") +
+    (b.note ? "<div>" + esc(b.note) + "</div>" : "") + imgTag(b) +
     '<a href="#" data-go="' + b.id + '">Shfaq në hartë</a> · ' +
     '<a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a>' +
     (me && b.owner === me.id ? ' <button class="del" data-del="' + b.id + '" type="button">Fshij</button>' : "") + "</div>"
@@ -139,6 +160,13 @@ $("q").addEventListener("input", filterRows);
 async function load(){
   const {data, error} = await sb.from("businesses").select("*").order("created_at", {ascending:false});
   if (error) { $("list").innerHTML = '<p class="msg err">S’u lexuan të dhënat. Kontrollo kodet e Supabase.</p>'; return; }
+  const paths = data.filter(b => b.photo_path).map(b => b.photo_path);
+  if (paths.length) {
+    const {data: urls} = await sb.storage.from("photos").createSignedUrls(paths, 3600);
+    const m = {};
+    (urls || []).forEach(u => { if (u.signedUrl) m[u.path] = u.signedUrl; });
+    data.forEach(b => { if (b.photo_path) b.photoUrl = m[b.photo_path]; });
+  }
   allRows = data; filterRows();
 }
 
@@ -177,7 +205,8 @@ function applyUser(u){
 async function doLogin(){
   say("amsg", "Duke hyrë…");
   const {error} = await sb.auth.signInWithPassword({email: $("em").value.trim(), password: $("pw").value});
-if (error) say("amsg", "Gabim: " + error.message, true); else say("amsg", "");
+  if (error) say("amsg", error.message.toLowerCase().includes("invalid login") ? "Email ose fjalëkalim i gabuar." : "Gabim: " + error.message, true);
+  else say("amsg", "");
 }
 $("login").onclick = doLogin;
 $("pw").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
@@ -193,21 +222,40 @@ $("add").onclick = async () => {
   const name = $("n").value.trim();
   if (!name) return say("msg", "Shkruaj emrin e biznesit.", true);
   if (!picked) return say("msg", "Zgjidh një pikë në hartë.", true);
-  const {error} = await sb.from("businesses").insert({
-    name, category: $("c").value, phone: $("p").value.trim(), note: $("t").value.trim(),
-    lat: picked.lat, lng: picked.lng, owner: me.id, owner_name: (me.user_metadata && me.user_metadata.username) || me.email
-  });
-  if (error) return say("msg", "S’u ruajt: " + error.message, true);
-  ["n","p","t"].forEach(i => $(i).value = ""); picked = null;
-  if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
-  $("coords").textContent = "Pika nuk është zgjedhur."; say("msg", "U ruajt.");
-  load();
+  $("add").disabled = true; say("msg", "Duke ruajtur…");
+  try {
+    let photo_path = null;
+    const file = $("f").files[0];
+    if (file) {
+      const blob = await shrink(file);
+      photo_path = me.id + "/" + Date.now() + ".jpg";
+      const {error: upErr} = await sb.storage.from("photos").upload(photo_path, blob, {contentType: "image/jpeg"});
+      if (upErr) throw new Error("Foto nuk u ngarkua: " + upErr.message);
+    }
+    const {error} = await sb.from("businesses").insert({
+      name, category: $("c").value, phone: $("p").value.trim(), note: $("t").value.trim(),
+      lat: picked.lat, lng: picked.lng, owner: me.id, photo_path,
+      owner_name: (me.user_metadata && me.user_metadata.username) || me.email
+    });
+    if (error) throw new Error(error.message);
+    ["n","p","t","f"].forEach(i => $(i).value = ""); picked = null;
+    if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
+    $("coords").textContent = "Pika nuk është zgjedhur."; say("msg", "U ruajt.");
+    load();
+  } catch (e) { say("msg", "S’u ruajt: " + e.message, true); }
+  $("add").disabled = false;
 };
 
 $("list").onclick = async e => {
   const go = e.target.getAttribute("data-go"), del = e.target.getAttribute("data-del");
   if (go) { e.preventDefault(); const b = allRows.find(x => String(x.id) === go); if (b) { map.setView([b.lat, b.lng], 17); window.scrollTo({top:0, behavior:"smooth"}); } }
-  if (del && confirm("Ta fshij këtë biznes?")) { const {error} = await sb.from("businesses").delete().eq("id", del); if (error) say("msg", "S’u fshi.", true); else load(); }
+  if (del && confirm("Ta fshij këtë biznes?")) {
+    const b = allRows.find(x => String(x.id) === del);
+    const {error} = await sb.from("businesses").delete().eq("id", del);
+    if (error) return say("msg", "S’u fshi.", true);
+    if (b && b.photo_path) await sb.storage.from("photos").remove([b.photo_path]);
+    load();
+  }
 };
 
 sb.auth.onAuthStateChange((_ev, session) => applyUser(session ? session.user : null));
