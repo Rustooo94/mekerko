@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Me Kerko</title>
+<title>PikaBlu | Platforma Digjitale e Ujësjellësit</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{--ink:#0d3b45;--sea:#13a3a8;--foam:#eaf7f6;--line:#c9e3e2;--mut:#58797d;--warn:#b3402a}
@@ -17,11 +17,11 @@ button:disabled{opacity:.6}
 input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit;color:var(--ink);background:#fff}
 label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .msg{font-size:14px;color:var(--mut);margin:8px 0 0;min-height:1.2em} .msg.err{color:var(--warn)}
-#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;position:fixed;inset:0;
+#gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;
   background:linear-gradient(rgba(6,50,70,.45),rgba(6,50,70,.7)),url("water.jpg") center/cover no-repeat,linear-gradient(160deg,#0d3b45,#13a3a8)}
 .login{width:100%;max-width:380px;background:rgba(255,255,255,.96);border-radius:16px;padding:24px}
-.login h1{margin:0 0 4px;font-size:30px} .login h1 b{color:var(--sea)}
-.login p{margin:0 0 12px;color:var(--mut)}
+.login h1{margin:0;font-size:32px} .login h1 b{color:var(--sea)}
+.login p{margin:2px 0 12px;color:var(--mut)}
 .login button{width:100%;margin-top:14px}
 #app{position:fixed;inset:0;--sh:42dvh}
 #map{position:absolute;inset:0}
@@ -37,13 +37,13 @@ label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .chip.on{background:var(--sea);color:#fff}
 .fabs{position:absolute;z-index:1000;right:10px;bottom:calc(var(--sh) + 12px);display:flex;flex-direction:column;gap:8px;align-items:flex-end;transition:bottom .25s}
 .fab{width:44px;height:44px;border-radius:50%;padding:0;font-size:20px;background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.35)}
-.fab.on{background:#1a73e8;color:#fff}
+.fab.on{background:#1a73e8}
 .fab.main{width:54px;height:54px;font-size:30px;background:var(--sea);color:#fff;line-height:1}
 .sheet{position:absolute;z-index:1000;left:0;right:0;bottom:0;height:var(--sh);background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -2px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;transition:height .25s}
 .handle{padding:8px 0 4px;cursor:pointer} .handle i{display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
 .sheethead{padding:0 14px 6px;font-size:15px}
 #scroll{overflow-y:auto;flex:1;padding:0 14px calc(14px + env(safe-area-inset-bottom,0px))}
-.item{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.item{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
 .item img,.ph{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;background:#cfe8e8}
 .item .b{flex:1;min-width:0} .item b{display:block}
 .meta{font-size:13px;color:var(--mut)}
@@ -51,25 +51,42 @@ label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .badge.red{background:#fcebeb;color:#a32d2d}
 a{color:#0a7d82;font-weight:600}
 .acts{margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.del{background:transparent;color:var(--warn);padding:0;font-weight:600}
 .foot{font-size:11px;color:var(--mut);margin-top:10px}
 #pickbar{position:absolute;z-index:1100;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 #pickbar button{background:#7fe3e0;color:var(--ink)}
-#modal{position:fixed;inset:0;z-index:2000;background:rgba(6,30,40,.6);display:flex;align-items:flex-end;justify-content:center}
+#detail{position:fixed;inset:0;z-index:2100;background:#fff;overflow-y:auto}
+.dhead{position:sticky;top:0;z-index:2;background:var(--ink);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;display:flex;align-items:center;gap:12px}
+.dhead button{background:#7fe3e0;color:var(--ink);padding:6px 12px}
+.dbody{max-width:640px;margin:0 auto;padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+.dbody img.big{width:100%;max-height:55vh;object-fit:cover;display:block}
+.nophoto{height:120px;background:#cfe8e8;color:var(--mut);display:flex;align-items:center;justify-content:center}
+.dpad{padding:14px}
+.dpad h2{margin:0 0 4px;font-size:22px}
+.dl{display:grid;grid-template-columns:120px 1fr;gap:8px 10px;margin:12px 0;font-size:15px}
+.dl dt{color:var(--mut)} .dl dd{margin:0;word-break:break-word}
+.dbtn{display:inline-block;background:var(--sea);color:#fff;border-radius:10px;padding:10px 14px;text-decoration:none}
+.dbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button.red{background:#fcebeb;color:#a32d2d}
+#modal{position:fixed;inset:0;z-index:2200;background:rgba(6,30,40,.6);display:flex;align-items:flex-end;justify-content:center}
 .mc{width:100%;max-width:520px;max-height:92dvh;overflow-y:auto;background:#fff;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
 .mc h2{margin:0 0 4px;font-size:18px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.leaflet-popup-content{margin:10px 12px}
-.pop img{width:100%;max-width:220px;border-radius:8px;margin:6px 0;display:block}
+.chks{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:4px}
+.chk{display:flex;align-items:center;gap:6px;font-size:15px;color:var(--ink);margin:0}
+.chk input{width:auto;padding:0}
+.me{position:relative;width:22px;height:22px}
+.me::before{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(26,115,232,.5);animation:pulse 1.6s ease-out infinite}
+.me span{position:absolute;inset:3px;border-radius:50%;background:#1a73e8;border:3px solid #fff}
+@keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.8);opacity:0}}
 </style>
 </head>
 <body>
 
 <div id="gate">
   <div class="login">
-    <h1>Me <b>Kerko</b></h1>
-    <p>Hyr për të parë hartën e bizneseve.</p>
+    <h1>Pika<b>Blu</b></h1>
+    <p>Platforma Digjitale e Ujësjellësit</p>
     <label for="em">Email</label><input id="em" type="email" autocomplete="email">
     <label for="pw">Fjalëkalimi</label><input id="pw" type="password" autocomplete="current-password">
     <button id="login" type="button">Hyr</button>
@@ -78,7 +95,7 @@ a{color:#0a7d82;font-weight:600}
 </div>
 
 <div id="app" class="hide">
-  <div id="map" role="application" aria-label="Harta e bizneseve"></div>
+  <div id="map" role="application" aria-label="Harta e pikave"></div>
   <div class="top">
     <div class="search">
       <span aria-hidden="true">🔍</span>
@@ -90,11 +107,11 @@ a{color:#0a7d82;font-weight:600}
   <div class="fabs">
     <button id="layers" class="fab" type="button" aria-label="Satelit ose hartë normale">🗺️</button>
     <button id="gps" class="fab" type="button" aria-label="Vendndodhja ime">📍</button>
-    <button id="addBtn" class="fab main" type="button" aria-label="Shto biznes">+</button>
+    <button id="addBtn" class="fab main" type="button" aria-label="Shto pikë">+</button>
   </div>
   <div class="sheet" id="sheet">
     <div class="handle" id="handle" aria-label="Zgjat ose mbyll listën"><i></i></div>
-    <div class="sheethead"><b id="title">0 biznese</b></div>
+    <div class="sheethead"><b id="title">0 pika</b></div>
     <div id="scroll">
       <div id="list"></div>
       <div id="more"></div>
@@ -104,23 +121,25 @@ a{color:#0a7d82;font-weight:600}
   <div id="pickbar" class="hide"><span>Prek hartën për të zgjedhur pikën</span><button id="pickdone" type="button">U bë</button></div>
 </div>
 
+<div id="detail" class="hide"></div>
+
 <div id="modal" class="hide">
   <div class="mc">
-    <h2>Shto biznes</h2>
-    <label for="n">Emri i biznesit</label><input id="n" maxlength="80">
-    <div class="row">
-      <div><label for="c">Kategoria</label><select id="c"><option>Dyqan</option><option>Lokal</option><option>Institucion</option><option>Guest house</option><option>Hotel</option></select></div>
-      <div><label for="d">Debitor</label><select id="d"><option value="jo">Jo</option><option value="po">Po</option></select></div>
-    </div>
+    <h2 id="ftitle">Shto pikë</h2>
+    <label for="n">Emri</label><input id="n" maxlength="80">
+    <label>Kategoritë (mund të zgjedhësh disa)</label>
+    <div class="chks" id="cats"></div>
+    <div class="chks"><label class="chk"><input type="checkbox" id="d"> Debitor</label></div>
     <div class="row">
       <div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div>
       <div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div>
     </div>
     <label for="t">Shënim</label><input id="t" maxlength="120">
-    <label for="f">Foto e biznesit (opsionale)</label><input id="f" type="file" accept="image/*">
+    <label for="f">Foto (opsionale)</label><input id="f" type="file" accept="image/*">
+    <p class="meta" id="fhint" style="margin:4px 0 0"></p>
     <p class="meta" id="coords" style="margin:10px 0 0">Pika nuk është zgjedhur.</p>
     <div class="bar"><button id="loc" type="button" class="alt">📍 Vendndodhja ime</button><button id="pickmap" type="button" class="alt">Zgjidh në hartë</button></div>
-    <div class="bar"><button id="add" type="button">Ruaj biznesin</button><button id="cancel" type="button" class="alt">Anulo</button></div>
+    <div class="bar"><button id="add" type="button">Ruaj</button><button id="cancel" type="button" class="alt">Anulo</button></div>
     <p class="msg" id="msg"></p>
   </div>
 </div>
@@ -137,7 +156,7 @@ const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const CATS = ["Dyqan", "Lokal", "Institucion", "Guest house", "Hotel"];
 const STATES = ["56px", "42dvh", "80dvh"];
-let me = null, picked = null, pickMarker = null, pickMode = false;
+let me = null, picked = null, pickMarker = null, pickMode = false, editingId = null;
 let rows = [], allRows = [], filter = "all", limit = 5, stateIdx = 1;
 let watchId = null, meMarker = null, firstFix = true, sat = true, timer = null;
 
@@ -150,12 +169,14 @@ const satellite = L.layerGroup([
 const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19});
 satellite.addTo(map);
 const layer = L.layerGroup().addTo(map);
+const meIcon = L.divIcon({className: "", html: '<div class="me"><span></span></div>', iconSize: [22, 22]});
 
 function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
-function say(id, t, err){const e=$(id);e.textContent=t||"";e.className="msg"+(err?" err":"");}
+function say(id, t, err){const e=$(id);e.textContent=t||"";e.className=(id==="msg"||id==="amsg"?"msg":"meta")+(err?" err":"");}
 function dirUrl(b){return "https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng;}
+function cats(b){return (b.categories && b.categories.length) ? b.categories : (b.category ? [b.category] : []);}
 function badges(b){
-  return '<span class="badge">' + esc(b.category) + "</span>" +
+  return cats(b).map(c => '<span class="badge">' + esc(c) + "</span>").join("") +
     (b.contract_no ? '<span class="badge">Kontratë: ' + esc(b.contract_no) + "</span>" : "") +
     (b.debtor ? '<span class="badge red">Debitor</span>' : "");
 }
@@ -183,37 +204,26 @@ function setPick(lat, lng){
   else pickMarker = L.circleMarker([lat, lng], {radius: 10, color: "#ffffff", weight: 3, fillColor: "#e67e22", fillOpacity: 1}).addTo(map);
   $("coords").textContent = "Pika e zgjedhur: " + lat.toFixed(5) + ", " + lng.toFixed(5);
 }
-function closePick(){pickMode = false; $("pickbar").classList.add("hide"); $("modal").classList.remove("hide");}
 map.on("click", e => { if (me && pickMode) setPick(e.latlng.lat, e.latlng.lng); });
-
-function popupHtml(b){
-  return '<div class="pop"><b>' + esc(b.name) + "</b><br>" + badges(b) +
-    (b.phone ? '<div class="meta">' + esc(b.phone) + "</div>" : "") +
-    (b.note ? "<div>" + esc(b.note) + "</div>" : "") +
-    (b.photoUrl ? '<img alt="Foto e biznesit" src="' + esc(b.photoUrl) + '">' : "") +
-    '<a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a></div>';
-}
 
 function render(){
   layer.clearLayers();
   rows.forEach(b => {
-    L.circleMarker([b.lat, b.lng], {radius: 9, color: "#ffffff", weight: 3, fillColor: b.debtor ? "#e24b4a" : "#13a3a8", fillOpacity: 1})
-      .addTo(layer).bindPopup(popupHtml(b), {maxWidth: 250});
+    L.circleMarker([b.lat, b.lng], {radius: 10, color: "#ffffff", weight: 3, fillColor: b.debtor ? "#e24b4a" : "#13a3a8", fillOpacity: 1})
+      .addTo(layer).on("click", () => openDetail(b.id));
   });
   const shown = rows.slice(0, limit);
-  $("title").textContent = rows.length + " biznese" + (rows.length > limit ? " · po shfaqen " + limit : "");
+  $("title").textContent = rows.length + " pika" + (rows.length > limit ? " · po shfaqen " + limit : "");
   $("list").innerHTML = shown.length ? shown.map(b =>
-    '<div class="item">' +
+    '<div class="item" data-id="' + b.id + '">' +
     (b.photoUrl ? '<img alt="" src="' + esc(b.photoUrl) + '">' : '<div class="ph"></div>') +
     '<div class="b"><b>' + esc(b.name) + "</b>" + badges(b) +
     '<div class="meta">' + (b.phone ? esc(b.phone) + " · " : "") + "nga " + esc(b.owner_name || "përdorues") + "</div>" +
-    '<div class="acts"><a href="#" data-go="' + b.id + '">Shfaq</a>' +
-    '<a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a>' +
-    (me && b.owner === me.id ? '<button class="del" data-del="' + b.id + '" type="button">Fshij</button>' : "") +
-    "</div></div></div>"
-  ).join("") : '<p class="meta">Asnjë biznes nuk u gjet.</p>';
+    '<div class="acts"><a href="#" data-go="' + b.id + '">Shfaq në hartë</a>' +
+    '<a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a></div></div></div>'
+  ).join("") : '<p class="meta">Asnjë pikë nuk u gjet.</p>';
   $("more").innerHTML = rows.length > limit
-    ? '<button class="alt" id="moreBtn" type="button" style="width:100%;margin-top:8px">Shfaq edhe 5</button><p class="meta">Për të gjetur të tjerët, kërko me emër ose nr. kontrate.</p>'
+    ? '<button class="alt" id="moreBtn" type="button" style="width:100%;margin-top:8px">Shfaq edhe 5</button><p class="meta">Për të gjetur të tjerat, kërko me emër ose nr. kontrate.</p>'
     : "";
 }
 
@@ -221,15 +231,17 @@ function filterRows(fit){
   const t = $("q").value.trim().toLowerCase();
   rows = allRows.filter(b => {
     if (filter === "debt" && !b.debtor) return false;
-    if (filter !== "all" && filter !== "debt" && b.category !== filter) return false;
+    if (filter !== "all" && filter !== "debt" && cats(b).indexOf(filter) < 0) return false;
     if (!t) return true;
-    return [b.name, b.category, b.note, b.owner_name, b.contract_no, b.phone].join(" ").toLowerCase().includes(t);
+    return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone].join(" ").toLowerCase().includes(t);
   });
   render();
   if (fit && rows.length) map.fitBounds(L.latLngBounds(rows.map(b => [b.lat, b.lng])), {maxZoom: 17, padding: [60, 60]});
 }
-function newFilter(fit){limit = 5; filterRows(fit);}
-$("q").addEventListener("input", () => { limit = 5; filterRows(false); clearTimeout(timer); timer = setTimeout(() => { if ($("q").value.trim()) filterRows(true); }, 500); });
+$("q").addEventListener("input", () => {
+  limit = 5; filterRows(false); clearTimeout(timer);
+  timer = setTimeout(() => { if ($("q").value.trim()) filterRows(true); }, 500);
+});
 
 function drawChips(){
   const list = [["all", "Të gjitha"]].concat(CATS.map(c => [c, c]), [["debt", "Debitorë"]]);
@@ -250,28 +262,82 @@ async function load(){
   allRows = data; filterRows(false);
 }
 
+function openDetail(id){
+  const b = allRows.find(x => String(x.id) === String(id));
+  if (!b) return;
+  const own = me && b.owner === me.id;
+  const tel = b.phone ? '<a href="tel:' + esc(b.phone.replace(/[^\d+]/g, "")) + '">' + esc(b.phone) + "</a>" : "–";
+  $("detail").innerHTML =
+    '<div class="dhead"><button id="dback" type="button">← Mbrapa</button><b>Detajet e pikës</b></div>' +
+    '<div class="dbody">' +
+    (b.photoUrl ? '<a href="' + esc(b.photoUrl) + '" target="_blank" rel="noopener"><img class="big" alt="Foto" src="' + esc(b.photoUrl) + '"></a>' : '<div class="nophoto">Pa foto</div>') +
+    '<div class="dpad"><h2>' + esc(b.name) + "</h2>" + badges(b) +
+    '<dl class="dl"><dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd>" +
+    "<dt>Debitor</dt><dd>" + (b.debtor ? "Po" : "Jo") + "</dd>" +
+    "<dt>Telefoni</dt><dd>" + tel + "</dd>" +
+    "<dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd>" +
+    "<dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
+    "<dt>Koordinatat</dt><dd>" + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) + "</dd></dl>" +
+    '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a>' +
+    '<button class="alt" type="button" data-dgo="' + b.id + '">Shfaq në hartë</button>' +
+    (own ? '<button type="button" data-edit="' + b.id + '">Ndrysho</button><button class="red" type="button" data-ddel="' + b.id + '">Fshij</button>' : "") +
+    "</div></div></div>";
+  $("detail").classList.remove("hide");
+  $("detail").scrollTop = 0;
+}
+function closeDetail(){ $("detail").classList.add("hide"); }
+
+function buildCats(selected){
+  const all = CATS.concat(selected.filter(x => CATS.indexOf(x) < 0));
+  $("cats").innerHTML = all.map(c => '<label class="chk"><input type="checkbox" name="cat" value="' + esc(c) + '"' + (selected.indexOf(c) >= 0 ? " checked" : "") + "> " + esc(c) + "</label>").join("");
+}
+function openForm(b){
+  editingId = b ? b.id : null;
+  $("ftitle").textContent = b ? "Ndrysho pikën" : "Shto pikë";
+  $("n").value = b ? b.name : ""; $("k").value = b ? (b.contract_no || "") : "";
+  $("p").value = b ? (b.phone || "") : ""; $("t").value = b ? (b.note || "") : "";
+  $("d").checked = !!(b && b.debtor); $("f").value = "";
+  $("fhint").textContent = b && b.photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
+  buildCats(b ? cats(b) : []);
+  if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
+  picked = b ? {lat: b.lat, lng: b.lng} : null;
+  $("coords").textContent = b ? "Pika aktuale: " + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) : "Pika nuk është zgjedhur.";
+  say("msg", ""); $("modal").classList.remove("hide");
+}
+function closeForm(){
+  $("modal").classList.add("hide");
+  if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
+  if (editingId) openDetail(editingId);
+}
+
 document.addEventListener("click", async e => {
   const t = e.target;
   if (!t.getAttribute) return;
-  const chip = t.getAttribute("data-chip"), go = t.getAttribute("data-go"), del = t.getAttribute("data-del");
-  if (chip !== null) { filter = chip; drawChips(); newFilter(false); }
-  if (t.id === "moreBtn") { limit += 5; render(); }
-  if (go) {
+  const chip = t.getAttribute("data-chip"), go = t.getAttribute("data-go");
+  const dgo = t.getAttribute("data-dgo"), edit = t.getAttribute("data-edit"), ddel = t.getAttribute("data-ddel");
+  if (chip !== null) { filter = chip; drawChips(); limit = 5; filterRows(false); return; }
+  if (t.id === "moreBtn") { limit += 5; render(); return; }
+  if (t.id === "dback") { closeDetail(); return; }
+  if (go || dgo) {
     e.preventDefault();
-    const b = allRows.find(x => String(x.id) === go);
+    const b = allRows.find(x => String(x.id) === String(go || dgo));
+    if (dgo) closeDetail();
     if (b) { if (stateIdx === 2) setSheet(1); map.setView([b.lat, b.lng], 18); }
+    return;
   }
-  if (del && confirm("Ta fshij këtë biznes?")) {
-    const b = allRows.find(x => String(x.id) === del);
-    const {error} = await sb.from("businesses").delete().eq("id", del);
+  if (edit) { const b = allRows.find(x => String(x.id) === edit); if (b) openForm(b); return; }
+  if (ddel && confirm("Ta fshij këtë pikë?")) {
+    const b = allRows.find(x => String(x.id) === ddel);
+    const {error} = await sb.from("businesses").delete().eq("id", ddel);
     if (error) return alert("S’u fshi.");
     if (b && b.photo_path) await sb.storage.from("photos").remove([b.photo_path]);
-    load();
+    closeDetail(); load(); return;
   }
+  const it = t.closest ? t.closest(".item") : null;
+  if (it && !t.closest("a") && !t.closest("button")) openDetail(it.getAttribute("data-id"));
 });
 
 $("handle").onclick = () => setSheet((stateIdx + 1) % 3);
-
 $("layers").onclick = () => {
   if (sat) { map.removeLayer(satellite); normal.addTo(map); } else { map.removeLayer(normal); satellite.addTo(map); }
   sat = !sat;
@@ -282,25 +348,26 @@ function stopGps(){
   if (meMarker) { map.removeLayer(meMarker); meMarker = null; }
   $("gps").classList.remove("on");
 }
-$("gps").onclick = () => {
-  if (watchId !== null) return stopGps();
-  if (!navigator.geolocation) return alert("Pajisja nuk mbështet vendndodhjen.");
+function startGps(silent){
+  if (watchId !== null || !navigator.geolocation) return;
   firstFix = true; $("gps").classList.add("on");
   watchId = navigator.geolocation.watchPosition(p => {
     const ll = [p.coords.latitude, p.coords.longitude];
-    if (!meMarker) meMarker = L.circleMarker(ll, {radius: 9, color: "#ffffff", weight: 3, fillColor: "#1a73e8", fillOpacity: 1}).addTo(map);
+    if (!meMarker) meMarker = L.marker(ll, {icon: meIcon, interactive: false, zIndexOffset: 1000}).addTo(map);
     else meMarker.setLatLng(ll);
-    if (firstFix) { map.setView(ll, 16); firstFix = false; }
-  }, () => { stopGps(); alert("Vendndodhja nuk u lejua. Lejoje te shfletuesi."); },
+    if (firstFix && !silent) map.setView(ll, 16);
+    firstFix = false;
+  }, () => { stopGps(); if (!silent) alert("Vendndodhja nuk u lejua. Lejoje te shfletuesi."); },
   {enableHighAccuracy: true, maximumAge: 5000});
-};
+}
+$("gps").onclick = () => { if (watchId !== null) stopGps(); else startGps(false); };
 
 function applyUser(u){
   me = u;
   $("gate").classList.toggle("hide", !!u);
   $("app").classList.toggle("hide", !u);
-  if (u) { setTimeout(() => map.invalidateSize(), 50); load(); }
-  else { stopGps(); allRows = []; rows = []; render(); }
+  if (u) { setTimeout(() => map.invalidateSize(), 50); load(); startGps(true); }
+  else { stopGps(); allRows = []; rows = []; closeDetail(); render(); }
 }
 
 async function doLogin(){
@@ -313,43 +380,55 @@ $("login").onclick = doLogin;
 $("pw").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
 $("out").onclick = () => { if (confirm("Do dalësh?")) sb.auth.signOut(); };
 
-$("addBtn").onclick = () => { say("msg", ""); $("modal").classList.remove("hide"); };
-$("cancel").onclick = () => $("modal").classList.add("hide");
-$("pickmap").onclick = () => { pickMode = true; $("modal").classList.add("hide"); $("pickbar").classList.remove("hide"); if (stateIdx === 2) setSheet(1); };
-$("pickdone").onclick = closePick;
+$("addBtn").onclick = () => openForm(null);
+$("cancel").onclick = closeForm;
+$("pickmap").onclick = () => { pickMode = true; $("modal").classList.add("hide"); closeDetail(); $("pickbar").classList.remove("hide"); if (stateIdx === 2) setSheet(1); };
+$("pickdone").onclick = () => { pickMode = false; $("pickbar").classList.add("hide"); $("modal").classList.remove("hide"); };
 $("loc").onclick = () => {
   if (!navigator.geolocation) return say("msg", "Pajisja nuk mbështet vendndodhjen.", true);
   say("msg", "Duke marrë vendndodhjen…");
-  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); map.setView([p.coords.latitude, p.coords.longitude], 17); say("msg", ""); },
+  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); say("msg", ""); },
     () => say("msg", "Vendndodhja nuk u lejua. Përdor “Zgjidh në hartë”.", true), {enableHighAccuracy: true});
 };
 
 $("add").onclick = async () => {
   const name = $("n").value.trim();
-  if (!name) return say("msg", "Shkruaj emrin e biznesit.", true);
+  const cs = Array.from(document.querySelectorAll('input[name="cat"]:checked')).map(i => i.value);
+  if (!name) return say("msg", "Shkruaj emrin.", true);
+  if (!cs.length) return say("msg", "Zgjidh të paktën një kategori.", true);
   if (!picked) return say("msg", "Zgjidh një pikë: vendndodhjen tënde ose në hartë.", true);
   $("add").disabled = true; say("msg", "Duke ruajtur…");
   try {
-    let photo_path = null;
+    const old = editingId ? allRows.find(x => x.id === editingId) : null;
+    let photo_path = old ? old.photo_path : null, newPhoto = false;
     const file = $("f").files[0];
     if (file) {
       const blob = await shrink(file);
-      photo_path = me.id + "/" + Date.now() + ".jpg";
-      const {error: upErr} = await sb.storage.from("photos").upload(photo_path, blob, {contentType: "image/jpeg"});
+      const path = me.id + "/" + Date.now() + ".jpg";
+      const {error: upErr} = await sb.storage.from("photos").upload(path, blob, {contentType: "image/jpeg"});
       if (upErr) throw new Error("Foto nuk u ngarkua: " + upErr.message);
+      photo_path = path; newPhoto = true;
     }
-    const {error} = await sb.from("businesses").insert({
-      name, category: $("c").value, contract_no: $("k").value.trim(), debtor: $("d").value === "po",
-      phone: $("p").value.trim(), note: $("t").value.trim(),
-      lat: picked.lat, lng: picked.lng, owner: me.id, photo_path,
-      owner_name: (me.user_metadata && me.user_metadata.username) || me.email
-    });
-    if (error) throw new Error(error.message);
-    ["n", "k", "p", "t", "f"].forEach(i => $(i).value = ""); $("d").value = "jo"; picked = null;
-    if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
-    $("coords").textContent = "Pika nuk është zgjedhur.";
+    const fields = {
+      name, categories: cs, category: cs[0], contract_no: $("k").value.trim(), debtor: $("d").checked,
+      phone: $("p").value.trim(), note: $("t").value.trim(), lat: picked.lat, lng: picked.lng, photo_path
+    };
+    if (editingId) {
+      const {data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select();
+      if (error) throw new Error(error.message);
+      if (!data || !data.length) throw new Error("Nuk ke leje ta ndryshosh këtë pikë.");
+      if (newPhoto && old && old.photo_path) await sb.storage.from("photos").remove([old.photo_path]);
+    } else {
+      fields.owner = me.id;
+      fields.owner_name = (me.user_metadata && me.user_metadata.username) || me.email;
+      const {error} = await sb.from("businesses").insert(fields);
+      if (error) throw new Error(error.message);
+    }
+    const id = editingId;
     $("modal").classList.add("hide");
-    load();
+    if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
+    await load();
+    if (id) openDetail(id);
   } catch (e) { say("msg", "S’u ruajt: " + e.message, true); }
   $("add").disabled = false;
 };
