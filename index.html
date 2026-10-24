@@ -11,7 +11,8 @@
 html,body{height:100%;margin:0}
 body{background:var(--foam);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
 .hide{display:none!important}
-button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-weight:600;background:var(--sea);color:#fff}
+svg.lucide{width:20px;height:20px;stroke-width:2;flex:none}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-weight:600;background:var(--sea);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 button.alt{background:var(--foam);color:var(--ink);border:1px solid var(--line)}
 button:disabled{opacity:.6}
 input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit;color:var(--ink);background:#fff}
@@ -22,23 +23,24 @@ label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .login{width:100%;max-width:380px;background:rgba(255,255,255,.96);border-radius:16px;padding:24px}
 .login h1{margin:0;font-size:32px} .login h1 b{color:var(--sea)}
 .login p{margin:2px 0 12px;color:var(--mut)}
-.login button{width:100%;margin-top:14px}
+.login button{width:100%;margin-top:12px}
 #app{position:fixed;inset:0;--sh:42dvh}
 #map{position:absolute;inset:0}
 .leaflet-top.leaflet-right{margin-top:112px}
 .top{position:absolute;z-index:1000;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px))}
-.search{background:#fff;border-radius:26px;height:46px;display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.search{background:#fff;border-radius:26px;height:46px;display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;box-shadow:0 2px 10px rgba(0,0,0,.3);color:var(--mut)}
 .search input{border:0;padding:0;height:100%;border-radius:0;background:transparent;flex:1;min-width:0}
 .search input:focus{outline:none}
-.search button{background:var(--foam);color:var(--ink);padding:6px 12px;border-radius:18px}
+.search button{background:var(--foam);color:var(--ink);padding:0;width:34px;height:34px;border-radius:50%}
 .chips{display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;background:#fff;color:var(--ink);border-radius:18px;padding:6px 12px;font-size:13px;font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.3)}
 .chip.on{background:var(--sea);color:#fff}
 .fabs{position:absolute;z-index:1000;right:10px;bottom:calc(var(--sh) + 12px);display:flex;flex-direction:column;gap:8px;align-items:flex-end;transition:bottom .25s}
-.fab{width:44px;height:44px;border-radius:50%;padding:0;font-size:20px;background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.35)}
-.fab.on{background:#1a73e8}
-.fab.main{width:54px;height:54px;font-size:30px;background:var(--sea);color:#fff;line-height:1}
+.fab{width:44px;height:44px;border-radius:50%;padding:0;background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.fab.on{background:#1a73e8;color:#fff}
+.fab.main{width:54px;height:54px;background:var(--sea);color:#fff}
+.fab.main svg.lucide{width:26px;height:26px}
 .sheet{position:absolute;z-index:1000;left:0;right:0;bottom:0;height:var(--sh);background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -2px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;transition:height .25s}
 .handle{padding:8px 0 4px;cursor:pointer} .handle i{display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
 .sheethead{padding:0 14px 6px;font-size:15px}
@@ -54,7 +56,8 @@ a{color:#0a7d82;font-weight:600}
 .foot{font-size:11px;color:var(--mut);margin-top:10px}
 #pickbar{position:absolute;z-index:1100;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 #pickbar button{background:#7fe3e0;color:var(--ink)}
-#detail{position:fixed;inset:0;z-index:2100;background:#fff;overflow-y:auto}
+#detail,#about{position:fixed;inset:0;z-index:2100;background:#fff;overflow-y:auto}
+#about{z-index:2300}
 .dhead{position:sticky;top:0;z-index:2;background:var(--ink);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;display:flex;align-items:center;gap:12px}
 .dhead button{background:#7fe3e0;color:var(--ink);padding:6px 12px}
 .dbody{max-width:640px;margin:0 auto;padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
@@ -62,9 +65,11 @@ a{color:#0a7d82;font-weight:600}
 .nophoto{height:120px;background:#cfe8e8;color:var(--mut);display:flex;align-items:center;justify-content:center}
 .dpad{padding:14px}
 .dpad h2{margin:0 0 4px;font-size:22px}
+.dpad h3{margin:18px 0 4px;font-size:16px}
+.dpad p{margin:0 0 6px} .dpad ul{margin:4px 0;padding-left:20px} .dpad li{margin-bottom:4px}
 .dl{display:grid;grid-template-columns:120px 1fr;gap:8px 10px;margin:12px 0;font-size:15px}
 .dl dt{color:var(--mut)} .dl dd{margin:0;word-break:break-word}
-.dbtn{display:inline-block;background:var(--sea);color:#fff;border-radius:10px;padding:10px 14px;text-decoration:none}
+.dbtn{display:inline-flex;align-items:center;gap:6px;background:var(--sea);color:#fff;border-radius:10px;padding:10px 14px;text-decoration:none}
 .dbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 button.red{background:#fcebeb;color:#a32d2d}
 #modal{position:fixed;inset:0;z-index:2200;background:rgba(6,30,40,.6);display:flex;align-items:flex-end;justify-content:center}
@@ -78,6 +83,11 @@ button.red{background:#fcebeb;color:#a32d2d}
 .me{position:relative;width:22px;height:22px}
 .me::before{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(26,115,232,.5);animation:pulse 1.6s ease-out infinite}
 .me span{position:absolute;inset:3px;border-radius:50%;background:#1a73e8;border:3px solid #fff}
+.pt{position:relative;width:24px;height:24px}
+.pt span{position:absolute;inset:4px;border-radius:50%;background:#13a3a8;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.pt.red span{background:#e24b4a}
+.pt.pulse::before{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(19,163,168,.6);animation:pulse 1.3s ease-out infinite}
+.pt.red.pulse::before{background:rgba(226,75,74,.6)}
 @keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.8);opacity:0}}
 </style>
 </head>
@@ -89,7 +99,8 @@ button.red{background:#fcebeb;color:#a32d2d}
     <p>Platforma Digjitale e Ujësjellësit</p>
     <label for="em">Email</label><input id="em" type="email" autocomplete="email">
     <label for="pw">Fjalëkalimi</label><input id="pw" type="password" autocomplete="current-password">
-    <button id="login" type="button">Hyr</button>
+    <button id="login" type="button"><i data-lucide="log-in"></i> Hyr</button>
+    <button id="aboutLogin" type="button" class="alt"><i data-lucide="info"></i> Çfarë është PikaBlu?</button>
     <p class="msg" id="amsg"></p>
   </div>
 </div>
@@ -98,16 +109,17 @@ button.red{background:#fcebeb;color:#a32d2d}
   <div id="map" role="application" aria-label="Harta e pikave"></div>
   <div class="top">
     <div class="search">
-      <span aria-hidden="true">🔍</span>
+      <i data-lucide="search"></i>
       <input id="q" type="search" placeholder="Kërko emër, kategori ose nr. kontrate">
-      <button id="out" type="button">Dil</button>
+      <button id="infoBtn" type="button" aria-label="Rreth PikaBlu"><i data-lucide="info"></i></button>
+      <button id="out" type="button" aria-label="Dil"><i data-lucide="log-out"></i></button>
     </div>
     <div class="chips" id="chips"></div>
   </div>
   <div class="fabs">
-    <button id="layers" class="fab" type="button" aria-label="Satelit ose hartë normale">🗺️</button>
-    <button id="gps" class="fab" type="button" aria-label="Vendndodhja ime">📍</button>
-    <button id="addBtn" class="fab main" type="button" aria-label="Shto pikë">+</button>
+    <button id="layers" class="fab" type="button" aria-label="Satelit ose hartë normale"><i data-lucide="layers"></i></button>
+    <button id="gps" class="fab" type="button" aria-label="Vendndodhja ime"><i data-lucide="locate-fixed"></i></button>
+    <button id="addBtn" class="fab main" type="button" aria-label="Shto pikë"><i data-lucide="plus"></i></button>
   </div>
   <div class="sheet" id="sheet">
     <div class="handle" id="handle" aria-label="Zgjat ose mbyll listën"><i></i></div>
@@ -122,6 +134,32 @@ button.red{background:#fcebeb;color:#a32d2d}
 </div>
 
 <div id="detail" class="hide"></div>
+
+<div id="about" class="hide">
+  <div class="dhead"><button id="aback" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Rreth PikaBlu</b></div>
+  <div class="dbody"><div class="dpad">
+    <h2>Pika<span style="color:var(--sea)">Blu</span></h2>
+    <p class="meta" style="font-size:15px;margin:0 0 10px">Platforma Digjitale e Ujësjellësit</p>
+    <h3>Çfarë është</h3>
+    <p>PikaBlu është një platformë digjitale për regjistrimin dhe menaxhimin e pikave në hartë: dyqane, lokale, institucione, guest house, hotele dhe pika të tjera të lidhura me shërbimin e ujësjellësit.</p>
+    <h3>Për çfarë shërben</h3>
+    <p>Qëllimi është që çdo pikë të ketë vendndodhjen e saktë, të dhënat e kontratës dhe statusin e debitorit në një vend të vetëm, dhe që stafi të gjejë e të arrijë shpejt te ajo pikë në terren.</p>
+    <h3>Funksionet</h3>
+    <ul>
+      <li>Hyrje me llogari personale. Të dhënat shihen vetëm nga përdoruesit e autorizuar.</li>
+      <li>Hartë satelitore dhe hartë normale, me kalim të shpejtë ndërmjet tyre.</li>
+      <li>Vendndodhja jote në kohë reale, e shënuar me pikë blu që pulson.</li>
+      <li>Shtimi i pikave me emër, kategori (mund të zgjidhen disa), nr. kontrate, statusin debitor po ose jo, telefon, shënim dhe foto.</li>
+      <li>Kërkim sipas emrit, kategorisë ose nr. kontrate. Pikat që nuk përputhen fshihen përkohësisht dhe ato që gjenden pulsojnë në hartë.</li>
+      <li>Filtra të shpejtë sipas kategorisë dhe për debitorët.</li>
+      <li>Faqe e plotë për çdo pikë, me foto të madhe dhe të gjitha të dhënat.</li>
+      <li>Udhëzim rruge deri te pika, përmes Google Maps.</li>
+      <li>Ndryshimi i të dhënave të një pike pa e fshirë atë.</li>
+    </ul>
+    <h3>Siguria</h3>
+    <p>Llogaritë i krijon administratori. Pa hyrje në llogari nuk shfaqet asnjë pikë apo e dhënë.</p>
+  </div></div>
+</div>
 
 <div id="modal" class="hide">
   <div class="mc">
@@ -138,14 +176,15 @@ button.red{background:#fcebeb;color:#a32d2d}
     <label for="f">Foto (opsionale)</label><input id="f" type="file" accept="image/*">
     <p class="meta" id="fhint" style="margin:4px 0 0"></p>
     <p class="meta" id="coords" style="margin:10px 0 0">Pika nuk është zgjedhur.</p>
-    <div class="bar"><button id="loc" type="button" class="alt">📍 Vendndodhja ime</button><button id="pickmap" type="button" class="alt">Zgjidh në hartë</button></div>
-    <div class="bar"><button id="add" type="button">Ruaj</button><button id="cancel" type="button" class="alt">Anulo</button></div>
+    <div class="bar"><button id="loc" type="button" class="alt"><i data-lucide="locate-fixed"></i> Vendndodhja ime</button><button id="pickmap" type="button" class="alt"><i data-lucide="crosshair"></i> Zgjidh në hartë</button></div>
+    <div class="bar"><button id="add" type="button"><i data-lucide="check"></i> Ruaj</button><button id="cancel" type="button" class="alt">Anulo</button></div>
     <p class="msg" id="msg"></p>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <script>
 // ====== SHKRUAJ KËTU KODET E SUPABASE ======
 const SUPABASE_URL = "https://eltzkgjaqmjwkuglvrqr.supabase.co";
@@ -158,7 +197,10 @@ const CATS = ["Dyqan", "Lokal", "Institucion", "Guest house", "Hotel"];
 const STATES = ["56px", "42dvh", "80dvh"];
 let me = null, picked = null, pickMarker = null, pickMode = false, editingId = null;
 let rows = [], allRows = [], filter = "all", limit = 5, stateIdx = 1;
-let watchId = null, meMarker = null, firstFix = true, sat = true, timer = null;
+let watchId = null, meMarker = null, firstFix = true, sat = true, timer = null, hadSearch = false;
+
+function icons(){ if (window.lucide) lucide.createIcons(); }
+function ic(n){ return '<i data-lucide="' + n + '"></i>'; }
 
 const map = L.map("map", {zoomControl: false, attributionControl: false}).setView([41.15, 20.05], 7);
 L.control.zoom({position: "topright"}).addTo(map);
@@ -170,9 +212,13 @@ const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {ma
 satellite.addTo(map);
 const layer = L.layerGroup().addTo(map);
 const meIcon = L.divIcon({className: "", html: '<div class="me"><span></span></div>', iconSize: [22, 22]});
+function ptIcon(b, pulse){
+  return L.divIcon({className: "", iconSize: [24, 24],
+    html: '<div class="pt' + (b.debtor ? " red" : "") + (pulse ? " pulse" : "") + '"><span></span></div>'});
+}
 
 function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
-function say(id, t, err){const e=$(id);e.textContent=t||"";e.className=(id==="msg"||id==="amsg"?"msg":"meta")+(err?" err":"");}
+function say(id, t, err){const e=$(id);e.textContent=t||"";e.className="msg"+(err?" err":"");}
 function dirUrl(b){return "https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng;}
 function cats(b){return (b.categories && b.categories.length) ? b.categories : (b.category ? [b.category] : []);}
 function badges(b){
@@ -206,11 +252,10 @@ function setPick(lat, lng){
 }
 map.on("click", e => { if (me && pickMode) setPick(e.latlng.lat, e.latlng.lng); });
 
-function render(){
+function render(pulse){
   layer.clearLayers();
   rows.forEach(b => {
-    L.circleMarker([b.lat, b.lng], {radius: 10, color: "#ffffff", weight: 3, fillColor: b.debtor ? "#e24b4a" : "#13a3a8", fillOpacity: 1})
-      .addTo(layer).on("click", () => openDetail(b.id));
+    L.marker([b.lat, b.lng], {icon: ptIcon(b, pulse)}).addTo(layer).on("click", () => openDetail(b.id));
   });
   const shown = rows.slice(0, limit);
   $("title").textContent = rows.length + " pika" + (rows.length > limit ? " · po shfaqen " + limit : "");
@@ -227,7 +272,7 @@ function render(){
     : "";
 }
 
-function filterRows(fit){
+function filterRows(){
   const t = $("q").value.trim().toLowerCase();
   rows = allRows.filter(b => {
     if (filter === "debt" && !b.debtor) return false;
@@ -235,13 +280,22 @@ function filterRows(fit){
     if (!t) return true;
     return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone].join(" ").toLowerCase().includes(t);
   });
-  render();
-  if (fit && rows.length) map.fitBounds(L.latLngBounds(rows.map(b => [b.lat, b.lng])), {maxZoom: 17, padding: [60, 60]});
+  render(!!t);
+}
+function fitRows(){
+  if (!rows.length) return;
+  if (stateIdx === 2) setSheet(1);
+  if (rows.length === 1) map.flyTo([rows[0].lat, rows[0].lng], 18, {duration: 1});
+  else map.flyToBounds(L.latLngBounds(rows.map(b => [b.lat, b.lng])), {maxZoom: 17, padding: [70, 70], duration: 1});
 }
 $("q").addEventListener("input", () => {
-  limit = 5; filterRows(false); clearTimeout(timer);
-  timer = setTimeout(() => { if ($("q").value.trim()) filterRows(true); }, 500);
+  limit = 5; filterRows(); clearTimeout(timer);
+  timer = setTimeout(() => {
+    if ($("q").value.trim()) { hadSearch = true; fitRows(); }
+    else if (hadSearch) { hadSearch = false; fitRows(); }
+  }, 450);
 });
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") { clearTimeout(timer); e.target.blur(); if ($("q").value.trim()) { hadSearch = true; fitRows(); } } });
 
 function drawChips(){
   const list = [["all", "Të gjitha"]].concat(CATS.map(c => [c, c]), [["debt", "Debitorë"]]);
@@ -259,7 +313,7 @@ async function load(){
     (urls || []).forEach(u => { if (u.signedUrl) m[u.path] = u.signedUrl; });
     data.forEach(b => { if (b.photo_path) b.photoUrl = m[b.photo_path]; });
   }
-  allRows = data; filterRows(false);
+  allRows = data; filterRows();
 }
 
 function openDetail(id){
@@ -268,7 +322,7 @@ function openDetail(id){
   const own = me && b.owner === me.id;
   const tel = b.phone ? '<a href="tel:' + esc(b.phone.replace(/[^\d+]/g, "")) + '">' + esc(b.phone) + "</a>" : "–";
   $("detail").innerHTML =
-    '<div class="dhead"><button id="dback" type="button">← Mbrapa</button><b>Detajet e pikës</b></div>' +
+    '<div class="dhead"><button id="dback" type="button">' + ic("arrow-left") + ' Mbrapa</button><b>Detajet e pikës</b></div>' +
     '<div class="dbody">' +
     (b.photoUrl ? '<a href="' + esc(b.photoUrl) + '" target="_blank" rel="noopener"><img class="big" alt="Foto" src="' + esc(b.photoUrl) + '"></a>' : '<div class="nophoto">Pa foto</div>') +
     '<div class="dpad"><h2>' + esc(b.name) + "</h2>" + badges(b) +
@@ -278,12 +332,13 @@ function openDetail(id){
     "<dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd>" +
     "<dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
     "<dt>Koordinatat</dt><dd>" + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) + "</dd></dl>" +
-    '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a>' +
-    '<button class="alt" type="button" data-dgo="' + b.id + '">Shfaq në hartë</button>' +
-    (own ? '<button type="button" data-edit="' + b.id + '">Ndrysho</button><button class="red" type="button" data-ddel="' + b.id + '">Fshij</button>' : "") +
+    '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">' + ic("navigation") + ' Më ço atje</a>' +
+    '<button class="alt" type="button" data-dgo="' + b.id + '">' + ic("map-pin") + ' Shfaq në hartë</button>' +
+    (own ? '<button type="button" data-edit="' + b.id + '">' + ic("pencil") + ' Ndrysho</button><button class="red" type="button" data-ddel="' + b.id + '">' + ic("trash-2") + " Fshij</button>" : "") +
     "</div></div></div>";
   $("detail").classList.remove("hide");
   $("detail").scrollTop = 0;
+  icons();
 }
 function closeDetail(){ $("detail").classList.add("hide"); }
 
@@ -311,18 +366,18 @@ function closeForm(){
 }
 
 document.addEventListener("click", async e => {
-  const t = e.target;
+  const t = e.target.closest ? (e.target.closest("[data-chip],[data-go],[data-dgo],[data-edit],[data-ddel],#moreBtn,#dback") || e.target) : e.target;
   if (!t.getAttribute) return;
   const chip = t.getAttribute("data-chip"), go = t.getAttribute("data-go");
   const dgo = t.getAttribute("data-dgo"), edit = t.getAttribute("data-edit"), ddel = t.getAttribute("data-ddel");
-  if (chip !== null) { filter = chip; drawChips(); limit = 5; filterRows(false); return; }
-  if (t.id === "moreBtn") { limit += 5; render(); return; }
+  if (chip !== null) { filter = chip; drawChips(); limit = 5; filterRows(); return; }
+  if (t.id === "moreBtn") { limit += 5; render(!!$("q").value.trim()); return; }
   if (t.id === "dback") { closeDetail(); return; }
   if (go || dgo) {
     e.preventDefault();
     const b = allRows.find(x => String(x.id) === String(go || dgo));
     if (dgo) closeDetail();
-    if (b) { if (stateIdx === 2) setSheet(1); map.setView([b.lat, b.lng], 18); }
+    if (b) { if (stateIdx === 2) setSheet(1); map.flyTo([b.lat, b.lng], 18, {duration: 1}); }
     return;
   }
   if (edit) { const b = allRows.find(x => String(x.id) === edit); if (b) openForm(b); return; }
@@ -333,8 +388,8 @@ document.addEventListener("click", async e => {
     if (b && b.photo_path) await sb.storage.from("photos").remove([b.photo_path]);
     closeDetail(); load(); return;
   }
-  const it = t.closest ? t.closest(".item") : null;
-  if (it && !t.closest("a") && !t.closest("button")) openDetail(it.getAttribute("data-id"));
+  const it = e.target.closest ? e.target.closest(".item") : null;
+  if (it && !e.target.closest("a") && !e.target.closest("button")) openDetail(it.getAttribute("data-id"));
 });
 
 $("handle").onclick = () => setSheet((stateIdx + 1) % 3);
@@ -342,6 +397,9 @@ $("layers").onclick = () => {
   if (sat) { map.removeLayer(satellite); normal.addTo(map); } else { map.removeLayer(normal); satellite.addTo(map); }
   sat = !sat;
 };
+$("infoBtn").onclick = () => $("about").classList.remove("hide");
+$("aboutLogin").onclick = () => $("about").classList.remove("hide");
+$("aback").onclick = () => $("about").classList.add("hide");
 
 function stopGps(){
   if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
@@ -367,7 +425,7 @@ function applyUser(u){
   $("gate").classList.toggle("hide", !!u);
   $("app").classList.toggle("hide", !u);
   if (u) { setTimeout(() => map.invalidateSize(), 50); load(); startGps(true); }
-  else { stopGps(); allRows = []; rows = []; closeDetail(); render(); }
+  else { stopGps(); allRows = []; rows = []; closeDetail(); render(false); }
 }
 
 async function doLogin(){
@@ -435,6 +493,7 @@ $("add").onclick = async () => {
 
 sb.auth.onAuthStateChange((_ev, session) => applyUser(session ? session.user : null));
 sb.auth.getSession().then(({data}) => applyUser(data.session ? data.session.user : null));
+icons();
 </script>
 </body>
 </html>
