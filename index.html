@@ -2,84 +2,66 @@
 <html lang="sq">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Me Kerko</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
 <style>
-:root{--ink:#0d3b45;--sea:#13a3a8;--foam:#eaf7f6;--card:#ffffff;--line:#c9e3e2;--mut:#58797d;--warn:#b3402a}
+:root{--ink:#0d3b45;--sea:#13a3a8;--foam:#eaf7f6;--line:#c9e3e2;--mut:#58797d;--warn:#b3402a}
 *{box-sizing:border-box}
-body{margin:0;background:var(--foam);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+html,body{height:100%;margin:0}
+body{background:var(--foam);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
 .hide{display:none!important}
-#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
-  background:linear-gradient(rgba(6,50,70,.45),rgba(6,50,70,.7)),url("water.jpg") center/cover no-repeat,linear-gradient(160deg,#0d3b45,#13a3a8)}
-.login{width:100%;max-width:380px;background:rgba(255,255,255,.96);border-radius:16px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
-.login h1{margin:0 0 4px;font-size:30px} .login h1 b{color:var(--sea)}
-.login p{margin:0 0 16px;color:var(--mut)}
-header{background:var(--ink);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-header h1{margin:0;font-size:24px} header h1 b{color:#7fe3e0}
-#mapwrap{position:relative;width:100%;overflow:hidden}
-#map{height:60vh;min-height:340px;width:100%}
-main{max-width:720px;margin:0 auto;padding:14px 14px 40px;display:grid;gap:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
-h2{margin:0 0 10px;font-size:17px}
-label{display:block;font-size:13px;color:var(--mut);margin-bottom:3px;margin-top:8px}
-input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;color:var(--ink);background:#fff}
-input:focus,select:focus,button:focus-visible{outline:3px solid #7fe3e0;outline-offset:1px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-button{border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;background:var(--sea);color:#fff;cursor:pointer}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-weight:600;background:var(--sea);color:#fff}
 button.alt{background:var(--foam);color:var(--ink);border:1px solid var(--line)}
 button:disabled{opacity:.6}
-.login button{width:100%;margin-top:14px}
-header button{background:#7fe3e0;color:var(--ink);padding:8px 12px}
-.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit;color:var(--ink);background:#fff}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .msg{font-size:14px;color:var(--mut);margin:8px 0 0;min-height:1.2em} .msg.err{color:var(--warn)}
-.item{padding:10px 0;border-top:1px solid var(--line)}
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;position:fixed;inset:0;
+  background:linear-gradient(rgba(6,50,70,.45),rgba(6,50,70,.7)),url("water.jpg") center/cover no-repeat,linear-gradient(160deg,#0d3b45,#13a3a8)}
+.login{width:100%;max-width:380px;background:rgba(255,255,255,.96);border-radius:16px;padding:24px}
+.login h1{margin:0 0 4px;font-size:30px} .login h1 b{color:var(--sea)}
+.login p{margin:0 0 12px;color:var(--mut)}
+.login button{width:100%;margin-top:14px}
+#app{position:fixed;inset:0;--sh:42dvh}
+#map{position:absolute;inset:0}
+.leaflet-top.leaflet-right{margin-top:112px}
+.top{position:absolute;z-index:1000;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px))}
+.search{background:#fff;border-radius:26px;height:46px;display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.search input{border:0;padding:0;height:100%;border-radius:0;background:transparent;flex:1;min-width:0}
+.search input:focus{outline:none}
+.search button{background:var(--foam);color:var(--ink);padding:6px 12px;border-radius:18px}
+.chips{display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;background:#fff;color:var(--ink);border-radius:18px;padding:6px 12px;font-size:13px;font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.3)}
+.chip.on{background:var(--sea);color:#fff}
+.fabs{position:absolute;z-index:1000;right:10px;bottom:calc(var(--sh) + 12px);display:flex;flex-direction:column;gap:8px;align-items:flex-end;transition:bottom .25s}
+.fab{width:44px;height:44px;border-radius:50%;padding:0;font-size:20px;background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.fab.on{background:#1a73e8;color:#fff}
+.fab.main{width:54px;height:54px;font-size:30px;background:var(--sea);color:#fff;line-height:1}
+.sheet{position:absolute;z-index:1000;left:0;right:0;bottom:0;height:var(--sh);background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -2px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;transition:height .25s}
+.handle{padding:8px 0 4px;cursor:pointer} .handle i{display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.sheethead{padding:0 14px 6px;font-size:15px}
+#scroll{overflow-y:auto;flex:1;padding:0 14px calc(14px + env(safe-area-inset-bottom,0px))}
+.item{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.item img,.ph{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;background:#cfe8e8}
+.item .b{flex:1;min-width:0} .item b{display:block}
 .meta{font-size:13px;color:var(--mut)}
+.badge{display:inline-block;font-size:12px;font-weight:600;border-radius:8px;padding:1px 8px;background:var(--foam);color:var(--ink);margin:2px 4px 2px 0}
+.badge.red{background:#fcebeb;color:#a32d2d}
 a{color:#0a7d82;font-weight:600}
-.del{background:transparent;color:var(--warn);padding:2px 8px}
-img.thumb{display:block;width:100%;max-width:240px;border-radius:8px;margin:6px 0}
-
-/* ---- Pikat e vogla në hartë ---- */
-.dotwrap{background:none;border:0}
-.dot{display:block;width:16px;height:16px;margin:3px;border-radius:50%;background:var(--sea);border:3px solid #fff;
-  box-shadow:0 1px 5px rgba(0,0,0,.55);transition:transform .15s}
-.dotwrap:hover .dot,.dotwrap:focus .dot{transform:scale(1.35)}
-.pickdot{display:block;width:16px;height:16px;margin:3px;border-radius:50%;background:#f08a24;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.55)}
-
-/* ---- Grupimi i pikave ---- */
-.clwrap{background:none;border:0}
-.cl{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;border:3px solid #7fe3e0;
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.5)}
-
-/* ---- Pulsimi ---- */
-.pulsewrap{background:none;border:0;pointer-events:none}
-.pulse{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;border:3px solid #7fe3e0;
-  background:rgba(127,227,224,.35);animation:pulse 1.4s ease-out infinite}
-.pulse.p2{animation-delay:.7s}
-@keyframes pulse{0%{transform:scale(.2);opacity:1}100%{transform:scale(1);opacity:0}}
-
-/* ---- Paneli anash ---- */
-#panel{position:absolute;top:0;right:0;bottom:0;width:360px;max-width:100%;background:#fff;z-index:1100;
-  overflow:auto;box-shadow:-6px 0 24px rgba(0,0,0,.25);animation:slidein .25s ease}
-@keyframes slidein{from{transform:translateX(100%)}to{transform:none}}
-@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
-.pclose{position:absolute;top:8px;right:8px;z-index:2;width:36px;height:36px;padding:0;border-radius:50%;
-  background:rgba(13,59,69,.85);color:#fff;font-size:22px;line-height:1}
-.pphoto{display:block;width:100%;height:200px;object-fit:cover;background:var(--foam)}
-.pnophoto{height:64px;background:linear-gradient(160deg,#0d3b45,#13a3a8)}
-.pcontent{padding:14px 16px 18px}
-.pcontent h2{font-size:21px;margin:0 0 6px}
-.chip{display:inline-block;background:var(--foam);border:1px solid var(--line);border-radius:99px;padding:2px 10px;font-size:13px;color:var(--ink)}
-.prow{margin:12px 0 0}
-.prow small{display:block;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-.pbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-.btn{display:inline-block;text-decoration:none;border-radius:8px;padding:10px 14px;font-weight:600;background:var(--sea);color:#fff}
-.btn.alt{background:var(--foam);color:var(--ink);border:1px solid var(--line)}
-@media (max-width:700px){
-  #panel{top:auto;left:0;width:100%;max-height:62%;border-radius:16px 16px 0 0;animation:slideup .25s ease}
-  .pphoto{height:150px}
-}
+.acts{margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.del{background:transparent;color:var(--warn);padding:0;font-weight:600}
+.foot{font-size:11px;color:var(--mut);margin-top:10px}
+#pickbar{position:absolute;z-index:1100;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+#pickbar button{background:#7fe3e0;color:var(--ink)}
+#modal{position:fixed;inset:0;z-index:2000;background:rgba(6,30,40,.6);display:flex;align-items:flex-end;justify-content:center}
+.mc{width:100%;max-width:520px;max-height:92dvh;overflow-y:auto;background:#fff;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.mc h2{margin:0 0 4px;font-size:18px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.leaflet-popup-content{margin:10px 12px}
+.pop img{width:100%;max-width:220px;border-radius:8px;margin:6px 0;display:block}
 </style>
 </head>
 <body>
@@ -96,41 +78,54 @@ img.thumb{display:block;width:100%;max-width:240px;border-radius:8px;margin:6px 
 </div>
 
 <div id="app" class="hide">
-  <header>
-    <h1>Me <b>Kerko</b></h1>
-    <div class="bar"><span id="who"></span><button id="gps" type="button">Ndiz GPS</button><button id="out" type="button">Dil</button></div>
-  </header>
-  <div id="mapwrap">
-    <div id="map" role="application" aria-label="Harta e bizneseve"></div>
-    <aside id="panel" class="hide" aria-live="polite">
-      <button id="pclose" class="pclose" type="button" aria-label="Mbyll">&times;</button>
-      <div id="pbody"></div>
-    </aside>
+  <div id="map" role="application" aria-label="Harta e bizneseve"></div>
+  <div class="top">
+    <div class="search">
+      <span aria-hidden="true">🔍</span>
+      <input id="q" type="search" placeholder="Kërko emër, kategori ose nr. kontrate">
+      <button id="out" type="button">Dil</button>
+    </div>
+    <div class="chips" id="chips"></div>
   </div>
-  <main>
-    <section class="card">
-      <h2>Shto biznes</h2>
-      <p class="meta">Prek hartën ose përdor vendndodhjen tënde për të zgjedhur pikën.</p>
-      <div class="row"><div><label for="n">Emri i biznesit</label><input id="n" maxlength="80"></div>
-      <div><label for="c">Kategoria</label><select id="c"><option>Ujë i pijshëm</option><option>Pikë shitjeje</option><option>Depo</option><option>Shërbim</option><option>Lokal</option><option>Institucion</option><option>Bashki</option><option>Tjetër</option></select></div></div>
-      <div class="row"><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div>
-      <div><label for="t">Shënim</label><input id="t" maxlength="120"></div></div>
-      <label for="f">Foto e biznesit (opsionale)</label>
-      <input id="f" type="file" accept="image/*">
-      <p class="meta" id="coords">Pika nuk është zgjedhur.</p>
-      <div class="bar"><button id="loc" type="button" class="alt">Vendndodhja ime</button><button id="add" type="button">Ruaj biznesin</button></div>
-      <p class="msg" id="msg"></p>
-    </section>
-    <section class="card">
-      <h2>Bizneset (<span id="count">0</span>)</h2>
-      <input id="q" type="search" placeholder="Kërko biznes ose kategori…" style="margin-bottom:8px">
+  <div class="fabs">
+    <button id="layers" class="fab" type="button" aria-label="Satelit ose hartë normale">🗺️</button>
+    <button id="gps" class="fab" type="button" aria-label="Vendndodhja ime">📍</button>
+    <button id="addBtn" class="fab main" type="button" aria-label="Shto biznes">+</button>
+  </div>
+  <div class="sheet" id="sheet">
+    <div class="handle" id="handle" aria-label="Zgjat ose mbyll listën"><i></i></div>
+    <div class="sheethead"><b id="title">0 biznese</b></div>
+    <div id="scroll">
       <div id="list"></div>
-    </section>
-  </main>
+      <div id="more"></div>
+      <div class="foot">Harta: Esri, OpenStreetMap</div>
+    </div>
+  </div>
+  <div id="pickbar" class="hide"><span>Prek hartën për të zgjedhur pikën</span><button id="pickdone" type="button">U bë</button></div>
+</div>
+
+<div id="modal" class="hide">
+  <div class="mc">
+    <h2>Shto biznes</h2>
+    <label for="n">Emri i biznesit</label><input id="n" maxlength="80">
+    <div class="row">
+      <div><label for="c">Kategoria</label><select id="c"><option>Dyqan</option><option>Lokal</option><option>Institucion</option><option>Guest house</option><option>Hotel</option></select></div>
+      <div><label for="d">Debitor</label><select id="d"><option value="jo">Jo</option><option value="po">Po</option></select></div>
+    </div>
+    <div class="row">
+      <div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div>
+      <div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div>
+    </div>
+    <label for="t">Shënim</label><input id="t" maxlength="120">
+    <label for="f">Foto e biznesit (opsionale)</label><input id="f" type="file" accept="image/*">
+    <p class="meta" id="coords" style="margin:10px 0 0">Pika nuk është zgjedhur.</p>
+    <div class="bar"><button id="loc" type="button" class="alt">📍 Vendndodhja ime</button><button id="pickmap" type="button" class="alt">Zgjidh në hartë</button></div>
+    <div class="bar"><button id="add" type="button">Ruaj biznesin</button><button id="cancel" type="button" class="alt">Anulo</button></div>
+    <p class="msg" id="msg"></p>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 // ====== SHKRUAJ KËTU KODET E SUPABASE ======
@@ -140,38 +135,31 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let me = null, picked = null, pickMarker = null, rows = [], allRows = [];
-let watchId = null, meMarker = null, firstFix = true;
-let selected = null, pulseMarker = null;
+const CATS = ["Dyqan", "Lokal", "Institucion", "Guest house", "Hotel"];
+const STATES = ["56px", "42dvh", "80dvh"];
+let me = null, picked = null, pickMarker = null, pickMode = false;
+let rows = [], allRows = [], filter = "all", limit = 5, stateIdx = 1;
+let watchId = null, meMarker = null, firstFix = true, sat = true, timer = null;
 
-const map = L.map("map").setView([41.15, 20.05], 7);
+const map = L.map("map", {zoomControl: false, attributionControl: false}).setView([41.15, 20.05], 7);
+L.control.zoom({position: "topright"}).addTo(map);
 const satellite = L.layerGroup([
-  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {maxZoom: 19, attribution: "Tiles &copy; Esri"}),
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {maxZoom: 19}),
   L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {maxZoom: 19})
 ]);
-const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: "&copy; OpenStreetMap"});
+const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19});
 satellite.addTo(map);
-L.control.layers({"Satelit": satellite, "Hartë normale": normal}, null, {position: "bottomleft"}).addTo(map);
-
-const dotIcon = L.divIcon({className: "dotwrap", html: '<span class="dot"></span>', iconSize: [22, 22], iconAnchor: [11, 11]});
-const pickIcon = L.divIcon({className: "dotwrap", html: '<span class="pickdot"></span>', iconSize: [22, 22], iconAnchor: [11, 11]});
-const pulseIcon = L.divIcon({className: "pulsewrap", html: '<span class="pulse"></span><span class="pulse p2"></span>', iconSize: [64, 64], iconAnchor: [32, 32]});
-
-const layer = L.markerClusterGroup({
-  showCoverageOnHover: false,
-  maxClusterRadius: 40,
-  iconCreateFunction: c => L.divIcon({className: "clwrap", html: '<div class="cl">' + c.getChildCount() + "</div>", iconSize: [38, 38]})
-}).addTo(map);
-
-const panel = $("panel");
-L.DomEvent.disableClickPropagation(panel);
-L.DomEvent.disableScrollPropagation(panel);
+const layer = L.layerGroup().addTo(map);
 
 function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
 function say(id, t, err){const e=$(id);e.textContent=t||"";e.className="msg"+(err?" err":"");}
 function dirUrl(b){return "https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng;}
-function imgTag(b){return b.photoUrl ? '<img class="thumb" alt="Foto e biznesit" src="' + esc(b.photoUrl) + '">' : "";}
-function telHref(p){return "tel:" + String(p).replace(/[^\d+]/g, "");}
+function badges(b){
+  return '<span class="badge">' + esc(b.category) + "</span>" +
+    (b.contract_no ? '<span class="badge">Kontratë: ' + esc(b.contract_no) + "</span>" : "") +
+    (b.debtor ? '<span class="badge red">Debitor</span>' : "");
+}
+function setSheet(i){stateIdx = i; $("app").style.setProperty("--sh", STATES[i]); setTimeout(() => map.invalidateSize(), 300);}
 
 function shrink(file){
   return new Promise((res, rej) => {
@@ -191,77 +179,66 @@ function shrink(file){
 
 function setPick(lat, lng){
   picked = {lat, lng};
-  if (pickMarker) pickMarker.setLatLng([lat, lng]); else pickMarker = L.marker([lat, lng], {icon: pickIcon}).addTo(map);
+  if (pickMarker) pickMarker.setLatLng([lat, lng]);
+  else pickMarker = L.circleMarker([lat, lng], {radius: 10, color: "#ffffff", weight: 3, fillColor: "#e67e22", fillOpacity: 1}).addTo(map);
   $("coords").textContent = "Pika e zgjedhur: " + lat.toFixed(5) + ", " + lng.toFixed(5);
 }
-map.on("click", e => { closePanel(); if (me) setPick(e.latlng.lat, e.latlng.lng); });
+function closePick(){pickMode = false; $("pickbar").classList.add("hide"); $("modal").classList.remove("hide");}
+map.on("click", e => { if (me && pickMode) setPick(e.latlng.lat, e.latlng.lng); });
 
-/* ---- Paneli anash + pulsimi ---- */
-function panelHtml(b){
-  return (b.photoUrl ? '<img class="pphoto" alt="Foto e biznesit" src="' + esc(b.photoUrl) + '">' : '<div class="pnophoto"></div>') +
-    '<div class="pcontent"><h2>' + esc(b.name) + '</h2><span class="chip">' + esc(b.category) + "</span>" +
-    (b.note ? '<div class="prow"><small>Përshkrim</small>' + esc(b.note) + "</div>" : "") +
-    (b.phone ? '<div class="prow"><small>Telefoni</small><a href="' + esc(telHref(b.phone)) + '">' + esc(b.phone) + "</a></div>" : "") +
-    '<div class="prow"><small>Shtuar nga</small>' + esc(b.owner_name || "përdorues") + "</div>" +
-    '<div class="pbtns"><a class="btn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a>' +
-    (b.phone ? '<a class="btn alt" href="' + esc(telHref(b.phone)) + '">Telefono</a>' : "") + "</div></div>";
+function popupHtml(b){
+  return '<div class="pop"><b>' + esc(b.name) + "</b><br>" + badges(b) +
+    (b.phone ? '<div class="meta">' + esc(b.phone) + "</div>" : "") +
+    (b.note ? "<div>" + esc(b.note) + "</div>" : "") +
+    (b.photoUrl ? '<img alt="Foto e biznesit" src="' + esc(b.photoUrl) + '">' : "") +
+    '<a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a></div>';
 }
-
-function focusOn(b){
-  const z = Math.max(map.getZoom(), 17);
-  const size = map.getSize();
-  const desktop = window.innerWidth > 700;
-  const shift = desktop ? L.point(Math.min(360, size.x) / 2, 0) : L.point(0, size.y * 0.2);
-  const target = map.project([b.lat, b.lng], z).add(shift);
-  map.flyTo(map.unproject(target, z), z, {duration: 0.6});
-}
-
-function select(b){
-  selected = b;
-  $("pbody").innerHTML = panelHtml(b);
-  panel.scrollTop = 0;
-  panel.classList.remove("hide");
-  if (pulseMarker) map.removeLayer(pulseMarker);
-  pulseMarker = L.marker([b.lat, b.lng], {icon: pulseIcon, interactive: false, keyboard: false, zIndexOffset: -1000}).addTo(map);
-  focusOn(b);
-}
-
-function closePanel(){
-  selected = null;
-  panel.classList.add("hide");
-  if (pulseMarker) { map.removeLayer(pulseMarker); pulseMarker = null; }
-}
-$("pclose").onclick = closePanel;
-document.addEventListener("keydown", e => { if (e.key === "Escape" && selected) closePanel(); });
 
 function render(){
-  $("count").textContent = rows.length;
   layer.clearLayers();
-  const ms = rows.map(b => {
-    const m = L.marker([b.lat, b.lng], {icon: dotIcon, title: b.name});
-    m.on("click", () => select(b));
-    return m;
+  rows.forEach(b => {
+    L.circleMarker([b.lat, b.lng], {radius: 9, color: "#ffffff", weight: 3, fillColor: b.debtor ? "#e24b4a" : "#13a3a8", fillOpacity: 1})
+      .addTo(layer).bindPopup(popupHtml(b), {maxWidth: 250});
   });
-  layer.addLayers(ms);
-  $("list").innerHTML = rows.length ? rows.map(b =>
-    '<div class="item"><b>' + esc(b.name) + "</b> · " + esc(b.category) +
-    '<div class="meta">nga ' + esc(b.owner_name || "përdorues") + (b.phone ? " · " + esc(b.phone) : "") + "</div>" +
-    (b.note ? "<div>" + esc(b.note) + "</div>" : "") + imgTag(b) +
-    '<a href="#" data-go="' + b.id + '">Shfaq në hartë</a> · ' +
+  const shown = rows.slice(0, limit);
+  $("title").textContent = rows.length + " biznese" + (rows.length > limit ? " · po shfaqen " + limit : "");
+  $("list").innerHTML = shown.length ? shown.map(b =>
+    '<div class="item">' +
+    (b.photoUrl ? '<img alt="" src="' + esc(b.photoUrl) + '">' : '<div class="ph"></div>') +
+    '<div class="b"><b>' + esc(b.name) + "</b>" + badges(b) +
+    '<div class="meta">' + (b.phone ? esc(b.phone) + " · " : "") + "nga " + esc(b.owner_name || "përdorues") + "</div>" +
+    '<div class="acts"><a href="#" data-go="' + b.id + '">Shfaq</a>' +
     '<a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a>' +
-    (me && b.owner === me.id ? ' <button class="del" data-del="' + b.id + '" type="button">Fshij</button>' : "") + "</div>"
-  ).join("") : '<p class="meta">Asnjë biznes ende.</p>';
+    (me && b.owner === me.id ? '<button class="del" data-del="' + b.id + '" type="button">Fshij</button>' : "") +
+    "</div></div></div>"
+  ).join("") : '<p class="meta">Asnjë biznes nuk u gjet.</p>';
+  $("more").innerHTML = rows.length > limit
+    ? '<button class="alt" id="moreBtn" type="button" style="width:100%;margin-top:8px">Shfaq edhe 5</button><p class="meta">Për të gjetur të tjerët, kërko me emër ose nr. kontrate.</p>'
+    : "";
 }
 
-function filterRows(){
+function filterRows(fit){
   const t = $("q").value.trim().toLowerCase();
-  rows = t ? allRows.filter(b => ((b.name||"")+" "+(b.category||"")+" "+(b.note||"")+" "+(b.owner_name||"")).toLowerCase().includes(t)) : allRows;
+  rows = allRows.filter(b => {
+    if (filter === "debt" && !b.debtor) return false;
+    if (filter !== "all" && filter !== "debt" && b.category !== filter) return false;
+    if (!t) return true;
+    return [b.name, b.category, b.note, b.owner_name, b.contract_no, b.phone].join(" ").toLowerCase().includes(t);
+  });
   render();
+  if (fit && rows.length) map.fitBounds(L.latLngBounds(rows.map(b => [b.lat, b.lng])), {maxZoom: 17, padding: [60, 60]});
 }
-$("q").addEventListener("input", filterRows);
+function newFilter(fit){limit = 5; filterRows(fit);}
+$("q").addEventListener("input", () => { limit = 5; filterRows(false); clearTimeout(timer); timer = setTimeout(() => { if ($("q").value.trim()) filterRows(true); }, 500); });
+
+function drawChips(){
+  const list = [["all", "Të gjitha"]].concat(CATS.map(c => [c, c]), [["debt", "Debitorë"]]);
+  $("chips").innerHTML = list.map(x => '<button type="button" class="chip' + (filter === x[0] ? " on" : "") + '" data-chip="' + esc(x[0]) + '">' + esc(x[1]) + "</button>").join("");
+}
+drawChips();
 
 async function load(){
-  const {data, error} = await sb.from("businesses").select("*").order("created_at", {ascending:false});
+  const {data, error} = await sb.from("businesses").select("*").order("created_at", {ascending: false});
   if (error) { $("list").innerHTML = '<p class="msg err">S’u lexuan të dhënat. Kontrollo kodet e Supabase.</p>'; return; }
   const paths = data.filter(b => b.photo_path).map(b => b.photo_path);
   if (paths.length) {
@@ -270,19 +247,45 @@ async function load(){
     (urls || []).forEach(u => { if (u.signedUrl) m[u.path] = u.signedUrl; });
     data.forEach(b => { if (b.photo_path) b.photoUrl = m[b.photo_path]; });
   }
-  allRows = data; filterRows();
+  allRows = data; filterRows(false);
 }
+
+document.addEventListener("click", async e => {
+  const t = e.target;
+  if (!t.getAttribute) return;
+  const chip = t.getAttribute("data-chip"), go = t.getAttribute("data-go"), del = t.getAttribute("data-del");
+  if (chip !== null) { filter = chip; drawChips(); newFilter(false); }
+  if (t.id === "moreBtn") { limit += 5; render(); }
+  if (go) {
+    e.preventDefault();
+    const b = allRows.find(x => String(x.id) === go);
+    if (b) { if (stateIdx === 2) setSheet(1); map.setView([b.lat, b.lng], 18); }
+  }
+  if (del && confirm("Ta fshij këtë biznes?")) {
+    const b = allRows.find(x => String(x.id) === del);
+    const {error} = await sb.from("businesses").delete().eq("id", del);
+    if (error) return alert("S’u fshi.");
+    if (b && b.photo_path) await sb.storage.from("photos").remove([b.photo_path]);
+    load();
+  }
+});
+
+$("handle").onclick = () => setSheet((stateIdx + 1) % 3);
+
+$("layers").onclick = () => {
+  if (sat) { map.removeLayer(satellite); normal.addTo(map); } else { map.removeLayer(normal); satellite.addTo(map); }
+  sat = !sat;
+};
 
 function stopGps(){
   if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
   if (meMarker) { map.removeLayer(meMarker); meMarker = null; }
-  $("gps").textContent = "Ndiz GPS";
+  $("gps").classList.remove("on");
 }
 $("gps").onclick = () => {
   if (watchId !== null) return stopGps();
   if (!navigator.geolocation) return alert("Pajisja nuk mbështet vendndodhjen.");
-  firstFix = true;
-  $("gps").textContent = "GPS: ndezur";
+  firstFix = true; $("gps").classList.add("on");
   watchId = navigator.geolocation.watchPosition(p => {
     const ll = [p.coords.latitude, p.coords.longitude];
     if (!meMarker) meMarker = L.circleMarker(ll, {radius: 9, color: "#ffffff", weight: 3, fillColor: "#1a73e8", fillOpacity: 1}).addTo(map);
@@ -296,13 +299,8 @@ function applyUser(u){
   me = u;
   $("gate").classList.toggle("hide", !!u);
   $("app").classList.toggle("hide", !u);
-  if (u) {
-    $("who").textContent = "👤 " + ((u.user_metadata && u.user_metadata.username) || u.email);
-    setTimeout(() => map.invalidateSize(), 50);
-    load();
-  } else {
-    stopGps(); closePanel(); allRows = []; rows = []; render();
-  }
+  if (u) { setTimeout(() => map.invalidateSize(), 50); load(); }
+  else { stopGps(); allRows = []; rows = []; render(); }
 }
 
 async function doLogin(){
@@ -313,18 +311,23 @@ async function doLogin(){
 }
 $("login").onclick = doLogin;
 $("pw").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
-$("out").onclick = () => sb.auth.signOut();
+$("out").onclick = () => { if (confirm("Do dalësh?")) sb.auth.signOut(); };
 
+$("addBtn").onclick = () => { say("msg", ""); $("modal").classList.remove("hide"); };
+$("cancel").onclick = () => $("modal").classList.add("hide");
+$("pickmap").onclick = () => { pickMode = true; $("modal").classList.add("hide"); $("pickbar").classList.remove("hide"); if (stateIdx === 2) setSheet(1); };
+$("pickdone").onclick = closePick;
 $("loc").onclick = () => {
   if (!navigator.geolocation) return say("msg", "Pajisja nuk mbështet vendndodhjen.", true);
-  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); map.setView([p.coords.latitude, p.coords.longitude], 17); },
-    () => say("msg", "Vendndodhja nuk u lejua. Prek hartën.", true), {enableHighAccuracy: true});
+  say("msg", "Duke marrë vendndodhjen…");
+  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); map.setView([p.coords.latitude, p.coords.longitude], 17); say("msg", ""); },
+    () => say("msg", "Vendndodhja nuk u lejua. Përdor “Zgjidh në hartë”.", true), {enableHighAccuracy: true});
 };
 
 $("add").onclick = async () => {
   const name = $("n").value.trim();
   if (!name) return say("msg", "Shkruaj emrin e biznesit.", true);
-  if (!picked) return say("msg", "Zgjidh një pikë në hartë.", true);
+  if (!picked) return say("msg", "Zgjidh një pikë: vendndodhjen tënde ose në hartë.", true);
   $("add").disabled = true; say("msg", "Duke ruajtur…");
   try {
     let photo_path = null;
@@ -336,30 +339,19 @@ $("add").onclick = async () => {
       if (upErr) throw new Error("Foto nuk u ngarkua: " + upErr.message);
     }
     const {error} = await sb.from("businesses").insert({
-      name, category: $("c").value, phone: $("p").value.trim(), note: $("t").value.trim(),
+      name, category: $("c").value, contract_no: $("k").value.trim(), debtor: $("d").value === "po",
+      phone: $("p").value.trim(), note: $("t").value.trim(),
       lat: picked.lat, lng: picked.lng, owner: me.id, photo_path,
       owner_name: (me.user_metadata && me.user_metadata.username) || me.email
     });
     if (error) throw new Error(error.message);
-    ["n","p","t","f"].forEach(i => $(i).value = ""); picked = null;
+    ["n", "k", "p", "t", "f"].forEach(i => $(i).value = ""); $("d").value = "jo"; picked = null;
     if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
-    $("coords").textContent = "Pika nuk është zgjedhur."; say("msg", "U ruajt.");
+    $("coords").textContent = "Pika nuk është zgjedhur.";
+    $("modal").classList.add("hide");
     load();
   } catch (e) { say("msg", "S’u ruajt: " + e.message, true); }
   $("add").disabled = false;
-};
-
-$("list").onclick = async e => {
-  const go = e.target.getAttribute("data-go"), del = e.target.getAttribute("data-del");
-  if (go) { e.preventDefault(); const b = allRows.find(x => String(x.id) === go); if (b) { select(b); window.scrollTo({top:0, behavior:"smooth"}); } }
-  if (del && confirm("Ta fshij këtë biznes?")) {
-    const b = allRows.find(x => String(x.id) === del);
-    const {error} = await sb.from("businesses").delete().eq("id", del);
-    if (error) return say("msg", "S’u fshi.", true);
-    if (b && b.photo_path) await sb.storage.from("photos").remove([b.photo_path]);
-    if (selected && selected.id === b.id) closePanel();
-    load();
-  }
 };
 
 sb.auth.onAuthStateChange((_ev, session) => applyUser(session ? session.user : null));
