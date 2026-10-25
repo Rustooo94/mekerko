@@ -509,5 +509,117 @@ sb.auth.onAuthStateChange((_ev, session) => applyUser(session ? session.user : n
 sb.auth.getSession().then(({data}) => applyUser(data.session ? data.session.user : null));
 icons();
 </script>
+  <style>
+#debts{position:fixed;inset:0;z-index:2150;background:#fff;overflow-y:auto}
+#debts .dp{max-width:640px;margin:0 auto;padding:14px}
+.drow{padding:10px 0;border-top:1px solid var(--line)}
+.drow b{display:block}
+.upbox{background:var(--foam);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<div id="debts" class="hide">
+  <div class="dhead"><button id="dbBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Lista e debitorëve</b></div>
+  <div class="dp">
+    <div class="upbox hide" id="upbox">
+      <b>Shto listë nga Excel</b>
+      <p class="meta" style="margin:4px 0 8px">Kolonat: Emri, Mbiemri, Nr. i kontratës, Shuma (opsionale), Shënim (opsionale). Rreshti i parë duhet të jenë titujt.</p>
+      <input id="dbFile" type="file" accept=".xlsx,.xls,.csv">
+      <div class="bar"><button id="dbGo" type="button" disabled>Ngarko listën</button></div>
+      <p class="msg" id="dbMsg"></p>
+      <div id="dbBatches" style="margin-top:8px"></div>
+    </div>
+    <input id="dbQ" type="search" placeholder="Kërko emër ose nr. kontrate" style="margin-bottom:8px">
+    <p class="meta" id="dbCount"></p>
+    <div id="dbList"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  let debs = [], parsed = [], batches = [], fname = "";
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.id = "debtBtn"; btn.setAttribute("aria-label", "Lista e debitorëve");
+  btn.innerHTML = '<i data-lucide="banknote"></i>';
+  $("infoBtn").before(btn); lucide.createIcons();
+  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+  const pick = (keys, names) => keys.find(k => names.some(n => norm(k).includes(n)));
+
+  function draw(){
+    const t = $("dbQ").value.trim().toLowerCase();
+    const l = debs.filter(d => !t || ((d.full_name || "") + " " + (d.contract_no || "")).toLowerCase().includes(t));
+    $("dbCount").textContent = l.length + " debitorë";
+    $("dbList").innerHTML = (l.length ? l.slice(0, 100).map(d => {
+      const b = allRows.find(x => x.contract_no && d.contract_no && String(x.contract_no).trim() === String(d.contract_no).trim());
+      return '<div class="drow"><b>' + esc(d.full_name) + '</b><div class="meta">Kontratë: ' + esc(d.contract_no) + (d.amount != null ? " · Shuma: " + esc(d.amount) : "") + "</div>" +
+        (d.note ? "<div>" + esc(d.note) + "</div>" : "") + (b ? '<a href="#" data-dmap="' + b.id + '">Shfaq në hartë</a>' : "") + "</div>";
+    }).join("") : '<p class="meta">Lista është bosh.</p>') + (l.length > 100 ? '<p class="meta">Po shfaqen 100 të parët. Kërko për të gjetur të tjerët.</p>' : "");
+  }
+
+  async function loadDebs(){
+    const {data, error} = await sb.from("debtors").select("*").order("full_name");
+    if (error) { $("dbList").innerHTML = '<p class="msg err">S’u lexua lista. Kontrollo që SQL-i u krye.</p>'; return; }
+    debs = data;
+    const r = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
+    $("upbox").classList.toggle("hide", !(r.data && r.data.length));
+    const m = {}; debs.forEach(d => { const k = d.batch || "Pa emër"; m[k] = (m[k] || 0) + 1; });
+    batches = Object.keys(m);
+    $("dbBatches").innerHTML = batches.length ? "<b>Listat e ngarkuara</b>" + batches.map((k, i) =>
+      '<div class="drow"><div>' + esc(k) + '</div><div class="meta">' + m[k] + ' rreshta</div><button class="red" type="button" data-delb="' + i + '">Hiq listën</button></div>').join("") : "";
+    draw(); lucide.createIcons();
+  }
+
+  btn.onclick = () => { $("debts").classList.remove("hide"); loadDebs(); };
+  $("dbBack").onclick = () => $("debts").classList.add("hide");
+  $("dbQ").addEventListener("input", draw);
+  $("dbList").onclick = e => {
+    const a = e.target.closest("[data-dmap]"); if (!a) return;
+    e.preventDefault(); $("debts").classList.add("hide"); openDetail(a.getAttribute("data-dmap"));
+  };
+  $("dbBatches").onclick = async e => {
+    const b = e.target.closest("[data-delb]"); if (!b) return;
+    const k = batches[+b.getAttribute("data-delb")];
+    if (!confirm("Ta heq listën “" + k + "”?")) return;
+    const q = sb.from("debtors").delete();
+    const {error} = await (k === "Pa emër" ? q.is("batch", null) : q.eq("batch", k));
+    if (error) return say("dbMsg", "S’u hoq: " + error.message, true);
+    say("dbMsg", "Lista u hoq."); loadDebs();
+  };
+
+  $("dbFile").onchange = async e => {
+    parsed = []; $("dbGo").disabled = true;
+    const f = e.target.files[0]; if (!f) return;
+    fname = f.name;
+    try {
+      const wb = XLSX.read(await f.arrayBuffer(), {type: "array"});
+      const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: "", raw: false});
+      if (!data.length) throw new Error("Skedari është bosh.");
+      const keys = Object.keys(data[0]);
+      const sn = pick(keys, ["mbiem", "surname"]);
+      const nm = keys.find(k => k !== sn && ["emri", "emer", "name"].some(n => norm(k).includes(n)));
+      const ck = pick(keys, ["kontrat", "contract"]), ak = pick(keys, ["shum", "borxh", "amount", "detyr"]), nk = pick(keys, ["shenim", "note", "koment"]);
+      if (!ck || (!nm && !sn)) throw new Error("Nuk gjeta kolonat. Titujt që gjeta: " + keys.join(", "));
+      parsed = data.map(r => {
+        const a = ak ? parseFloat(String(r[ak]).replace(/\s/g, "").replace(",", ".")) : NaN;
+        return {full_name: [nm ? r[nm] : "", sn ? r[sn] : ""].join(" ").trim(), contract_no: String(r[ck]).trim(), amount: isNaN(a) ? null : a, note: nk ? String(r[nk]).trim() : null};
+      }).filter(x => x.full_name || x.contract_no);
+      say("dbMsg", "U gjetën " + parsed.length + " rreshta. Shtyp “Ngarko listën”.");
+      $("dbGo").disabled = !parsed.length;
+    } catch (err) { say("dbMsg", err.message, true); }
+  };
+
+  $("dbGo").onclick = async () => {
+    $("dbGo").disabled = true; say("dbMsg", "Duke ngarkuar…");
+    const batch = fname + " (" + new Date().toLocaleDateString("sq") + ")";
+    try {
+      for (let i = 0; i < parsed.length; i += 500) {
+        const {error} = await sb.from("debtors").insert(parsed.slice(i, i + 500).map(x => Object.assign({batch}, x)));
+        if (error) throw error;
+      }
+      say("dbMsg", "U ngarkuan " + parsed.length + " rreshta."); parsed = []; $("dbFile").value = ""; loadDebs();
+    } catch (err) { say("dbMsg", "S’u ngarkua: " + (err.message || err), true); $("dbGo").disabled = false; }
+  };
+})();
+</script>
 </body>
 </html>
