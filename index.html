@@ -18,9 +18,16 @@ button:disabled{opacity:.6}
 input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit;color:var(--ink);background:#fff}
 label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .msg{font-size:14px;color:var(--mut);margin:8px 0 0;min-height:1.2em} .msg.err{color:var(--warn)}
-#gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;
-  background:linear-gradient(rgba(6,50,70,.45),rgba(6,50,70,.7)),url("water.jpg") center/cover no-repeat,linear-gradient(160deg,#0d3b45,#13a3a8)}
-.login{width:100%;max-width:380px;background:rgba(255,255,255,.96);border-radius:16px;padding:24px}
+#gate{position:fixed;inset:0;display:grid;grid-template-columns:1.15fr 1fr;grid-template-rows:minmax(100dvh,auto);overflow:auto;background:#eaf7f6}
+.hero{display:flex;align-items:center;justify-content:center;overflow:hidden;background:#1f95cc}
+.hero img{height:100dvh;max-width:100%;object-fit:contain;display:block}
+.login{align-self:center;justify-self:center;width:calc(100% - 40px);max-width:380px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(13,59,69,.15)}
+@media (max-width:800px){
+  #gate{grid-template-columns:1fr}
+  .hero{position:absolute;inset:0}
+  .hero img{width:100%;height:100%;object-fit:cover;object-position:50% 45%}
+  .login{position:relative;align-self:start;margin-top:5vh;background:rgba(255,255,255,.95)}
+}
 .login h1{margin:0;font-size:32px} .login h1 b{color:var(--sea)}
 .login p{margin:2px 0 12px;color:var(--mut)}
 .login button{width:100%;margin-top:12px}
@@ -94,6 +101,7 @@ button.red{background:#fcebeb;color:#a32d2d}
 <body>
 
 <div id="gate">
+  <div class="hero"><img src="water.jpg" alt=""></div>
   <div class="login">
     <h1>Pika<b>Blu</b></h1>
     <p>Platforma Digjitale e Ujësjellësit</p>
