@@ -729,5 +729,45 @@ if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
   nN.addEventListener("change", sync); sync();
 })();
 </script>
+  <script>
+(function(){
+  ["netBtn", "netpanel"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+  const fabs = document.querySelector(".fabs");
+  const btn = document.createElement("button");
+  btn.className = "fab"; btn.id = "netBtn"; btn.type = "button"; btn.setAttribute("aria-label", "Rrjeti i tubave");
+  btn.innerHTML = '<i data-lucide="route"></i>';
+  fabs.prepend(btn);
+  const LEG = [["#7a6a1f", "HDPE 75"], ["#5cb85c", "HDPE 90"], ["#6aa9e6", "HDPE 110"], ["#e8832a", "HDPE 160"], ["#8a4fe0", "HDPE 225"], ["#c34fd6", "HDPE 250"], ["#e31a1c", "Tuba 180 ose 63"]];
+  const pan = document.createElement("div");
+  pan.id = "netpanel"; pan.className = "hide";
+  pan.innerHTML = '<label class="chk"><input type="checkbox" id="nT" checked> Shfaq tubat</label>' +
+    '<div class="meta" id="nSt" style="margin-top:4px">Duke ngarkuar…</div>' +
+    '<div class="lgt"><b>Legjenda</b>' + LEG.map(x => '<div class="lg"><span class="ln" style="background:' + x[0] + '"></span>' + x[1] + "</div>").join("") + "</div>";
+  fabs.appendChild(pan);
+  lucide.createIcons();
+
+  let grp = L.layerGroup(), loaded = false;
+  function apply(){ if ($("nT").checked) map.addLayer(grp); else map.removeLayer(grp); }
+  function clearNet(){ map.removeLayer(grp); grp = L.layerGroup(); loaded = false; $("nSt").textContent = "Duke ngarkuar…"; }
+  async function loadNet(){
+    if (loaded) return;
+    loaded = true;
+    const {data, error} = await sb.storage.from("photos").download("rrjeti2.geojson");
+    if (error) { loaded = false; $("nSt").textContent = "Gabim: " + (error.message || "skedari rrjeti2.geojson nuk u gjet"); return; }
+    let gj;
+    try { gj = JSON.parse(await data.text()); } catch (e) { loaded = false; $("nSt").textContent = "Skedari nuk është i vlefshëm."; return; }
+    const rc = L.canvas({padding: 0.5, tolerance: 8});
+    gj.features.forEach(f => grp.addLayer(L.polyline(f.geometry.coordinates.map(q => [q[1], q[0]]), {renderer: rc, color: "#ffffff", weight: 6, opacity: 0.7, interactive: false})));
+    gj.features.forEach(f => grp.addLayer(L.polyline(f.geometry.coordinates.map(q => [q[1], q[0]]), {renderer: rc, color: f.properties.c, weight: 3, opacity: 1}).bindPopup("<b>" + esc(f.properties.l) + "</b>")));
+    $("nSt").textContent = gj.features.length + " tuba";
+    apply();
+  }
+
+  btn.onclick = () => pan.classList.toggle("hide");
+  $("nT").onchange = apply;
+  sb.auth.getSession().then(({data}) => { if (data.session) loadNet(); });
+  sb.auth.onAuthStateChange((_e, s) => { if (s) loadNet(); else clearNet(); });
+})();
+</script>
 </body>
 </html>
