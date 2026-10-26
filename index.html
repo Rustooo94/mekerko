@@ -621,5 +621,82 @@ icons();
   };
 })();
 </script>
+  <style>
+#netpanel{position:absolute;right:54px;top:0;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap;font-size:14px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+</style>
+<script>
+(function(){
+  const fabs = document.querySelector(".fabs");
+  const btn = document.createElement("button");
+  btn.className = "fab"; btn.id = "netBtn"; btn.type = "button"; btn.setAttribute("aria-label", "Rrjeti i ujit");
+  btn.innerHTML = '<i data-lucide="route"></i>';
+  fabs.prepend(btn);
+  const pan = document.createElement("div");
+  pan.id = "netpanel"; pan.className = "hide";
+  pan.innerHTML = '<label class="chk"><input type="checkbox" id="nC" checked> <span class="dot" style="background:#d62728"></span> Lidhjet familjare</label>' +
+    '<label class="chk" style="margin-top:6px"><input type="checkbox" id="nN"> <span class="dot" style="background:#ff7f00"></span> Rrjeti kryesor</label>' +
+    '<div class="meta" id="nSt" style="margin-top:6px">Duke ngarkuar…</div>';
+  fabs.appendChild(pan);
+  lucide.createIcons();
+
+  const STY = {tm: ["#e31a1c", 3], tu: ["#ff7f00", 2], hdpe: ["#8e44ad", 3], sh: ["#3498db", 1.5], o: ["#00bcd4", 2], c: ["#ffd400", 2]};
+  let gC = L.layerGroup(), gN = L.layerGroup(), pts = [], loaded = false, tm = null;
+
+  function apply(){
+    if ($("nC").checked) map.addLayer(gC); else map.removeLayer(gC);
+    if ($("nN").checked) map.addLayer(gN); else map.removeLayer(gN);
+  }
+  function clearNet(){
+    map.removeLayer(gC); map.removeLayer(gN);
+    gC = L.layerGroup(); gN = L.layerGroup(); pts = []; loaded = false;
+    $("nSt").textContent = "Duke ngarkuar…";
+  }
+  async function loadNet(){
+    if (loaded) return;
+    loaded = true;
+    const {data, error} = await sb.storage.from("photos").download("rrjeti.geojson");
+    if (error) { loaded = false; $("nSt").textContent = "Skedari i rrjetit nuk u gjet."; return; }
+    const gj = JSON.parse(await data.text());
+    const rc = L.canvas({padding: 0.5});
+    let nc = 0;
+    gj.features.forEach(f => {
+      const p = f.properties, c = f.geometry.coordinates;
+      if (f.geometry.type === "Point") {
+        const ll = [c[1], c[0]];
+        const m = L.circleMarker(ll, {renderer: rc, radius: 5, color: "#ffffff", weight: 1.5, fillColor: "#d62728", fillOpacity: 1})
+          .bindPopup("<b>" + esc(p.id) + '</b><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + c[1] + "," + c[0] + '">Më ço atje</a>');
+        gC.addLayer(m); pts.push({id: p.id, ll, m}); nc++;
+      } else {
+        const st = STY[p.k] || STY.o;
+        (p.g === "c" ? gC : gN).addLayer(L.polyline(c.map(q => [q[1], q[0]]), {renderer: rc, color: st[0], weight: st[1], opacity: 0.95, interactive: false}));
+      }
+    });
+    $("nSt").textContent = nc + " lidhje familjare";
+    apply();
+  }
+
+  btn.onclick = () => pan.classList.toggle("hide");
+  $("nC").onchange = apply; $("nN").onchange = apply;
+
+  $("q").addEventListener("input", () => {
+    clearTimeout(tm);
+    tm = setTimeout(() => {
+      const v = $("q").value.trim().toUpperCase().replace(/\s+/g, " ");
+      const m = /^LF ?(\d+)$/.exec(v);
+      if (!m) return;
+      const hit = pts.find(x => x.id === "LF " + m[1]);
+      if (!hit) return;
+      $("nC").checked = true; apply();
+      if (typeof stateIdx !== "undefined" && stateIdx === 2) setSheet(1);
+      map.flyTo(hit.ll, 19, {duration: 1});
+      setTimeout(() => hit.m.openPopup(), 1100);
+    }, 500);
+  });
+
+  sb.auth.getSession().then(({data}) => { if (data.session) loadNet(); });
+  sb.auth.onAuthStateChange((_e, s) => { if (s) loadNet(); else clearNet(); });
+})();
+</script>
 </body>
 </html>
