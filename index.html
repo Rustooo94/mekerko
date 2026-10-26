@@ -640,7 +640,12 @@ icons();
   fabs.appendChild(pan);
   lucide.createIcons();
 
-  const STY = {tm: ["#e31a1c", 3], tu: ["#ff7f00", 2], hdpe: ["#8e44ad", 3], sh: ["#3498db", 1.5], o: ["#00bcd4", 2], c: ["#ffd400", 2]};
+  const STY = {tm: ["#e31a1c", 3], tu: ["#ff7f00", 2], sh: ["#3498db", 1.5], o: ["#00bcd4", 2], c: ["#ffd400", 2]};
+const HD = [[90, "#d9b8ff", 2], [160, "#b388ff", 3], [250, "#8e5cf0", 4], [9999, "#5b2fcf", 5.5]];
+function styFor(p){
+  if (p.k === "hdpe") { const m = /HDPE\s*(\d+)/.exec(p.l || ""), d = m ? +m[1] : 0, h = HD.find(x => d <= x[0]) || HD[3]; return [h[1], h[2]]; }
+  return STY[p.k] || STY.o;
+}
   let gC = L.layerGroup(), gN = L.layerGroup(), pts = [], loaded = false, tm = null;
 
   function apply(){
@@ -658,7 +663,7 @@ icons();
     const {data, error} = await sb.storage.from("photos").download("rrjeti.geojson");
     if (error) { loaded = false; $("nSt").textContent = "Skedari i rrjetit nuk u gjet."; return; }
     const gj = JSON.parse(await data.text());
-    const rc = L.canvas({padding: 0.5});
+   L.canvas({padding: 0.5, tolerance: 8})
     let nc = 0;
     gj.features.forEach(f => {
       const p = f.properties, c = f.geometry.coordinates;
@@ -668,8 +673,10 @@ icons();
           .bindPopup("<b>" + esc(p.id) + '</b><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + c[1] + "," + c[0] + '">Më ço atje</a>');
         gC.addLayer(m); pts.push({id: p.id, ll, m}); nc++;
       } else {
-        const st = STY[p.k] || STY.o;
-        (p.g === "c" ? gC : gN).addLayer(L.polyline(c.map(q => [q[1], q[0]]), {renderer: rc, color: st[0], weight: st[1], opacity: 0.95, interactive: false}));
+      const st = styFor(p);
+const pl = L.polyline(c.map(q => [q[1], q[0]]), {renderer: rc, color: st[0], weight: st[1], opacity: 0.95, interactive: !!p.l});
+if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
+(p.g === "c" ? gC : gN).addLayer(pl);
       }
     });
     $("nSt").textContent = nc + " lidhje familjare";
@@ -714,7 +721,7 @@ icons();
     '<div class="lg"><span class="ln" style="width:10px;height:10px;border-radius:50%;background:#d62728"></span>Lidhje familjare (ID: LF)</div>' +
     line("#ffd400", "Tubi i lidhjes familjare") +
     '<div id="lgN" class="hide">' +
-    line("#e31a1c", "Rrjeti TM") + line("#ff7f00", "Rrjeti TU") + line("#8e44ad", "Tuba HDPE") +
+    line("#e31a1c", "Rrjeti TM") + line("#ff7f00", "Rrjeti TU") + line("#d9b8ff", "HDPE ≤ 90 mm") + line("#b388ff", "HDPE 110–160 mm") + line("#8e5cf0", "HDPE 180–250 mm") + line("#5b2fcf", "HDPE ≥ 315 mm") +
     line("#3498db", "Shpërndarja") + line("#00bcd4", "Tuba të tjerë (çelik, gize, lidhje pallatesh)") + "</div>";
   p.appendChild(box);
   const nN = document.getElementById("nN"), lgN = document.getElementById("lgN");
