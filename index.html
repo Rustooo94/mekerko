@@ -1015,5 +1015,117 @@ if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
   };
 })();
 </script>
+  <style>
+.sub{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.sub .acts{margin-top:6px;display:flex;gap:8px}
+#subBox h3{margin:18px 0 6px}
+</style>
+<script>
+(function(){
+  if (CATS.indexOf("Pallat") < 0) CATS.push("Familje", "Pallat");
+  drawChips();
+  let isAdm = false, cache = [], editing = null;
+  const ptOf = id => allRows.find(x => String(x.id) === String(id));
+  function recalc(pid, list){
+    const b = ptOf(pid); if (!b) return;
+    b._n = list.length;
+    b._subs = list.map(x => [x.full_name, x.contract_no, x.apartment, x.phone].join(" ")).join(" ");
+  }
+  async function loadSubs(){
+    const {data: u} = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
+    isAdm = !!(u && u.length);
+    let all = [], from = 0;
+    for (;;) {
+      const {data, error} = await sb.from("subscribers").select("point_id,full_name,contract_no,apartment,phone").range(from, from + 999);
+      if (error || !data) break;
+      all = all.concat(data);
+      if (data.length < 1000) break;
+      from += 1000;
+    }
+    const m = {};
+    all.forEach(s => (m[s.point_id] = m[s.point_id] || []).push(s));
+    allRows.forEach(b => { b._n = 0; b._subs = ""; });
+    Object.keys(m).forEach(k => recalc(k, m[k]));
+    filterRows();
+  }
+  const oload = load;
+  load = async function(){ await oload(); try { await loadSubs(); } catch (e) {} };
+  filterRows = function(){
+    const t = $("q").value.trim().toLowerCase();
+    rows = allRows.filter(b => {
+      if (filter === "debt" && !b.debtor) return false;
+      if (filter !== "all" && filter !== "debt" && cats(b).indexOf(filter) < 0) return false;
+      if (!t) return true;
+      return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone, b._subs || ""].join(" ").toLowerCase().includes(t);
+    });
+    render(!!t);
+  };
+
+  async function drawSubs(pid){
+    const box = $("subBox"); if (!box) return;
+    box.dataset.pid = pid;
+    box.innerHTML = '<h3>Abonentët</h3><div class="meta">Duke ngarkuar…</div>';
+    const {data, error} = await sb.from("subscribers").select("*").eq("point_id", pid).order("apartment");
+    if (error) { box.innerHTML = '<h3>Abonentët</h3><p class="msg err">S’u lexuan abonentët. Kontrollo që SQL-i u krye.</p>'; return; }
+    cache = data; recalc(pid, data); editing = null;
+    box.innerHTML = "<h3>Abonentët (" + data.length + ")</h3>" +
+      (data.length ? data.map(s => {
+        const mine = isAdm || s.created_by === me.id;
+        return '<div class="sub"><b>' + esc(s.full_name) + "</b> " + (s.debtor ? '<span class="badge red">Debitor</span>' : "") +
+          '<div class="meta">' + [s.apartment, s.contract_no ? "Kontratë: " + s.contract_no : "", s.phone].filter(Boolean).map(esc).join(" · ") + "</div>" +
+          (mine ? '<div class="acts"><button class="alt" type="button" data-sedit="' + s.id + '">Ndrysho</button><button class="red" type="button" data-sdel="' + s.id + '">Fshij</button></div>' : "") + "</div>";
+      }).join("") : '<p class="meta">Asnjë abonent ende.</p>') +
+      '<div class="upbox" style="margin-top:10px"><b id="sfT">Shto abonent</b>' +
+      '<label for="sName">Emri dhe mbiemri</label><input id="sName" maxlength="80">' +
+      '<div class="row"><div><label for="sApt">Hyrja, kati, apartamenti</label><input id="sApt" maxlength="60" placeholder="p.sh. Hyrja 2, kati 3, ap. 12"></div>' +
+      '<div><label for="sK">Nr. i kontratës</label><input id="sK" maxlength="40"></div></div>' +
+      '<div class="row"><div><label for="sP">Telefoni</label><input id="sP" type="tel" maxlength="30"></div>' +
+      '<div><label class="chk" style="margin-top:30px"><input type="checkbox" id="sD"> Debitor</label></div></div>' +
+      '<div class="bar"><button id="sGo" type="button">Shto</button><button id="sCancel" type="button" class="alt hide">Anulo</button></div><p class="msg" id="sMsg"></p></div>';
+  }
+  function resetForm(){
+    editing = null;
+    ["sName", "sApt", "sK", "sP"].forEach(i => { $(i).value = ""; });
+    $("sD").checked = false; $("sfT").textContent = "Shto abonent"; $("sGo").textContent = "Shto"; $("sCancel").classList.add("hide");
+  }
+  document.addEventListener("click", async e => {
+    const box = e.target.closest ? e.target.closest("#subBox") : null;
+    if (!box) return;
+    const pid = box.dataset.pid;
+    const ed = e.target.closest("[data-sedit]"), dl = e.target.closest("[data-sdel]");
+    if (ed) {
+      const s = cache.find(x => String(x.id) === ed.getAttribute("data-sedit")); if (!s) return;
+      editing = s.id;
+      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor;
+      $("sfT").textContent = "Ndrysho abonentin"; $("sGo").textContent = "Ruaj ndryshimin"; $("sCancel").classList.remove("hide");
+      $("sName").scrollIntoView({block: "center"});
+    }
+    if (dl && confirm("Ta fshij këtë abonent?")) {
+      const {error} = await sb.from("subscribers").delete().eq("id", dl.getAttribute("data-sdel"));
+      if (error) return say("sMsg", "S’u fshi: " + error.message, true);
+      await drawSubs(pid); filterRows();
+    }
+    if (e.target.id === "sCancel") resetForm();
+    if (e.target.id === "sGo") {
+      const name = $("sName").value.trim();
+      if (!name) return say("sMsg", "Shkruaj emrin dhe mbiemrin.", true);
+      const row = {full_name: name, apartment: $("sApt").value.trim(), contract_no: $("sK").value.trim(), phone: $("sP").value.trim(), debtor: $("sD").checked};
+      $("sGo").disabled = true;
+      const {error} = editing ? await sb.from("subscribers").update(row).eq("id", editing) : await sb.from("subscribers").insert(Object.assign({point_id: +pid}, row));
+      $("sGo").disabled = false;
+      if (error) return say("sMsg", "S’u ruajt: " + error.message, true);
+      await drawSubs(pid); filterRows();
+    }
+  });
+  const od = openDetail;
+  openDetail = function(id){
+    od(id);
+    if (!ptOf(id)) return;
+    const d = document.querySelector("#detail .dpad"); if (!d) return;
+    const box = document.createElement("div"); box.id = "subBox"; d.appendChild(box);
+    drawSubs(id);
+  };
+})();
+</script>
 </body>
 </html>
