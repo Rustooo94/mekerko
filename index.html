@@ -698,5 +698,29 @@ icons();
   sb.auth.onAuthStateChange((_e, s) => { if (s) loadNet(); else clearNet(); });
 })();
 </script>
+<style>
+.lgt{margin-top:8px;padding-top:6px;border-top:1px solid var(--line);font-size:13px}
+.lg{display:flex;align-items:center;margin-top:4px}
+.ln{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:8px;flex:none}
+</style>
+<script>
+(function(){
+  const p = document.getElementById("netpanel");
+  if (!p) return;
+  const line = (c, t) => '<div class="lg"><span class="ln" style="background:' + c + '"></span>' + t + "</div>";
+  const box = document.createElement("div");
+  box.className = "lgt";
+  box.innerHTML = "<b>Legjenda</b>" +
+    '<div class="lg"><span class="ln" style="width:10px;height:10px;border-radius:50%;background:#d62728"></span>Lidhje familjare (ID: LF)</div>' +
+    line("#ffd400", "Tubi i lidhjes familjare") +
+    '<div id="lgN" class="hide">' +
+    line("#e31a1c", "Rrjeti TM") + line("#ff7f00", "Rrjeti TU") + line("#8e44ad", "Tuba HDPE") +
+    line("#3498db", "Shpërndarja") + line("#00bcd4", "Tuba të tjerë (çelik, gize, lidhje pallatesh)") + "</div>";
+  p.appendChild(box);
+  const nN = document.getElementById("nN"), lgN = document.getElementById("lgN");
+  const sync = () => lgN.classList.toggle("hide", !nN.checked);
+  nN.addEventListener("change", sync); sync();
+})();
+</script>
 </body>
 </html>
