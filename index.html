@@ -816,5 +816,84 @@ if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
   sb.auth.onAuthStateChange((_e, s) => { if (s) loadNet(); else clearNet(); });
 })();
 </script>
+  <style>
+#plan{position:fixed;inset:0;z-index:2150;background:#fff;overflow-y:auto}
+#plan .dp{max-width:640px;margin:0 auto;padding:14px}
+.drow{padding:10px 0;border-top:1px solid var(--line)}
+.drow b{display:block}
+.upbox{background:var(--foam);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+</style>
+<div id="plan" class="hide">
+  <div class="dhead"><button id="plBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Planimetritë</b></div>
+  <div class="dp">
+    <div class="upbox hide" id="plUp">
+      <b>Shto planimetri (PDF)</b>
+      <label for="plTitle">Titulli</label><input id="plTitle" maxlength="120" placeholder="p.sh. Planimetria e zonës Qendër">
+      <label for="plFile">Skedari PDF (deri 50 MB)</label><input id="plFile" type="file" accept="application/pdf,.pdf">
+      <div class="bar"><button id="plGo" type="button">Ngarko</button></div>
+    </div>
+    <p class="msg" id="plMsg"></p>
+    <div id="plList"></div>
+  </div>
+</div>
+<script>
+(function(){
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.id = "planBtn"; btn.setAttribute("aria-label", "Planimetritë");
+  btn.innerHTML = '<i data-lucide="file-text"></i>';
+  $("infoBtn").before(btn); lucide.createIcons();
+  let items = [];
+  async function loadP(){
+    const {data, error} = await sb.from("planimetri").select("*").order("created_at", {ascending: false});
+    if (error) { $("plList").innerHTML = '<p class="msg err">S’u lexuan planimetritë. Kontrollo që SQL-i u krye.</p>'; return; }
+    items = data;
+    const r = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
+    const can = !!(r.data && r.data.length);
+    $("plUp").classList.toggle("hide", !can);
+    $("plList").innerHTML = items.length ? items.map(p =>
+      '<div class="drow"><b>' + esc(p.title) + '</b><div class="meta">' + new Date(p.created_at).toLocaleDateString("sq") + "</div>" +
+      '<div class="bar" style="margin-top:6px"><button type="button" data-plopen="' + p.id + '">Hap PDF</button>' +
+      (can ? '<button class="red" type="button" data-pldel="' + p.id + '">Hiq</button>' : "") + "</div></div>").join("")
+      : '<p class="meta">Nuk ka planimetri ende.</p>';
+    lucide.createIcons();
+  }
+  btn.onclick = () => { $("plan").classList.remove("hide"); loadP(); };
+  $("plBack").onclick = () => $("plan").classList.add("hide");
+  $("plList").onclick = async e => {
+    const o = e.target.closest("[data-plopen]"), d = e.target.closest("[data-pldel]");
+    if (o) {
+      const p = items.find(x => String(x.id) === o.getAttribute("data-plopen"));
+      const w = window.open("", "_blank");
+      const {data, error} = await sb.storage.from("planimetri").createSignedUrl(p.path, 3600);
+      if (error) { if (w) w.close(); return say("plMsg", "S’u hap: " + error.message, true); }
+      if (w) w.location.href = data.signedUrl; else location.href = data.signedUrl;
+    }
+    if (d) {
+      const p = items.find(x => String(x.id) === d.getAttribute("data-pldel"));
+      if (!confirm("Ta heq planimetrinë “" + p.title + "”?")) return;
+      const {error} = await sb.from("planimetri").delete().eq("id", p.id);
+      if (error) return say("plMsg", "S’u hoq: " + error.message, true);
+      await sb.storage.from("planimetri").remove([p.path]);
+      say("plMsg", "U hoq."); loadP();
+    }
+  };
+  $("plGo").onclick = async () => {
+    const title = $("plTitle").value.trim(), f = $("plFile").files[0];
+    if (!title) return say("plMsg", "Shkruaj një titull.", true);
+    if (!f) return say("plMsg", "Zgjidh një skedar PDF.", true);
+    if (f.size > 50 * 1024 * 1024) return say("plMsg", "Skedari është mbi 50 MB.", true);
+    $("plGo").disabled = true; say("plMsg", "Duke ngarkuar…");
+    const path = Date.now() + "_" + f.name.replace(/[^\w.\-]+/g, "_");
+    try {
+      const up = await sb.storage.from("planimetri").upload(path, f, {contentType: "application/pdf"});
+      if (up.error) throw up.error;
+      const ins = await sb.from("planimetri").insert({title, path});
+      if (ins.error) { await sb.storage.from("planimetri").remove([path]); throw ins.error; }
+      $("plTitle").value = ""; $("plFile").value = ""; say("plMsg", "U shtua."); loadP();
+    } catch (err) { say("plMsg", "S’u ngarkua: " + (err.message || err), true); }
+    $("plGo").disabled = false;
+  };
+})();
+</script>
 </body>
 </html>
