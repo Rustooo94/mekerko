@@ -895,5 +895,125 @@ if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
   };
 })();
 </script>
+  <style>
+#plan2{position:fixed;inset:0;z-index:2150;background:#fff;overflow-y:auto}
+#plan2 .dp{max-width:640px;margin:0 auto;padding:14px}
+.upbox{background:var(--foam);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
+.pfc{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+.pfc svg{width:26px;height:26px;color:var(--sea);flex:none}
+.pft{flex:1;min-width:0}
+.pfa{display:flex;gap:6px;flex-wrap:wrap}
+</style>
+<script>
+(function(){
+  ["planBtn", "plan"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.id = "planBtn2"; btn.setAttribute("aria-label", "Planimetritë");
+  btn.innerHTML = '<i data-lucide="file-text"></i>';
+  $("infoBtn").before(btn);
+  const ov = document.createElement("div");
+  ov.id = "plan2"; ov.className = "hide";
+  ov.innerHTML =
+    '<div class="dhead"><button id="pfBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b id="pfTitle">Planimetritë</b></div>' +
+    '<div class="dp"><div class="meta" id="pfCrumb" style="margin-bottom:10px"></div>' +
+    '<div class="upbox hide" id="pfUp">' +
+      '<b>Folder i ri këtu</b><div class="bar" style="margin-top:6px"><input id="pfName" maxlength="80" placeholder="Emri i folderit" style="flex:1;min-width:140px"><button id="pfNew" type="button">Krijo</button></div>' +
+      '<div style="margin-top:12px"><b>Shto PDF këtu</b></div>' +
+      '<label for="pfTitleIn">Titulli</label><input id="pfTitleIn" maxlength="120">' +
+      '<label for="pfFile">Skedari PDF (deri 50 MB)</label><input id="pfFile" type="file" accept="application/pdf,.pdf">' +
+      '<div class="bar"><button id="pfGo" type="button">Ngarko</button></div></div>' +
+    '<p class="msg" id="pfMsg"></p><div id="pfList"></div></div>';
+  document.body.appendChild(ov);
+  lucide.createIcons();
+
+  let folders = [], files = [], cur = null, can = false;
+  const pid = x => (x == null ? null : x);
+  async function loadAll(){
+    const [f, p, u] = await Promise.all([
+      sb.from("plan_folders").select("*").order("name"),
+      sb.from("planimetri").select("*").order("created_at", {ascending: false}),
+      sb.from("uploaders").select("user_id").eq("user_id", me.id)]);
+    if (f.error || p.error) { $("pfList").innerHTML = '<p class="msg err">S’u lexuan të dhënat. Kontrollo që SQL-i u krye.</p>'; return; }
+    folders = f.data; files = p.data; can = !!(u.data && u.data.length); draw();
+  }
+  function draw(){
+    const path = []; let c = cur;
+    while (c) { const f = folders.find(x => x.id === c); if (!f) break; path.unshift(f); c = pid(f.parent_id); }
+    $("pfCrumb").innerHTML = '<a href="#" data-pfgo="">Planimetritë</a>' + path.map(f => " › " + '<a href="#" data-pfgo="' + f.id + '">' + esc(f.name) + "</a>").join("");
+    $("pfTitle").textContent = path.length ? path[path.length - 1].name : "Planimetritë";
+    $("pfUp").classList.toggle("hide", !can);
+    const subs = folders.filter(x => pid(x.parent_id) === cur), fl = files.filter(x => pid(x.folder_id) === cur);
+    let h = "";
+    if (subs.length) h += '<div class="meta" style="margin:4px 0 6px"><b>Folderat</b></div>' + subs.map(f => {
+      const nf = folders.filter(x => x.parent_id === f.id).length, np = files.filter(x => x.folder_id === f.id).length;
+      return '<div class="pfc" data-pfopen="' + f.id + '" style="cursor:pointer"><i data-lucide="folder"></i><div class="pft"><b>' + esc(f.name) + '</b><div class="meta">' + nf + " folderë · " + np + " PDF</div></div>" +
+        (can ? '<button class="red" type="button" data-pfdelf="' + f.id + '">Hiq</button>' : "") + "</div>";
+    }).join("");
+    if (fl.length) h += '<div class="meta" style="margin:12px 0 6px"><b>Skedarë PDF</b></div>' + fl.map(p =>
+      '<div class="pfc"><i data-lucide="file-text"></i><div class="pft"><b>' + esc(p.title) + '</b><div class="meta">' + new Date(p.created_at).toLocaleDateString("sq") + "</div></div>" +
+      '<div class="pfa"><button type="button" data-pfopenf="' + p.id + '">Hap</button>' + (can ? '<button class="red" type="button" data-pfdelp="' + p.id + '">Hiq</button>' : "") + "</div></div>").join("");
+    $("pfList").innerHTML = h || '<p class="meta">Ky folder është bosh.</p>';
+    lucide.createIcons();
+  }
+  function goUp(){
+    if (cur === null) { $("plan2").classList.add("hide"); return; }
+    const f = folders.find(x => x.id === cur); cur = f ? pid(f.parent_id) : null; say("pfMsg", ""); draw();
+  }
+  btn.onclick = () => { cur = null; say("pfMsg", ""); $("plan2").classList.remove("hide"); loadAll(); };
+  $("pfBack").onclick = goUp;
+  $("pfCrumb").onclick = e => { const a = e.target.closest("[data-pfgo]"); if (!a) return; e.preventDefault(); const v = a.getAttribute("data-pfgo"); cur = v ? +v : null; draw(); };
+  $("pfList").onclick = async e => {
+    const df = e.target.closest("[data-pfdelf]"), dp = e.target.closest("[data-pfdelp]"), of = e.target.closest("[data-pfopenf]"), op = e.target.closest("[data-pfopen]");
+    if (df) {
+      const id = +df.getAttribute("data-pfdelf");
+      if (folders.some(x => x.parent_id === id) || files.some(x => x.folder_id === id)) return say("pfMsg", "Folderi nuk është bosh. Hiq më parë përmbajtjen.", true);
+      if (!confirm("Ta heq këtë folder?")) return;
+      const {error} = await sb.from("plan_folders").delete().eq("id", id);
+      if (error) return say("pfMsg", "S’u hoq: " + error.message, true);
+      return loadAll();
+    }
+    if (dp) {
+      const p = files.find(x => String(x.id) === dp.getAttribute("data-pfdelp"));
+      if (!confirm("Ta heq planimetrinë “" + p.title + "”?")) return;
+      const {error} = await sb.from("planimetri").delete().eq("id", p.id);
+      if (error) return say("pfMsg", "S’u hoq: " + error.message, true);
+      await sb.storage.from("planimetri").remove([p.path]);
+      return loadAll();
+    }
+    if (of) {
+      const p = files.find(x => String(x.id) === of.getAttribute("data-pfopenf"));
+      const w = window.open("", "_blank");
+      const {data, error} = await sb.storage.from("planimetri").createSignedUrl(p.path, 3600);
+      if (error) { if (w) w.close(); return say("pfMsg", "S’u hap: " + error.message, true); }
+      if (w) w.location.href = data.signedUrl; else location.href = data.signedUrl;
+      return;
+    }
+    if (op) { cur = +op.getAttribute("data-pfopen"); say("pfMsg", ""); draw(); }
+  };
+  $("pfNew").onclick = async () => {
+    const name = $("pfName").value.trim();
+    if (!name) return say("pfMsg", "Shkruaj emrin e folderit.", true);
+    const {error} = await sb.from("plan_folders").insert({name, parent_id: cur});
+    if (error) return say("pfMsg", "S’u krijua: " + error.message, true);
+    $("pfName").value = ""; say("pfMsg", "Folderi u krijua."); loadAll();
+  };
+  $("pfGo").onclick = async () => {
+    const title = $("pfTitleIn").value.trim(), f = $("pfFile").files[0];
+    if (!title) return say("pfMsg", "Shkruaj një titull.", true);
+    if (!f) return say("pfMsg", "Zgjidh një skedar PDF.", true);
+    if (f.size > 50 * 1024 * 1024) return say("pfMsg", "Skedari është mbi 50 MB.", true);
+    $("pfGo").disabled = true; say("pfMsg", "Duke ngarkuar…");
+    const path = Date.now() + "_" + f.name.replace(/[^\w.\-]+/g, "_");
+    try {
+      const up = await sb.storage.from("planimetri").upload(path, f, {contentType: "application/pdf"});
+      if (up.error) throw up.error;
+      const ins = await sb.from("planimetri").insert({title, path, folder_id: cur});
+      if (ins.error) { await sb.storage.from("planimetri").remove([path]); throw ins.error; }
+      $("pfTitleIn").value = ""; $("pfFile").value = ""; say("pfMsg", "U shtua."); loadAll();
+    } catch (err) { say("pfMsg", "S’u ngarkua: " + (err.message || err), true); }
+    $("pfGo").disabled = false;
+  };
+})();
+</script>
 </body>
 </html>
