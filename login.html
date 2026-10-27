@@ -494,5 +494,128 @@ button{cursor:pointer}
   });
 })();
 </script>
+  <style>
+.zk{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 14px}
+.zkb{flex-direction:column;padding:14px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.zkb.on{background:var(--sea);color:#fff;border-color:var(--sea)}
+.zr{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
+.rd{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;box-sizing:border-box}
+.zr.on .rd{border:7px solid #0d3b45}
+#zones2{position:fixed;inset:0;z-index:2150;background:#eaf7f6;overflow-y:auto}
+#zones2 .dp{max-width:640px;margin:0 auto;padding:14px}
+.pft{flex:1;min-width:0}
+</style>
+<script>
+(function(){
+  let zones = [], activeZone = null, staff = false, kind = "qytet";
+  const zname = id => { const z = zones.find(x => x.id === id); return z ? z.name : ""; };
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.id = "zoneBtn"; btn.setAttribute("aria-label", "Zonat");
+  btn.innerHTML = '<i data-lucide="map-pinned"></i>';
+  $("infoBtn").before(btn);
+  const bar = document.createElement("div");
+  bar.id = "zbar"; bar.className = "hide";
+  bar.style.cssText = "display:flex;align-items:center;gap:8px;background:#13a3a8;color:#fff;border-radius:18px;padding:6px 6px 6px 12px;margin-top:8px;font-size:13px;font-weight:600;width:fit-content;box-shadow:0 1px 5px rgba(0,0,0,.3)";
+  document.querySelector(".top").appendChild(bar);
+  const ov = document.createElement("div");
+  ov.id = "zones2"; ov.className = "hide";
+  ov.innerHTML =
+    '<div class="dhead"><button id="zBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Zonat</b></div>' +
+    '<div class="dp"><b>Zgjidh zonën</b>' +
+    '<div class="zk"><button type="button" class="zkb" data-zk="qytet"><i data-lucide="building-2"></i>Qyteti</button>' +
+    '<button type="button" class="zkb" data-zk="fshat"><i data-lucide="house"></i>Fshatrat</button></div>' +
+    '<b id="zPickT">Zgjidh fshatin</b><div id="zPick" style="margin-top:8px"></div>' +
+    '<div class="upbox hide" id="zUp" style="margin-top:14px"><b>Shto zonë të re</b><div class="bar" style="margin-top:6px">' +
+    '<input id="zName" maxlength="60" placeholder="Emri (p.sh. Qilarisht)" style="flex:1;min-width:140px">' +
+    '<select id="zKind" style="width:auto"><option value="fshat">Fshat</option><option value="qytet">Qytet</option></select>' +
+    '<button id="zNew" type="button">Krijo</button></div></div>' +
+    '<p class="msg" id="zMsg"></p></div>';
+  document.body.appendChild(ov);
+  $("t").insertAdjacentHTML("afterend", '<label for="zSel">Zona</label><select id="zSel"></select>');
+  lucide.createIcons();
+
+  function fillSel(){
+    const o = g => zones.filter(z => z.kind === g).map(z => '<option value="' + z.id + '">' + esc(z.name) + "</option>").join("");
+    $("zSel").innerHTML = '<option value="">Pa zonë</option><optgroup label="Qyteti">' + o("qytet") + '</optgroup><optgroup label="Fshatrat">' + o("fshat") + "</optgroup>";
+  }
+  async function loadZones(){
+    const [z, u] = await Promise.all([sb.from("zones").select("*").order("name"), sb.from("uploaders").select("user_id").eq("user_id", me.id)]);
+    zones = z.error ? [] : z.data; staff = !!(u.data && u.data.length); fillSel();
+  }
+  function updateBar(){
+    if (activeZone === null) { bar.classList.add("hide"); return; }
+    bar.classList.remove("hide");
+    bar.innerHTML = "<span>Zona: " + esc(activeZone === "none" ? "Pa zonë" : zname(activeZone)) + '</span><button type="button" id="zClear" aria-label="Hiq filtrin" style="background:#fff;color:#0d3b45;padding:2px 10px;border-radius:12px">Hiq</button>';
+  }
+  function setZone(v){
+    activeZone = v; updateBar(); filterRows();
+    if (rows.length) {
+      if (typeof stateIdx !== "undefined" && stateIdx === 2) setSheet(1);
+      map.flyToBounds(L.latLngBounds(rows.map(b => [b.lat, b.lng])), {maxZoom: 17, padding: [70, 70], duration: 1});
+    }
+  }
+  function draw(){
+    const full = allRows;
+    document.querySelectorAll("#zones2 .zkb").forEach(b => b.classList.toggle("on", b.getAttribute("data-zk") === kind));
+    $("zPickT").textContent = kind === "qytet" ? "Zgjidh qytetin" : "Zgjidh fshatin";
+    const stat = f => { const l = full.filter(f); return l.length + " pika · " + l.reduce((s, b) => s + (b._n || 0), 0) + " abonentë"; };
+    const list = zones.filter(z => z.kind === kind);
+    let h = list.length ? list.map(z =>
+      '<div class="zr' + (activeZone === z.id ? " on" : "") + '" data-zset="' + z.id + '"><span class="rd"></span><div class="pft"><b>' + esc(z.name) + '</b><div class="meta">' + stat(b => b.zone_id === z.id) + "</div></div>" +
+      (staff ? '<button class="red" type="button" data-zdel="' + z.id + '">Hiq</button>' : "") + "</div>").join("")
+      : '<p class="meta">Asnjë zonë ende. ' + (staff ? "Shto një më poshtë." : "") + "</p>";
+    const nz = full.filter(b => !b.zone_id).length;
+    h += '<div class="bar" style="margin-top:12px"><button type="button" class="alt" data-zset="all">Të gjitha zonat (' + full.length + ')</button>' +
+      (nz ? '<button type="button" class="alt" data-zset="none">Pa zonë (' + nz + ")</button>" : "") + "</div>";
+    $("zPick").innerHTML = h; $("zUp").classList.toggle("hide", !staff);
+  }
+
+  const ol = load;
+  load = async function(){ try { await loadZones(); } catch (e) {} await ol(); };
+  const pf = filterRows;
+  filterRows = function(){
+    const full = allRows;
+    if (activeZone !== null) allRows = full.filter(b => activeZone === "none" ? !b.zone_id : b.zone_id === activeZone);
+    try { pf(); } finally { allRows = full; }
+  };
+  const ob = badges;
+  badges = function(b){ return ob(b) + (b.zone_id && zname(b.zone_id) ? '<span class="badge">Zona: ' + esc(zname(b.zone_id)) + "</span>" : ""); };
+  const oo = openForm;
+  openForm = function(b){ oo(b); $("zSel").value = b ? (b.zone_id || "") : (typeof activeZone === "number" ? activeZone : ""); };
+  const of = sb.from.bind(sb);
+  sb.from = function(t){
+    const q = of(t);
+    if (t !== "businesses") return q;
+    const oi = q.insert.bind(q), ou = q.update.bind(q), zv = () => { const v = $("zSel").value; return v ? +v : null; };
+    q.insert = r => oi(Object.assign({}, r, {zone_id: zv()}));
+    q.update = r => ou(Object.assign({}, r, {zone_id: zv()}));
+    return q;
+  };
+
+  btn.onclick = () => { say("zMsg", ""); if (typeof activeZone === "number") { const z = zones.find(x => x.id === activeZone); if (z) kind = z.kind; } draw(); $("zones2").classList.remove("hide"); };
+  $("zBack").onclick = () => $("zones2").classList.add("hide");
+  bar.addEventListener("click", e => { if (e.target.id === "zClear") setZone(null); });
+  $("zones2").addEventListener("click", async e => {
+    const k = e.target.closest("[data-zk]"), d = e.target.closest("[data-zdel]"), s = e.target.closest("[data-zset]");
+    if (k) { kind = k.getAttribute("data-zk"); draw(); return; }
+    if (d) {
+      const id = +d.getAttribute("data-zdel");
+      if (allRows.some(b => b.zone_id === id)) return say("zMsg", "Zona ka ende pika. Zhvendosi ose hiqi më parë.", true);
+      if (!confirm("Ta heq këtë zonë?")) return;
+      const {error} = await sb.from("zones").delete().eq("id", id);
+      if (error) return say("zMsg", "S’u hoq: " + error.message, true);
+      await loadZones(); draw(); return;
+    }
+    if (s) { const v = s.getAttribute("data-zset"); $("zones2").classList.add("hide"); setZone(v === "all" ? null : v === "none" ? "none" : +v); }
+  });
+  $("zNew").onclick = async () => {
+    const name = $("zName").value.trim();
+    if (!name) return say("zMsg", "Shkruaj emrin e zonës.", true);
+    const {error} = await sb.from("zones").insert({name, kind: $("zKind").value});
+    if (error) return say("zMsg", "S’u krijua: " + error.message, true);
+    $("zName").value = ""; say("zMsg", "Zona u krijua."); await loadZones(); draw();
+  };
+})();
+</script>
 </body>
 </html>
