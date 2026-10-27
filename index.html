@@ -14,23 +14,13 @@ body{background:var(--foam);color:var(--ink);font:16px/1.45 system-ui,-apple-sys
 svg.lucide{width:20px;height:20px;stroke-width:2;flex:none}
 button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-weight:600;background:var(--sea);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 button.alt{background:var(--foam);color:var(--ink);border:1px solid var(--line)}
+button.red{background:#fcebeb;color:#a32d2d}
 button:disabled{opacity:.6}
 input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit;color:var(--ink);background:#fff}
 label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
-.msg{font-size:14px;color:var(--mut);margin:8px 0 0;min-height:1.2em} .msg.err{color:var(--warn)}
-#gate{position:fixed;inset:0;display:grid;grid-template-columns:1.15fr 1fr;grid-template-rows:minmax(100dvh,auto);overflow:auto;background:#eaf7f6}
-.hero{display:flex;align-items:center;justify-content:center;overflow:hidden;background:#1f95cc}
-.hero img{height:100dvh;max-width:100%;object-fit:contain;display:block}
-.login{align-self:center;justify-self:center;width:calc(100% - 40px);max-width:380px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(13,59,69,.15)}
-@media (max-width:800px){
-  #gate{grid-template-columns:1fr}
-  .hero{position:absolute;inset:0}
-  .hero img{width:100%;height:100%;object-fit:cover;object-position:50% 45%}
-  .login{position:relative;align-self:start;margin-top:5vh;background:rgba(255,255,255,.95)}
-}
-.login h1{margin:0;font-size:32px} .login h1 b{color:var(--sea)}
-.login p{margin:2px 0 12px;color:var(--mut)}
-.login button{width:100%;margin-top:12px}
+.msg{font-size:14px;color:var(--mut);margin:8px 0 0;min-height:1.2em}.msg.err{color:var(--warn)}
+.meta{font-size:13px;color:var(--mut)}
+a{color:#0a7d82;font-weight:600}
 #app{position:fixed;inset:0;--sh:42dvh}
 #map{position:absolute;inset:0}
 .leaflet-top.leaflet-right{margin-top:112px}
@@ -38,7 +28,7 @@ label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .search{background:#fff;border-radius:26px;height:46px;display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;box-shadow:0 2px 10px rgba(0,0,0,.3);color:var(--mut)}
 .search input{border:0;padding:0;height:100%;border-radius:0;background:transparent;flex:1;min-width:0}
 .search input:focus{outline:none}
-.search button{background:var(--foam);color:var(--ink);padding:0;width:34px;height:34px;border-radius:50%}
+.search button{background:var(--foam);color:var(--ink);padding:0;width:34px;height:34px;border-radius:50%;flex:none}
 .chips{display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;background:#fff;color:var(--ink);border-radius:18px;padding:6px 12px;font-size:13px;font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.3)}
@@ -49,16 +39,14 @@ label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .fab.main{width:54px;height:54px;background:var(--sea);color:#fff}
 .fab.main svg.lucide{width:26px;height:26px}
 .sheet{position:absolute;z-index:1000;left:0;right:0;bottom:0;height:var(--sh);background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -2px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;transition:height .25s}
-.handle{padding:8px 0 4px;cursor:pointer} .handle i{display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.handle{padding:8px 0 4px;cursor:pointer}.handle i{display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
 .sheethead{padding:0 14px 6px;font-size:15px}
 #scroll{overflow-y:auto;flex:1;padding:0 14px calc(14px + env(safe-area-inset-bottom,0px))}
 .item{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
 .item img,.ph{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;background:#cfe8e8}
-.item .b{flex:1;min-width:0} .item b{display:block}
-.meta{font-size:13px;color:var(--mut)}
+.item .b{flex:1;min-width:0}.item b{display:block}
 .badge{display:inline-block;font-size:12px;font-weight:600;border-radius:8px;padding:1px 8px;background:var(--foam);color:var(--ink);margin:2px 4px 2px 0}
 .badge.red{background:#fcebeb;color:#a32d2d}
-a{color:#0a7d82;font-weight:600}
 .acts{margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .foot{font-size:11px;color:var(--mut);margin-top:10px}
 #pickbar{position:absolute;z-index:1100;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -70,15 +58,12 @@ a{color:#0a7d82;font-weight:600}
 .dbody{max-width:640px;margin:0 auto;padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
 .dbody img.big{width:100%;max-height:55vh;object-fit:cover;display:block}
 .nophoto{height:120px;background:#cfe8e8;color:var(--mut);display:flex;align-items:center;justify-content:center}
-.dpad{padding:14px}
-.dpad h2{margin:0 0 4px;font-size:22px}
-.dpad h3{margin:18px 0 4px;font-size:16px}
-.dpad p{margin:0 0 6px} .dpad ul{margin:4px 0;padding-left:20px} .dpad li{margin-bottom:4px}
+.dpad{padding:14px}.dpad h2{margin:0 0 4px;font-size:22px}.dpad h3{margin:18px 0 4px;font-size:16px}
+.dpad p{margin:0 0 6px}.dpad ul{margin:4px 0;padding-left:20px}.dpad li{margin-bottom:4px}
 .dl{display:grid;grid-template-columns:120px 1fr;gap:8px 10px;margin:12px 0;font-size:15px}
-.dl dt{color:var(--mut)} .dl dd{margin:0;word-break:break-word}
+.dl dt{color:var(--mut)}.dl dd{margin:0;word-break:break-word}
 .dbtn{display:inline-flex;align-items:center;gap:6px;background:var(--sea);color:#fff;border-radius:10px;padding:10px 14px;text-decoration:none}
 .dbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-button.red{background:#fcebeb;color:#a32d2d}
 #modal{position:fixed;inset:0;z-index:2200;background:rgba(6,30,40,.6);display:flex;align-items:flex-end;justify-content:center}
 .mc{width:100%;max-width:520px;max-height:92dvh;overflow-y:auto;background:#fff;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
 .mc h2{margin:0 0 4px;font-size:18px}
@@ -96,28 +81,37 @@ button.red{background:#fcebeb;color:#a32d2d}
 .pt.pulse::before{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(19,163,168,.6);animation:pulse 1.3s ease-out infinite}
 .pt.red.pulse::before{background:rgba(226,75,74,.6)}
 @keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.8);opacity:0}}
+.upbox{background:var(--foam);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
+.drow{padding:10px 0;border-top:1px solid var(--line)}.drow b{display:block}
+#debts,#plan2,#zones2{position:fixed;inset:0;z-index:2150;overflow-y:auto}
+#debts,#plan2{background:#fff}
+#zones2{background:#eaf7f6}
+#debts .dp,#plan2 .dp,#zones2 .dp{max-width:640px;margin:0 auto;padding:14px}
+.pfc{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+.pfc svg{width:26px;height:26px;color:var(--sea);flex:none}
+.pft{flex:1;min-width:0}.pfa{display:flex;gap:6px;flex-wrap:wrap}
+#netpanel3{position:absolute;right:54px;top:0;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap;font-size:14px;max-height:60vh;overflow-y:auto}
+.lgt{margin-top:8px;padding-top:6px;border-top:1px solid var(--line);font-size:13px}
+.lg{display:flex;align-items:center;margin-top:4px}
+.ln{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:8px;flex:none}
+.sub{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.sub .acts{margin-top:6px;display:flex;gap:8px}
+#subBox h3{margin:18px 0 6px}
+.zk{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 14px}
+.zkb{flex-direction:column;padding:14px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.zkb.on{background:var(--sea);color:#fff;border-color:var(--sea)}
+.zr{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
+.rd{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none}
+.zr.on .rd{border:7px solid #0d3b45}
 </style>
 </head>
 <body>
 
-<div id="gate">
-  <div class="hero"><img src="water.jpg" alt=""></div>
-  <div class="login">
-    <h1>Pika<b>Blu</b></h1>
-    <p>Platforma Digjitale e Ujësjellësit</p>
-    <label for="em">Email</label><input id="em" type="email" autocomplete="email">
-    <label for="pw">Fjalëkalimi</label><input id="pw" type="password" autocomplete="current-password">
-    <button id="login" type="button"><i data-lucide="log-in"></i> Hyr</button>
-    <button id="aboutLogin" type="button" class="alt"><i data-lucide="info"></i> Çfarë është PikaBlu?</button>
-    <p class="msg" id="amsg"></p>
-  </div>
-</div>
-
+<iframe id="gate2" src="login.html" title="Hyrje" style="position:fixed;inset:0;width:100%;height:100%;border:0;padding:0;display:block;z-index:3000;background:#06202E"></iframe>
 <div id="app" class="hide">
   <div id="map" role="application" aria-label="Harta e pikave"></div>
   <div class="top">
-    <div class="search">
-      <i data-lucide="search"></i>
+    <div class="search"><i data-lucide="search"></i>
       <input id="q" type="search" placeholder="Kërko emër, kategori ose nr. kontrate">
       <button id="infoBtn" type="button" aria-label="Rreth PikaBlu"><i data-lucide="info"></i></button>
       <button id="out" type="button" aria-label="Dil"><i data-lucide="log-out"></i></button>
@@ -132,54 +126,37 @@ button.red{background:#fcebeb;color:#a32d2d}
   <div class="sheet" id="sheet">
     <div class="handle" id="handle" aria-label="Zgjat ose mbyll listën"><i></i></div>
     <div class="sheethead"><b id="title">0 pika</b></div>
-    <div id="scroll">
-      <div id="list"></div>
-      <div id="more"></div>
-      <div class="foot">Harta: Esri, OpenStreetMap</div>
-    </div>
+    <div id="scroll"><div id="list"></div><div id="more"></div><div class="foot">Harta: Esri, OpenStreetMap</div></div>
   </div>
   <div id="pickbar" class="hide"><span>Prek hartën për të zgjedhur pikën</span><button id="pickdone" type="button">U bë</button></div>
 </div>
-
 <div id="detail" class="hide"></div>
-<iframe id="gate2" src="login.html" title="Hyrje" style="position:fixed;inset:0;width:100%;height:100%;border:0;padding:0;display:block;z-index:3000;background:#06202E"></iframe>
 <div id="about" class="hide">
   <div class="dhead"><button id="aback" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Rreth PikaBlu</b></div>
   <div class="dbody"><div class="dpad">
     <h2>Pika<span style="color:var(--sea)">Blu</span></h2>
     <p class="meta" style="font-size:15px;margin:0 0 10px">Platforma Digjitale e Ujësjellësit</p>
     <h3>Çfarë është</h3>
-    <p>PikaBlu është një platformë digjitale për regjistrimin dhe menaxhimin e pikave në hartë: dyqane, lokale, institucione, guest house, hotele dhe pika të tjera të lidhura me shërbimin e ujësjellësit.</p>
-    <h3>Për çfarë shërben</h3>
-    <p>Qëllimi është që çdo pikë të ketë vendndodhjen e saktë, të dhënat e kontratës dhe statusin e debitorit në një vend të vetëm, dhe që stafi të gjejë e të arrijë shpejt te ajo pikë në terren.</p>
+    <p>PikaBlu është një platformë digjitale për regjistrimin dhe menaxhimin e pikave në hartë: biznese, pallate, familje, kolektorë dhe institucione, të organizuara sipas zonave (qyteti dhe fshatrat).</p>
     <h3>Funksionet</h3>
     <ul>
       <li>Hyrje me llogari personale. Të dhënat shihen vetëm nga përdoruesit e autorizuar.</li>
-      <li>Hartë satelitore dhe hartë normale, me kalim të shpejtë ndërmjet tyre.</li>
-      <li>Vendndodhja jote në kohë reale, e shënuar me pikë blu që pulson.</li>
-      <li>Shtimi i pikave me emër, kategori (mund të zgjidhen disa), nr. kontrate, statusin debitor po ose jo, telefon, shënim dhe foto.</li>
-      <li>Kërkim sipas emrit, kategorisë ose nr. kontrate. Pikat që nuk përputhen fshihen përkohësisht dhe ato që gjenden pulsojnë në hartë.</li>
-      <li>Filtra të shpejtë sipas kategorisë dhe për debitorët.</li>
-      <li>Faqe e plotë për çdo pikë, me foto të madhe dhe të gjitha të dhënat.</li>
-      <li>Udhëzim rruge deri te pika, përmes Google Maps.</li>
-      <li>Ndryshimi i të dhënave të një pike pa e fshirë atë.</li>
+      <li>Hartë satelitore dhe normale, vendndodhja jote në kohë reale dhe udhëzim rruge deri te pika.</li>
+      <li>Pika me kategori, nr. kontrate, status debitori, telefon, shënim dhe foto.</li>
+      <li>Shumë abonentë brenda një pike (pallat ose kolektor).</li>
+      <li>Zona: qyteti dhe fshatrat, me pikat e tyre.</li>
+      <li>Kërkim sipas emrit, kontratës ose abonentit.</li>
+      <li>Rrjeti i tubave me legjendë, lista e debitorëve dhe planimetritë në folderë.</li>
     </ul>
-    <h3>Siguria</h3>
-    <p>Llogaritë i krijon administratori. Pa hyrje në llogari nuk shfaqet asnjë pikë apo e dhënë.</p>
   </div></div>
 </div>
-
 <div id="modal" class="hide">
   <div class="mc">
     <h2 id="ftitle">Shto pikë</h2>
     <label for="n">Emri</label><input id="n" maxlength="80">
-    <label>Kategoritë (mund të zgjedhësh disa)</label>
-    <div class="chks" id="cats"></div>
+    <label>Kategoritë (mund të zgjedhësh disa)</label><div class="chks" id="cats"></div>
     <div class="chks"><label class="chk"><input type="checkbox" id="d"> Debitor</label></div>
-    <div class="row">
-      <div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div>
-      <div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div>
-    </div>
+    <div class="row"><div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div></div>
     <label for="t">Shënim</label><input id="t" maxlength="120">
     <label for="f">Foto (opsionale)</label><input id="f" type="file" accept="image/*">
     <p class="meta" id="fhint" style="margin:4px 0 0"></p>
@@ -189,16 +166,13 @@ button.red{background:#fcebeb;color:#a32d2d}
     <p class="msg" id="msg"></p>
   </div>
 </div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="config.js"></script>
 <script>
-// ====== SHKRUAJ KËTU KODET E SUPABASE ======
-const SUPABASE_URL = "https://eltzkgjaqmjwkuglvrqr.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsdHprZ2phcW1qd2t1Z2x2cnFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2OTAwMDEsImV4cCI6MjEwODI2NjAwMX0.6zN6Q3KWwkLUf6Nos_nXUezEFseX9JMCkxuoKAhc72I";
-// ===========================================
-
+if (typeof SUPABASE_URL === "undefined") { document.body.innerHTML = '<p style="padding:20px;font:16px system-ui">Mungon skedari <b>config.js</b> në GitHub.</p>'; throw new Error("config.js missing"); }
 const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const CATS = ["Dyqan", "Lokal", "Institucion", "Guest house", "Hotel"];
@@ -209,7 +183,6 @@ let watchId = null, meMarker = null, firstFix = true, sat = true, timer = null, 
 
 function icons(){ if (window.lucide) lucide.createIcons(); }
 function ic(n){ return '<i data-lucide="' + n + '"></i>'; }
-
 const map = L.map("map", {zoomControl: false, attributionControl: false}).setView([41.15, 20.05], 7);
 L.control.zoom({position: "topright"}).addTo(map);
 const satellite = L.layerGroup([
@@ -220,38 +193,32 @@ const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {ma
 satellite.addTo(map);
 const layer = L.layerGroup().addTo(map);
 const meIcon = L.divIcon({className: "", html: '<div class="me"><span></span></div>', iconSize: [22, 22]});
-function ptIcon(b, pulse){
-  return L.divIcon({className: "", iconSize: [24, 24],
-    html: '<div class="pt' + (b.debtor ? " red" : "") + (pulse ? " pulse" : "") + '"><span></span></div>'});
-}
+function ptIcon(b, pulse){ return L.divIcon({className: "", iconSize: [24, 24], html: '<div class="pt' + (b.debtor ? " red" : "") + (pulse ? " pulse" : "") + '"><span></span></div>'}); }
 
-function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
-function say(id, t, err){const e=$(id);e.textContent=t||"";e.className="msg"+(err?" err":"");}
-function dirUrl(b){return "https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng;}
-function cats(b){return (b.categories && b.categories.length) ? b.categories : (b.category ? [b.category] : []);}
+function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+function say(id, t, err){ const e = $(id); e.textContent = t || ""; e.className = "msg" + (err ? " err" : ""); }
+function dirUrl(b){ return "https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng; }
+function cats(b){ return (b.categories && b.categories.length) ? b.categories : (b.category ? [b.category] : []); }
 function badges(b){
   return cats(b).map(c => '<span class="badge">' + esc(c) + "</span>").join("") +
     (b.contract_no ? '<span class="badge">Kontratë: ' + esc(b.contract_no) + "</span>" : "") +
     (b.debtor ? '<span class="badge red">Debitor</span>' : "");
 }
-function setSheet(i){stateIdx = i; $("app").style.setProperty("--sh", STATES[i]); setTimeout(() => map.invalidateSize(), 300);}
+function setSheet(i){ stateIdx = i; $("app").style.setProperty("--sh", STATES[i]); setTimeout(() => map.invalidateSize(), 300); }
 
 function shrink(file){
   return new Promise((res, rej) => {
     const img = new Image(), u = URL.createObjectURL(file);
     img.onload = () => {
-      const s = Math.min(1, 1280 / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
+      const s = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement("canvas");
       c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(u);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
       c.toBlob(b => b ? res(b) : rej(new Error("Foto nuk u përpunua.")), "image/jpeg", 0.8);
     };
     img.onerror = () => rej(new Error("Foto nuk u hap."));
     img.src = u;
   });
 }
-
 function setPick(lat, lng){
   picked = {lat, lng};
   if (pickMarker) pickMarker.setLatLng([lat, lng]);
@@ -262,24 +229,17 @@ map.on("click", e => { if (me && pickMode) setPick(e.latlng.lat, e.latlng.lng); 
 
 function render(pulse){
   layer.clearLayers();
-  rows.forEach(b => {
-    L.marker([b.lat, b.lng], {icon: ptIcon(b, pulse)}).addTo(layer).on("click", () => openDetail(b.id));
-  });
+  rows.forEach(b => L.marker([b.lat, b.lng], {icon: ptIcon(b, pulse)}).addTo(layer).on("click", () => openDetail(b.id)));
   const shown = rows.slice(0, limit);
   $("title").textContent = rows.length + " pika" + (rows.length > limit ? " · po shfaqen " + limit : "");
   $("list").innerHTML = shown.length ? shown.map(b =>
-    '<div class="item" data-id="' + b.id + '">' +
-    (b.photoUrl ? '<img alt="" src="' + esc(b.photoUrl) + '">' : '<div class="ph"></div>') +
+    '<div class="item" data-id="' + b.id + '">' + (b.photoUrl ? '<img alt="" src="' + esc(b.photoUrl) + '">' : '<div class="ph"></div>') +
     '<div class="b"><b>' + esc(b.name) + "</b>" + badges(b) +
     '<div class="meta">' + (b.phone ? esc(b.phone) + " · " : "") + "nga " + esc(b.owner_name || "përdorues") + "</div>" +
-    '<div class="acts"><a href="#" data-go="' + b.id + '">Shfaq në hartë</a>' +
-    '<a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a></div></div></div>'
+    '<div class="acts"><a href="#" data-go="' + b.id + '">Shfaq në hartë</a><a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a></div></div></div>'
   ).join("") : '<p class="meta">Asnjë pikë nuk u gjet.</p>';
-  $("more").innerHTML = rows.length > limit
-    ? '<button class="alt" id="moreBtn" type="button" style="width:100%;margin-top:8px">Shfaq edhe 5</button><p class="meta">Për të gjetur të tjerat, kërko me emër ose nr. kontrate.</p>'
-    : "";
+  $("more").innerHTML = rows.length > limit ? '<button class="alt" id="moreBtn" type="button" style="width:100%;margin-top:8px">Shfaq edhe 5</button><p class="meta">Për të gjetur të tjerat, kërko me emër ose nr. kontrate.</p>' : "";
 }
-
 function filterRows(){
   const t = $("q").value.trim().toLowerCase();
   rows = allRows.filter(b => {
@@ -298,13 +258,8 @@ function fitRows(){
 }
 $("q").addEventListener("input", () => {
   limit = 5; filterRows(); clearTimeout(timer);
-  timer = setTimeout(() => {
-    if ($("q").value.trim()) { hadSearch = true; fitRows(); }
-    else if (hadSearch) { hadSearch = false; fitRows(); }
-  }, 450);
+  timer = setTimeout(() => { if ($("q").value.trim()) { hadSearch = true; fitRows(); } else if (hadSearch) { hadSearch = false; fitRows(); } }, 450);
 });
-$("q").addEventListener("keydown", e => { if (e.key === "Enter") { clearTimeout(timer); e.target.blur(); if ($("q").value.trim()) { hadSearch = true; fitRows(); } } });
-
 function drawChips(){
   const list = [["all", "Të gjitha"]].concat(CATS.map(c => [c, c]), [["debt", "Debitorë"]]);
   $("chips").innerHTML = list.map(x => '<button type="button" class="chip' + (filter === x[0] ? " on" : "") + '" data-chip="' + esc(x[0]) + '">' + esc(x[1]) + "</button>").join("");
@@ -316,8 +271,7 @@ async function load(){
   if (error) { $("list").innerHTML = '<p class="msg err">S’u lexuan të dhënat. Kontrollo kodet e Supabase.</p>'; return; }
   const paths = data.filter(b => b.photo_path).map(b => b.photo_path);
   if (paths.length) {
-    const {data: urls} = await sb.storage.from("photos").createSignedUrls(paths, 3600);
-    const m = {};
+    const {data: urls} = await sb.storage.from("photos").createSignedUrls(paths, 3600), m = {};
     (urls || []).forEach(u => { if (u.signedUrl) m[u.path] = u.signedUrl; });
     data.forEach(b => { if (b.photo_path) b.photoUrl = m[b.photo_path]; });
   }
@@ -330,35 +284,27 @@ function openDetail(id){
   const own = me && b.owner === me.id;
   const tel = b.phone ? '<a href="tel:' + esc(b.phone.replace(/[^\d+]/g, "")) + '">' + esc(b.phone) + "</a>" : "–";
   $("detail").innerHTML =
-    '<div class="dhead"><button id="dback" type="button">' + ic("arrow-left") + ' Mbrapa</button><b>Detajet e pikës</b></div>' +
-    '<div class="dbody">' +
+    '<div class="dhead"><button id="dback" type="button">' + ic("arrow-left") + ' Mbrapa</button><b>Detajet e pikës</b></div><div class="dbody">' +
     (b.photoUrl ? '<a href="' + esc(b.photoUrl) + '" target="_blank" rel="noopener"><img class="big" alt="Foto" src="' + esc(b.photoUrl) + '"></a>' : '<div class="nophoto">Pa foto</div>') +
     '<div class="dpad"><h2>' + esc(b.name) + "</h2>" + badges(b) +
-    '<dl class="dl"><dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd>" +
-    "<dt>Debitor</dt><dd>" + (b.debtor ? "Po" : "Jo") + "</dd>" +
-    "<dt>Telefoni</dt><dd>" + tel + "</dd>" +
-    "<dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd>" +
-    "<dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
+    '<dl class="dl"><dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd><dt>Debitor</dt><dd>" + (b.debtor ? "Po" : "Jo") + "</dd>" +
+    "<dt>Telefoni</dt><dd>" + tel + "</dd><dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
     "<dt>Koordinatat</dt><dd>" + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) + "</dd></dl>" +
     '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">' + ic("navigation") + ' Më ço atje</a>' +
-    '<button class="alt" type="button" data-dgo="' + b.id + '">' + ic("map-pin") + ' Shfaq në hartë</button>' +
+    '<button class="alt" type="button" data-dgo="' + b.id + '">' + ic("map-pin") + " Shfaq në hartë</button>" +
     (own ? '<button type="button" data-edit="' + b.id + '">' + ic("pencil") + ' Ndrysho</button><button class="red" type="button" data-ddel="' + b.id + '">' + ic("trash-2") + " Fshij</button>" : "") +
     "</div></div></div>";
-  $("detail").classList.remove("hide");
-  $("detail").scrollTop = 0;
-  icons();
+  $("detail").classList.remove("hide"); $("detail").scrollTop = 0; icons();
 }
 function closeDetail(){ $("detail").classList.add("hide"); }
-
-function buildCats(selected){
-  const all = CATS.concat(selected.filter(x => CATS.indexOf(x) < 0));
-  $("cats").innerHTML = all.map(c => '<label class="chk"><input type="checkbox" name="cat" value="' + esc(c) + '"' + (selected.indexOf(c) >= 0 ? " checked" : "") + "> " + esc(c) + "</label>").join("");
+function buildCats(sel){
+  const all = CATS.concat(sel.filter(x => CATS.indexOf(x) < 0));
+  $("cats").innerHTML = all.map(c => '<label class="chk"><input type="checkbox" name="cat" value="' + esc(c) + '"' + (sel.indexOf(c) >= 0 ? " checked" : "") + "> " + esc(c) + "</label>").join("");
 }
 function openForm(b){
   editingId = b ? b.id : null;
   $("ftitle").textContent = b ? "Ndrysho pikën" : "Shto pikë";
-  $("n").value = b ? b.name : ""; $("k").value = b ? (b.contract_no || "") : "";
-  $("p").value = b ? (b.phone || "") : ""; $("t").value = b ? (b.note || "") : "";
+  $("n").value = b ? b.name : ""; $("k").value = b ? (b.contract_no || "") : ""; $("p").value = b ? (b.phone || "") : ""; $("t").value = b ? (b.note || "") : "";
   $("d").checked = !!(b && b.debtor); $("f").value = "";
   $("fhint").textContent = b && b.photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
   buildCats(b ? cats(b) : []);
@@ -372,12 +318,10 @@ function closeForm(){
   if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
   if (editingId) openDetail(editingId);
 }
-
 document.addEventListener("click", async e => {
   const t = e.target.closest ? (e.target.closest("[data-chip],[data-go],[data-dgo],[data-edit],[data-ddel],#moreBtn,#dback") || e.target) : e.target;
   if (!t.getAttribute) return;
-  const chip = t.getAttribute("data-chip"), go = t.getAttribute("data-go");
-  const dgo = t.getAttribute("data-dgo"), edit = t.getAttribute("data-edit"), ddel = t.getAttribute("data-ddel");
+  const chip = t.getAttribute("data-chip"), go = t.getAttribute("data-go"), dgo = t.getAttribute("data-dgo"), edit = t.getAttribute("data-edit"), ddel = t.getAttribute("data-ddel");
   if (chip !== null) { filter = chip; drawChips(); limit = 5; filterRows(); return; }
   if (t.id === "moreBtn") { limit += 5; render(!!$("q").value.trim()); return; }
   if (t.id === "dback") { closeDetail(); return; }
@@ -399,14 +343,9 @@ document.addEventListener("click", async e => {
   const it = e.target.closest ? e.target.closest(".item") : null;
   if (it && !e.target.closest("a") && !e.target.closest("button")) openDetail(it.getAttribute("data-id"));
 });
-
 $("handle").onclick = () => setSheet((stateIdx + 1) % 3);
-$("layers").onclick = () => {
-  if (sat) { map.removeLayer(satellite); normal.addTo(map); } else { map.removeLayer(normal); satellite.addTo(map); }
-  sat = !sat;
-};
+$("layers").onclick = () => { if (sat) { map.removeLayer(satellite); normal.addTo(map); } else { map.removeLayer(normal); satellite.addTo(map); } sat = !sat; };
 $("infoBtn").onclick = () => $("about").classList.remove("hide");
-$("aboutLogin").onclick = () => $("about").classList.remove("hide");
 $("aback").onclick = () => $("about").classList.add("hide");
 
 function stopGps(){
@@ -419,39 +358,28 @@ function startGps(silent){
   firstFix = true; $("gps").classList.add("on");
   watchId = navigator.geolocation.watchPosition(p => {
     const ll = [p.coords.latitude, p.coords.longitude];
-    if (!meMarker) meMarker = L.marker(ll, {icon: meIcon, interactive: false, zIndexOffset: 1000}).addTo(map);
-    else meMarker.setLatLng(ll);
+    if (!meMarker) meMarker = L.marker(ll, {icon: meIcon, interactive: false, zIndexOffset: 1000}).addTo(map); else meMarker.setLatLng(ll);
     if (firstFix && !silent) map.setView(ll, 16);
     firstFix = false;
-  }, () => { stopGps(); if (!silent) alert("Vendndodhja nuk u lejua. Lejoje te shfletuesi."); },
-  {enableHighAccuracy: true, maximumAge: 5000});
+  }, () => { stopGps(); if (!silent) alert("Vendndodhja nuk u lejua. Lejoje te shfletuesi."); }, {enableHighAccuracy: true, maximumAge: 5000});
 }
 $("gps").onclick = () => { if (watchId !== null) stopGps(); else startGps(false); };
 
-function applyUser(u){
-  me = u;
-  $("gate").classList.toggle("hide", !!u);
-  $("gate2").classList.toggle("hide", !!u); if (u) $("gate2").dataset.in = "1"; else if ($("gate2").dataset.in) { $("gate2").dataset.in = ""; $("gate2").src = "login.html"; }
-  $("app").classList.toggle("hide", !u);
-  if (u) { setTimeout(() => map.invalidateSize(), 50); load(); startGps(true); }
-  else { stopGps(); allRows = []; rows = []; closeDetail(); render(false); }
-}
-
-async function doLogin(){
-  say("amsg", "Duke hyrë…");
-  const {error} = await sb.auth.signInWithPassword({email: $("em").value.trim(), password: $("pw").value});
-  if (error) say("amsg", error.message.toLowerCase().includes("invalid login") ? "Email ose fjalëkalim i gabuar." : "Gabim: " + error.message, true);
-  else say("amsg", "");
-}
-$("login").onclick = doLogin;
-  window.pikaLogin = async function (email, password) {
+window.pikaLogin = async function (email, password) {
   const {error} = await sb.auth.signInWithPassword({email, password});
   if (!error) return {ok: true};
   return {error: true, invalid: error.message.toLowerCase().includes("invalid login"), message: error.message};
 };
-$("pw").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+function applyUser(u){
+  me = u;
+  $("gate2").classList.toggle("hide", !!u);
+  if (u) { $("gate2").dataset.in = "1"; $("app").classList.remove("hide"); setTimeout(() => map.invalidateSize(), 50); load(); startGps(true); }
+  else {
+    $("app").classList.add("hide"); stopGps(); allRows = []; rows = []; closeDetail(); render(false);
+    if ($("gate2").dataset.in) { $("gate2").dataset.in = ""; $("gate2").src = "login.html"; }
+  }
+}
 $("out").onclick = () => { if (confirm("Do dalësh?")) sb.auth.signOut(); };
-
 $("addBtn").onclick = () => openForm(null);
 $("cancel").onclick = closeForm;
 $("pickmap").onclick = () => { pickMode = true; $("modal").classList.add("hide"); closeDetail(); $("pickbar").classList.remove("hide"); if (stateIdx === 2) setSheet(1); };
@@ -459,13 +387,10 @@ $("pickdone").onclick = () => { pickMode = false; $("pickbar").classList.add("hi
 $("loc").onclick = () => {
   if (!navigator.geolocation) return say("msg", "Pajisja nuk mbështet vendndodhjen.", true);
   say("msg", "Duke marrë vendndodhjen…");
-  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); say("msg", ""); },
-    () => say("msg", "Vendndodhja nuk u lejua. Përdor “Zgjidh në hartë”.", true), {enableHighAccuracy: true});
+  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); say("msg", ""); }, () => say("msg", "Vendndodhja nuk u lejua. Përdor “Zgjidh në hartë”.", true), {enableHighAccuracy: true});
 };
-
 $("add").onclick = async () => {
-  const name = $("n").value.trim();
-  const cs = Array.from(document.querySelectorAll('input[name="cat"]:checked')).map(i => i.value);
+  const name = $("n").value.trim(), cs = Array.from(document.querySelectorAll('input[name="cat"]:checked')).map(i => i.value);
   if (!name) return say("msg", "Shkruaj emrin.", true);
   if (!cs.length) return say("msg", "Zgjidh të paktën një kategori.", true);
   if (!picked) return say("msg", "Zgjidh një pikë: vendndodhjen tënde ose në hartë.", true);
@@ -475,24 +400,19 @@ $("add").onclick = async () => {
     let photo_path = old ? old.photo_path : null, newPhoto = false;
     const file = $("f").files[0];
     if (file) {
-      const blob = await shrink(file);
-      const path = me.id + "/" + Date.now() + ".jpg";
+      const blob = await shrink(file), path = me.id + "/" + Date.now() + ".jpg";
       const {error: upErr} = await sb.storage.from("photos").upload(path, blob, {contentType: "image/jpeg"});
       if (upErr) throw new Error("Foto nuk u ngarkua: " + upErr.message);
       photo_path = path; newPhoto = true;
     }
-    const fields = {
-      name, categories: cs, category: cs[0], contract_no: $("k").value.trim(), debtor: $("d").checked,
-      phone: $("p").value.trim(), note: $("t").value.trim(), lat: picked.lat, lng: picked.lng, photo_path
-    };
+    const fields = {name, categories: cs, category: cs[0], contract_no: $("k").value.trim(), debtor: $("d").checked, phone: $("p").value.trim(), note: $("t").value.trim(), lat: picked.lat, lng: picked.lng, photo_path};
     if (editingId) {
       const {data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select();
       if (error) throw new Error(error.message);
       if (!data || !data.length) throw new Error("Nuk ke leje ta ndryshosh këtë pikë.");
       if (newPhoto && old && old.photo_path) await sb.storage.from("photos").remove([old.photo_path]);
     } else {
-      fields.owner = me.id;
-      fields.owner_name = (me.user_metadata && me.user_metadata.username) || me.email;
+      fields.owner = me.id; fields.owner_name = (me.user_metadata && me.user_metadata.username) || me.email;
       const {error} = await sb.from("businesses").insert(fields);
       if (error) throw new Error(error.message);
     }
@@ -504,39 +424,23 @@ $("add").onclick = async () => {
   } catch (e) { say("msg", "S’u ruajt: " + e.message, true); }
   $("add").disabled = false;
 };
-
 sb.auth.onAuthStateChange((_ev, session) => applyUser(session ? session.user : null));
 sb.auth.getSession().then(({data}) => applyUser(data.session ? data.session.user : null));
 icons();
+
 </script>
-  <style>
-#debts{position:fixed;inset:0;z-index:2150;background:#fff;overflow-y:auto}
-#debts .dp{max-width:640px;margin:0 auto;padding:14px}
-.drow{padding:10px 0;border-top:1px solid var(--line)}
-.drow b{display:block}
-.upbox{background:var(--foam);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<div id="debts" class="hide">
-  <div class="dhead"><button id="dbBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Lista e debitorëve</b></div>
-  <div class="dp">
-    <div class="upbox hide" id="upbox">
-      <b>Shto listë nga Excel</b>
-      <p class="meta" style="margin:4px 0 8px">Kolonat: Emri, Mbiemri, Nr. i kontratës, Shuma (opsionale), Shënim (opsionale). Rreshti i parë duhet të jenë titujt.</p>
-      <input id="dbFile" type="file" accept=".xlsx,.xls,.csv">
-      <div class="bar"><button id="dbGo" type="button" disabled>Ngarko listën</button></div>
-      <p class="msg" id="dbMsg"></p>
-      <div id="dbBatches" style="margin-top:8px"></div>
-    </div>
-    <input id="dbQ" type="search" placeholder="Kërko emër ose nr. kontrate" style="margin-bottom:8px">
-    <p class="meta" id="dbCount"></p>
-    <div id="dbList"></div>
-  </div>
-</div>
-
 <script>
 (function(){
+  const ov = document.createElement("div");
+  ov.id = "debts"; ov.className = "hide";
+  ov.innerHTML =
+    '<div class="dhead"><button id="dbBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Lista e debitorëve</b></div>' +
+    '<div class="dp"><div class="upbox hide" id="upbox"><b>Shto listë nga Excel</b>' +
+    '<p class="meta" style="margin:4px 0 8px">Kolonat: Emri, Mbiemri, Nr. i kontratës, Shuma (opsionale), Shënim (opsionale). Rreshti i parë duhet të jenë titujt.</p>' +
+    '<input id="dbFile" type="file" accept=".xlsx,.xls,.csv"><div class="bar"><button id="dbGo" type="button" disabled>Ngarko listën</button></div>' +
+    '<p class="msg" id="dbMsg"></p><div id="dbBatches" style="margin-top:8px"></div></div>' +
+    '<input id="dbQ" type="search" placeholder="Kërko emër ose nr. kontrate" style="margin-bottom:8px"><p class="meta" id="dbCount"></p><div id="dbList"></div></div>';
+  document.body.appendChild(ov);
   let debs = [], parsed = [], batches = [], fname = "";
   const btn = document.createElement("button");
   btn.type = "button"; btn.id = "debtBtn"; btn.setAttribute("aria-label", "Lista e debitorëve");
@@ -544,7 +448,6 @@ icons();
   $("infoBtn").before(btn); lucide.createIcons();
   const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
   const pick = (keys, names) => keys.find(k => names.some(n => norm(k).includes(n)));
-
   function draw(){
     const t = $("dbQ").value.trim().toLowerCase();
     const l = debs.filter(d => !t || ((d.full_name || "") + " " + (d.contract_no || "")).toLowerCase().includes(t));
@@ -555,7 +458,6 @@ icons();
         (d.note ? "<div>" + esc(d.note) + "</div>" : "") + (b ? '<a href="#" data-dmap="' + b.id + '">Shfaq në hartë</a>' : "") + "</div>";
     }).join("") : '<p class="meta">Lista është bosh.</p>') + (l.length > 100 ? '<p class="meta">Po shfaqen 100 të parët. Kërko për të gjetur të tjerët.</p>' : "");
   }
-
   async function loadDebs(){
     const {data, error} = await sb.from("debtors").select("*").order("full_name");
     if (error) { $("dbList").innerHTML = '<p class="msg err">S’u lexua lista. Kontrollo që SQL-i u krye.</p>'; return; }
@@ -568,14 +470,10 @@ icons();
       '<div class="drow"><div>' + esc(k) + '</div><div class="meta">' + m[k] + ' rreshta</div><button class="red" type="button" data-delb="' + i + '">Hiq listën</button></div>').join("") : "";
     draw(); lucide.createIcons();
   }
-
   btn.onclick = () => { $("debts").classList.remove("hide"); loadDebs(); };
   $("dbBack").onclick = () => $("debts").classList.add("hide");
   $("dbQ").addEventListener("input", draw);
-  $("dbList").onclick = e => {
-    const a = e.target.closest("[data-dmap]"); if (!a) return;
-    e.preventDefault(); $("debts").classList.add("hide"); openDetail(a.getAttribute("data-dmap"));
-  };
+  $("dbList").onclick = e => { const a = e.target.closest("[data-dmap]"); if (!a) return; e.preventDefault(); $("debts").classList.add("hide"); openDetail(a.getAttribute("data-dmap")); };
   $("dbBatches").onclick = async e => {
     const b = e.target.closest("[data-delb]"); if (!b) return;
     const k = batches[+b.getAttribute("data-delb")];
@@ -585,7 +483,6 @@ icons();
     if (error) return say("dbMsg", "S’u hoq: " + error.message, true);
     say("dbMsg", "Lista u hoq."); loadDebs();
   };
-
   $("dbFile").onchange = async e => {
     parsed = []; $("dbGo").disabled = true;
     const f = e.target.files[0]; if (!f) return;
@@ -607,7 +504,6 @@ icons();
       $("dbGo").disabled = !parsed.length;
     } catch (err) { say("dbMsg", err.message, true); }
   };
-
   $("dbGo").onclick = async () => {
     $("dbGo").disabled = true; say("dbMsg", "Duke ngarkuar…");
     const batch = fname + " (" + new Date().toLocaleDateString("sq") + ")";
@@ -620,161 +516,8 @@ icons();
     } catch (err) { say("dbMsg", "S’u ngarkua: " + (err.message || err), true); $("dbGo").disabled = false; }
   };
 })();
+
 </script>
-  <style>
-#netpanel{position:absolute;right:54px;top:0;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap;font-size:14px}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%}
-</style>
-<script>
-(function(){
-  const fabs = document.querySelector(".fabs");
-  const btn = document.createElement("button");
-  btn.className = "fab"; btn.id = "netBtn"; btn.type = "button"; btn.setAttribute("aria-label", "Rrjeti i ujit");
-  btn.innerHTML = '<i data-lucide="route"></i>';
-  fabs.prepend(btn);
-  const pan = document.createElement("div");
-  pan.id = "netpanel"; pan.className = "hide";
-  pan.innerHTML = '<label class="chk"><input type="checkbox" id="nC" checked> <span class="dot" style="background:#d62728"></span> Lidhjet familjare</label>' +
-    '<label class="chk" style="margin-top:6px"><input type="checkbox" id="nN"> <span class="dot" style="background:#ff7f00"></span> Rrjeti kryesor</label>' +
-    '<div class="meta" id="nSt" style="margin-top:6px">Duke ngarkuar…</div>';
-  fabs.appendChild(pan);
-  lucide.createIcons();
-
-  const STY = {tm: ["#e31a1c", 3], tu: ["#ff7f00", 2], sh: ["#3498db", 1.5], o: ["#00bcd4", 2], c: ["#ffd400", 2]};
-const HD = [[90, "#d9b8ff", 2], [160, "#b388ff", 3], [250, "#8e5cf0", 4], [9999, "#5b2fcf", 5.5]];
-function styFor(p){
-  if (p.k === "hdpe") { const m = /HDPE\s*(\d+)/.exec(p.l || ""), d = m ? +m[1] : 0, h = HD.find(x => d <= x[0]) || HD[3]; return [h[1], h[2]]; }
-  return STY[p.k] || STY.o;
-}
-  let gC = L.layerGroup(), gN = L.layerGroup(), pts = [], loaded = false, tm = null;
-
-  function apply(){
-    if ($("nC").checked) map.addLayer(gC); else map.removeLayer(gC);
-    if ($("nN").checked) map.addLayer(gN); else map.removeLayer(gN);
-  }
-  function clearNet(){
-    map.removeLayer(gC); map.removeLayer(gN);
-    gC = L.layerGroup(); gN = L.layerGroup(); pts = []; loaded = false;
-    $("nSt").textContent = "Duke ngarkuar…";
-  }
-  async function loadNet(){
-    if (loaded) return;
-    loaded = true;
-    const {data, error} = await sb.storage.from("photos").download("rrjeti.geojson");
-    if (error) { loaded = false; $("nSt").textContent = "Skedari i rrjetit nuk u gjet."; return; }
-    const gj = JSON.parse(await data.text());
-   L.canvas({padding: 0.5, tolerance: 8})
-    let nc = 0;
-    gj.features.forEach(f => {
-      const p = f.properties, c = f.geometry.coordinates;
-      if (f.geometry.type === "Point") {
-        const ll = [c[1], c[0]];
-        const m = L.circleMarker(ll, {renderer: rc, radius: 5, color: "#ffffff", weight: 1.5, fillColor: "#d62728", fillOpacity: 1})
-          .bindPopup("<b>" + esc(p.id) + '</b><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + c[1] + "," + c[0] + '">Më ço atje</a>');
-        gC.addLayer(m); pts.push({id: p.id, ll, m}); nc++;
-      } else {
-      const st = styFor(p);
-const pl = L.polyline(c.map(q => [q[1], q[0]]), {renderer: rc, color: st[0], weight: st[1], opacity: 0.95, interactive: !!p.l});
-if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
-(p.g === "c" ? gC : gN).addLayer(pl);
-      }
-    });
-    $("nSt").textContent = nc + " lidhje familjare";
-    apply();
-  }
-
-  btn.onclick = () => pan.classList.toggle("hide");
-  $("nC").onchange = apply; $("nN").onchange = apply;
-
-  $("q").addEventListener("input", () => {
-    clearTimeout(tm);
-    tm = setTimeout(() => {
-      const v = $("q").value.trim().toUpperCase().replace(/\s+/g, " ");
-      const m = /^LF ?(\d+)$/.exec(v);
-      if (!m) return;
-      const hit = pts.find(x => x.id === "LF " + m[1]);
-      if (!hit) return;
-      $("nC").checked = true; apply();
-      if (typeof stateIdx !== "undefined" && stateIdx === 2) setSheet(1);
-      map.flyTo(hit.ll, 19, {duration: 1});
-      setTimeout(() => hit.m.openPopup(), 1100);
-    }, 500);
-  });
-
-  sb.auth.getSession().then(({data}) => { if (data.session) loadNet(); });
-  sb.auth.onAuthStateChange((_e, s) => { if (s) loadNet(); else clearNet(); });
-})();
-</script>
-<style>
-.lgt{margin-top:8px;padding-top:6px;border-top:1px solid var(--line);font-size:13px}
-.lg{display:flex;align-items:center;margin-top:4px}
-.ln{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:8px;flex:none}
-</style>
-<script>
-(function(){
-  const p = document.getElementById("netpanel");
-  if (!p) return;
-  const line = (c, t) => '<div class="lg"><span class="ln" style="background:' + c + '"></span>' + t + "</div>";
-  const box = document.createElement("div");
-  box.className = "lgt";
-  box.innerHTML = "<b>Legjenda</b>" +
-    '<div class="lg"><span class="ln" style="width:10px;height:10px;border-radius:50%;background:#d62728"></span>Lidhje familjare (ID: LF)</div>' +
-    line("#ffd400", "Tubi i lidhjes familjare") +
-    '<div id="lgN" class="hide">' +
-    line("#e31a1c", "Rrjeti TM") + line("#ff7f00", "Rrjeti TU") + line("#d9b8ff", "HDPE ≤ 90 mm") + line("#b388ff", "HDPE 110–160 mm") + line("#8e5cf0", "HDPE 180–250 mm") + line("#5b2fcf", "HDPE ≥ 315 mm") +
-    line("#3498db", "Shpërndarja") + line("#00bcd4", "Tuba të tjerë (çelik, gize, lidhje pallatesh)") + "</div>";
-  p.appendChild(box);
-  const nN = document.getElementById("nN"), lgN = document.getElementById("lgN");
-  const sync = () => lgN.classList.toggle("hide", !nN.checked);
-  nN.addEventListener("change", sync); sync();
-})();
-</script>
-  <script>
-(function(){
-  ["netBtn", "netpanel"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
-  const fabs = document.querySelector(".fabs");
-  const btn = document.createElement("button");
-  btn.className = "fab"; btn.id = "netBtn"; btn.type = "button"; btn.setAttribute("aria-label", "Rrjeti i tubave");
-  btn.innerHTML = '<i data-lucide="route"></i>';
-  fabs.prepend(btn);
-  const LEG = [["#7a6a1f", "HDPE 75"], ["#5cb85c", "HDPE 90"], ["#6aa9e6", "HDPE 110"], ["#e8832a", "HDPE 160"], ["#8a4fe0", "HDPE 225"], ["#c34fd6", "HDPE 250"], ["#e31a1c", "Tuba 180 ose 63"]];
-  const pan = document.createElement("div");
-  pan.id = "netpanel"; pan.className = "hide";
-  pan.innerHTML = '<label class="chk"><input type="checkbox" id="nT" checked> Shfaq tubat</label>' +
-    '<div class="meta" id="nSt" style="margin-top:4px">Duke ngarkuar…</div>' +
-    '<div class="lgt"><b>Legjenda</b>' + LEG.map(x => '<div class="lg"><span class="ln" style="background:' + x[0] + '"></span>' + x[1] + "</div>").join("") + "</div>";
-  fabs.appendChild(pan);
-  lucide.createIcons();
-
-  let grp = L.layerGroup(), loaded = false;
-  function apply(){ if ($("nT").checked) map.addLayer(grp); else map.removeLayer(grp); }
-  function clearNet(){ map.removeLayer(grp); grp = L.layerGroup(); loaded = false; $("nSt").textContent = "Duke ngarkuar…"; }
-  async function loadNet(){
-    if (loaded) return;
-    loaded = true;
-    const {data, error} = await sb.storage.from("photos").download("rrjeti2.geojson");
-    if (error) { loaded = false; $("nSt").textContent = "Gabim: " + (error.message || "skedari rrjeti2.geojson nuk u gjet"); return; }
-    let gj;
-    try { gj = JSON.parse(await data.text()); } catch (e) { loaded = false; $("nSt").textContent = "Skedari nuk është i vlefshëm."; return; }
-    const rc = L.canvas({padding: 0.5, tolerance: 8});
-    gj.features.forEach(f => grp.addLayer(L.polyline(f.geometry.coordinates.map(q => [q[1], q[0]]), {renderer: rc, color: "#ffffff", weight: 6, opacity: 0.7, interactive: false})));
-    gj.features.forEach(f => grp.addLayer(L.polyline(f.geometry.coordinates.map(q => [q[1], q[0]]), {renderer: rc, color: f.properties.c, weight: 3, opacity: 1}).bindPopup("<b>" + esc(f.properties.l) + "</b>")));
-    $("nSt").textContent = gj.features.length + " tuba";
-    apply();
-  }
-
-  btn.onclick = () => pan.classList.toggle("hide");
-  $("nT").onchange = apply;
-  sb.auth.getSession().then(({data}) => { if (data.session) loadNet(); });
-  sb.auth.onAuthStateChange((_e, s) => { if (s) loadNet(); else clearNet(); });
-})();
-</script>
-  <style>
-#netpanel3{position:absolute;right:54px;top:0;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap;font-size:14px;max-height:60vh;overflow-y:auto}
-.lgt{margin-top:8px;padding-top:6px;border-top:1px solid var(--line);font-size:13px}
-.lg{display:flex;align-items:center;margin-top:4px}
-.ln{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:8px;flex:none}
-</style>
 <script>
 (function(){
   ["netBtn", "netpanel"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
@@ -815,95 +558,8 @@ if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
   sb.auth.getSession().then(({data}) => { if (data.session) loadNet(); });
   sb.auth.onAuthStateChange((_e, s) => { if (s) loadNet(); else clearNet(); });
 })();
+
 </script>
-  <style>
-#plan{position:fixed;inset:0;z-index:2150;background:#fff;overflow-y:auto}
-#plan .dp{max-width:640px;margin:0 auto;padding:14px}
-.drow{padding:10px 0;border-top:1px solid var(--line)}
-.drow b{display:block}
-.upbox{background:var(--foam);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-</style>
-<div id="plan" class="hide">
-  <div class="dhead"><button id="plBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Planimetritë</b></div>
-  <div class="dp">
-    <div class="upbox hide" id="plUp">
-      <b>Shto planimetri (PDF)</b>
-      <label for="plTitle">Titulli</label><input id="plTitle" maxlength="120" placeholder="p.sh. Planimetria e zonës Qendër">
-      <label for="plFile">Skedari PDF (deri 50 MB)</label><input id="plFile" type="file" accept="application/pdf,.pdf">
-      <div class="bar"><button id="plGo" type="button">Ngarko</button></div>
-    </div>
-    <p class="msg" id="plMsg"></p>
-    <div id="plList"></div>
-  </div>
-</div>
-<script>
-(function(){
-  const btn = document.createElement("button");
-  btn.type = "button"; btn.id = "planBtn"; btn.setAttribute("aria-label", "Planimetritë");
-  btn.innerHTML = '<i data-lucide="file-text"></i>';
-  $("infoBtn").before(btn); lucide.createIcons();
-  let items = [];
-  async function loadP(){
-    const {data, error} = await sb.from("planimetri").select("*").order("created_at", {ascending: false});
-    if (error) { $("plList").innerHTML = '<p class="msg err">S’u lexuan planimetritë. Kontrollo që SQL-i u krye.</p>'; return; }
-    items = data;
-    const r = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
-    const can = !!(r.data && r.data.length);
-    $("plUp").classList.toggle("hide", !can);
-    $("plList").innerHTML = items.length ? items.map(p =>
-      '<div class="drow"><b>' + esc(p.title) + '</b><div class="meta">' + new Date(p.created_at).toLocaleDateString("sq") + "</div>" +
-      '<div class="bar" style="margin-top:6px"><button type="button" data-plopen="' + p.id + '">Hap PDF</button>' +
-      (can ? '<button class="red" type="button" data-pldel="' + p.id + '">Hiq</button>' : "") + "</div></div>").join("")
-      : '<p class="meta">Nuk ka planimetri ende.</p>';
-    lucide.createIcons();
-  }
-  btn.onclick = () => { $("plan").classList.remove("hide"); loadP(); };
-  $("plBack").onclick = () => $("plan").classList.add("hide");
-  $("plList").onclick = async e => {
-    const o = e.target.closest("[data-plopen]"), d = e.target.closest("[data-pldel]");
-    if (o) {
-      const p = items.find(x => String(x.id) === o.getAttribute("data-plopen"));
-      const w = window.open("", "_blank");
-      const {data, error} = await sb.storage.from("planimetri").createSignedUrl(p.path, 3600);
-      if (error) { if (w) w.close(); return say("plMsg", "S’u hap: " + error.message, true); }
-      if (w) w.location.href = data.signedUrl; else location.href = data.signedUrl;
-    }
-    if (d) {
-      const p = items.find(x => String(x.id) === d.getAttribute("data-pldel"));
-      if (!confirm("Ta heq planimetrinë “" + p.title + "”?")) return;
-      const {error} = await sb.from("planimetri").delete().eq("id", p.id);
-      if (error) return say("plMsg", "S’u hoq: " + error.message, true);
-      await sb.storage.from("planimetri").remove([p.path]);
-      say("plMsg", "U hoq."); loadP();
-    }
-  };
-  $("plGo").onclick = async () => {
-    const title = $("plTitle").value.trim(), f = $("plFile").files[0];
-    if (!title) return say("plMsg", "Shkruaj një titull.", true);
-    if (!f) return say("plMsg", "Zgjidh një skedar PDF.", true);
-    if (f.size > 50 * 1024 * 1024) return say("plMsg", "Skedari është mbi 50 MB.", true);
-    $("plGo").disabled = true; say("plMsg", "Duke ngarkuar…");
-    const path = Date.now() + "_" + f.name.replace(/[^\w.\-]+/g, "_");
-    try {
-      const up = await sb.storage.from("planimetri").upload(path, f, {contentType: "application/pdf"});
-      if (up.error) throw up.error;
-      const ins = await sb.from("planimetri").insert({title, path});
-      if (ins.error) { await sb.storage.from("planimetri").remove([path]); throw ins.error; }
-      $("plTitle").value = ""; $("plFile").value = ""; say("plMsg", "U shtua."); loadP();
-    } catch (err) { say("plMsg", "S’u ngarkua: " + (err.message || err), true); }
-    $("plGo").disabled = false;
-  };
-})();
-</script>
-  <style>
-#plan2{position:fixed;inset:0;z-index:2150;background:#fff;overflow-y:auto}
-#plan2 .dp{max-width:640px;margin:0 auto;padding:14px}
-.upbox{background:var(--foam);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
-.pfc{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
-.pfc svg{width:26px;height:26px;color:var(--sea);flex:none}
-.pft{flex:1;min-width:0}
-.pfa{display:flex;gap:6px;flex-wrap:wrap}
-</style>
 <script>
 (function(){
   ["planBtn", "plan"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
@@ -1014,12 +670,8 @@ if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
     $("pfGo").disabled = false;
   };
 })();
+
 </script>
-  <style>
-.sub{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
-.sub .acts{margin-top:6px;display:flex;gap:8px}
-#subBox h3{margin:18px 0 6px}
-</style>
 <script>
 (function(){
   if (CATS.indexOf("Pallat") < 0) CATS.push("Familje", "Pallat");
@@ -1126,6 +778,120 @@ if (p.l) pl.bindPopup("<b>" + esc(p.l) + "</b>");
     drawSubs(id);
   };
 })();
+
+</script>
+<script>
+(function(){
+  let zones = [], activeZone = null, staff = false, kind = "qytet";
+  const zname = id => { const z = zones.find(x => x.id === id); return z ? z.name : ""; };
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.id = "zoneBtn"; btn.setAttribute("aria-label", "Zonat");
+  btn.innerHTML = '<i data-lucide="map-pinned"></i>';
+  $("infoBtn").before(btn);
+  const bar = document.createElement("div");
+  bar.id = "zbar"; bar.className = "hide";
+  bar.style.cssText = "display:flex;align-items:center;gap:8px;background:#13a3a8;color:#fff;border-radius:18px;padding:6px 6px 6px 12px;margin-top:8px;font-size:13px;font-weight:600;width:fit-content;box-shadow:0 1px 5px rgba(0,0,0,.3)";
+  document.querySelector(".top").appendChild(bar);
+  const ov = document.createElement("div");
+  ov.id = "zones2"; ov.className = "hide";
+  ov.innerHTML =
+    '<div class="dhead"><button id="zBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Zonat</b></div>' +
+    '<div class="dp"><b>Zgjidh zonën</b>' +
+    '<div class="zk"><button type="button" class="zkb" data-zk="qytet"><i data-lucide="building-2"></i>Qyteti</button>' +
+    '<button type="button" class="zkb" data-zk="fshat"><i data-lucide="house"></i>Fshatrat</button></div>' +
+    '<b id="zPickT">Zgjidh fshatin</b><div id="zPick" style="margin-top:8px"></div>' +
+    '<div class="upbox hide" id="zUp" style="margin-top:14px"><b>Shto zonë të re</b><div class="bar" style="margin-top:6px">' +
+    '<input id="zName" maxlength="60" placeholder="Emri (p.sh. Qilarisht)" style="flex:1;min-width:140px">' +
+    '<select id="zKind" style="width:auto"><option value="fshat">Fshat</option><option value="qytet">Qytet</option></select>' +
+    '<button id="zNew" type="button">Krijo</button></div></div>' +
+    '<p class="msg" id="zMsg"></p></div>';
+  document.body.appendChild(ov);
+  $("t").insertAdjacentHTML("afterend", '<label for="zSel">Zona</label><select id="zSel"></select>');
+  lucide.createIcons();
+
+  function fillSel(){
+    const o = g => zones.filter(z => z.kind === g).map(z => '<option value="' + z.id + '">' + esc(z.name) + "</option>").join("");
+    $("zSel").innerHTML = '<option value="">Pa zonë</option><optgroup label="Qyteti">' + o("qytet") + '</optgroup><optgroup label="Fshatrat">' + o("fshat") + "</optgroup>";
+  }
+  async function loadZones(){
+    const [z, u] = await Promise.all([sb.from("zones").select("*").order("name"), sb.from("uploaders").select("user_id").eq("user_id", me.id)]);
+    zones = z.error ? [] : z.data; staff = !!(u.data && u.data.length); fillSel();
+  }
+  function updateBar(){
+    if (activeZone === null) { bar.classList.add("hide"); return; }
+    bar.classList.remove("hide");
+    bar.innerHTML = "<span>Zona: " + esc(activeZone === "none" ? "Pa zonë" : zname(activeZone)) + '</span><button type="button" id="zClear" aria-label="Hiq filtrin" style="background:#fff;color:#0d3b45;padding:2px 10px;border-radius:12px">Hiq</button>';
+  }
+  function setZone(v){
+    activeZone = v; updateBar(); filterRows();
+    if (rows.length) {
+      if (typeof stateIdx !== "undefined" && stateIdx === 2) setSheet(1);
+      map.flyToBounds(L.latLngBounds(rows.map(b => [b.lat, b.lng])), {maxZoom: 17, padding: [70, 70], duration: 1});
+    }
+  }
+  function draw(){
+    const full = allRows;
+    document.querySelectorAll("#zones2 .zkb").forEach(b => b.classList.toggle("on", b.getAttribute("data-zk") === kind));
+    $("zPickT").textContent = kind === "qytet" ? "Zgjidh qytetin" : "Zgjidh fshatin";
+    const stat = f => { const l = full.filter(f); return l.length + " pika · " + l.reduce((s, b) => s + (b._n || 0), 0) + " abonentë"; };
+    const list = zones.filter(z => z.kind === kind);
+    let h = list.length ? list.map(z =>
+      '<div class="zr' + (activeZone === z.id ? " on" : "") + '" data-zset="' + z.id + '"><span class="rd"></span><div class="pft"><b>' + esc(z.name) + '</b><div class="meta">' + stat(b => b.zone_id === z.id) + "</div></div>" +
+      (staff ? '<button class="red" type="button" data-zdel="' + z.id + '">Hiq</button>' : "") + "</div>").join("")
+      : '<p class="meta">Asnjë zonë ende. ' + (staff ? "Shto një më poshtë." : "") + "</p>";
+    const nz = full.filter(b => !b.zone_id).length;
+    h += '<div class="bar" style="margin-top:12px"><button type="button" class="alt" data-zset="all">Të gjitha zonat (' + full.length + ')</button>' +
+      (nz ? '<button type="button" class="alt" data-zset="none">Pa zonë (' + nz + ")</button>" : "") + "</div>";
+    $("zPick").innerHTML = h; $("zUp").classList.toggle("hide", !staff);
+  }
+
+  const ol = load;
+  load = async function(){ try { await loadZones(); } catch (e) {} await ol(); };
+  const pf = filterRows;
+  filterRows = function(){
+    const full = allRows;
+    if (activeZone !== null) allRows = full.filter(b => activeZone === "none" ? !b.zone_id : b.zone_id === activeZone);
+    try { pf(); } finally { allRows = full; }
+  };
+  const ob = badges;
+  badges = function(b){ return ob(b) + (b.zone_id && zname(b.zone_id) ? '<span class="badge">Zona: ' + esc(zname(b.zone_id)) + "</span>" : ""); };
+  const oo = openForm;
+  openForm = function(b){ oo(b); $("zSel").value = b ? (b.zone_id || "") : (typeof activeZone === "number" ? activeZone : ""); };
+  const of = sb.from.bind(sb);
+  sb.from = function(t){
+    const q = of(t);
+    if (t !== "businesses") return q;
+    const oi = q.insert.bind(q), ou = q.update.bind(q), zv = () => { const v = $("zSel").value; return v ? +v : null; };
+    q.insert = r => oi(Object.assign({}, r, {zone_id: zv()}));
+    q.update = r => ou(Object.assign({}, r, {zone_id: zv()}));
+    return q;
+  };
+
+  btn.onclick = () => { say("zMsg", ""); if (typeof activeZone === "number") { const z = zones.find(x => x.id === activeZone); if (z) kind = z.kind; } draw(); $("zones2").classList.remove("hide"); };
+  $("zBack").onclick = () => $("zones2").classList.add("hide");
+  bar.addEventListener("click", e => { if (e.target.id === "zClear") setZone(null); });
+  $("zones2").addEventListener("click", async e => {
+    const k = e.target.closest("[data-zk]"), d = e.target.closest("[data-zdel]"), s = e.target.closest("[data-zset]");
+    if (k) { kind = k.getAttribute("data-zk"); draw(); return; }
+    if (d) {
+      const id = +d.getAttribute("data-zdel");
+      if (allRows.some(b => b.zone_id === id)) return say("zMsg", "Zona ka ende pika. Zhvendosi ose hiqi më parë.", true);
+      if (!confirm("Ta heq këtë zonë?")) return;
+      const {error} = await sb.from("zones").delete().eq("id", id);
+      if (error) return say("zMsg", "S’u hoq: " + error.message, true);
+      await loadZones(); draw(); return;
+    }
+    if (s) { const v = s.getAttribute("data-zset"); $("zones2").classList.add("hide"); setZone(v === "all" ? null : v === "none" ? "none" : +v); }
+  });
+  $("zNew").onclick = async () => {
+    const name = $("zName").value.trim();
+    if (!name) return say("zMsg", "Shkruaj emrin e zonës.", true);
+    const {error} = await sb.from("zones").insert({name, kind: $("zKind").value});
+    if (error) return say("zMsg", "S’u krijua: " + error.message, true);
+    $("zName").value = ""; say("zMsg", "Zona u krijua."); await loadZones(); draw();
+  };
+})();
+
 </script>
 </body>
 </html>
