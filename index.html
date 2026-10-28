@@ -175,7 +175,7 @@ a{color:#0a7d82;font-weight:600}
 if (typeof SUPABASE_URL === "undefined") { document.body.innerHTML = '<p style="padding:20px;font:16px system-ui">Mungon skedari <b>config.js</b> në GitHub.</p>'; throw new Error("config.js missing"); }
 const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const CATS = ["Dyqan", "Lokal", "Institucion", "Guest house", "Hotel"];
+const CATS = ["Dyqan", "Lokal", "Institucion", "Guest house", "Hotel", "Kolektor"];
 const STATES = ["56px", "42dvh", "80dvh"];
 let me = null, picked = null, pickMarker = null, pickMode = false, editingId = null;
 let rows = [], allRows = [], filter = "all", limit = 5, stateIdx = 1;
@@ -183,13 +183,13 @@ let watchId = null, meMarker = null, firstFix = true, sat = true, timer = null, 
 
 function icons(){ if (window.lucide) lucide.createIcons(); }
 function ic(n){ return '<i data-lucide="' + n + '"></i>'; }
-const map = L.map("map", {zoomControl: false, attributionControl: false}).setView([41.15, 20.05], 7);
+const map = L.map("map", {zoomControl: false, attributionControl: false, maxZoom: 21}).setView([41.15, 20.05], 7);
 L.control.zoom({position: "topright"}).addTo(map);
 const satellite = L.layerGroup([
-  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {maxZoom: 19}),
-  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {maxZoom: 19})
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {maxZoom: 21, maxNativeZoom: 17}),
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {maxZoom: 21, maxNativeZoom: 16})
 ]);
-const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19});
+const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 21, maxNativeZoom: 19});
 satellite.addTo(map);
 const layer = L.layerGroup().addTo(map);
 const meIcon = L.divIcon({className: "", html: '<div class="me"><span></span></div>', iconSize: [22, 22]});
@@ -680,7 +680,7 @@ icons();
   const ptOf = id => allRows.find(x => String(x.id) === String(id));
   function recalc(pid, list){
     const b = ptOf(pid); if (!b) return;
-    b._n = list.length;
+    b._n = list.length; b._subArr = list;
     b._subs = list.map(x => [x.full_name, x.contract_no, x.apartment, x.phone].join(" ")).join(" ");
   }
   async function loadSubs(){
@@ -712,6 +712,38 @@ icons();
     });
     render(!!t);
   };
+
+
+  const obd = badges;
+  badges = function(b){
+    let h = obd(b);
+    const t = $("q").value.trim().toLowerCase();
+    if (t && b._subArr) {
+      const hit = b._subArr.filter(s => ((s.full_name || "") + " " + (s.contract_no || "")).toLowerCase().includes(t));
+      if (hit.length) h += '<div class="meta" style="color:#0a7d82;font-weight:600">Gjetur brenda: ' + hit.slice(0, 3).map(s => esc(s.full_name) + (s.apartment ? " (" + esc(s.apartment) + ")" : "")).join(", ") + (hit.length > 3 ? " +" + (hit.length - 3) + " të tjerë" : "") + "</div>";
+    }
+    return h;
+  };
+  let qt = null, tt = null;
+  function toast(msg){
+    let t = $("toast");
+    if (!t) {
+      t = document.createElement("div"); t.id = "toast";
+      t.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);top:calc(120px + env(safe-area-inset-top,0px));z-index:3500;background:#0d3b45;color:#fff;padding:10px 16px;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.4);max-width:90vw;font-size:14px";
+      document.body.appendChild(t);
+    }
+    t.textContent = msg; t.style.display = "block"; clearTimeout(tt); tt = setTimeout(() => { t.style.display = "none"; }, 6000);
+  }
+  $("q").addEventListener("input", () => {
+    clearTimeout(qt);
+    qt = setTimeout(() => {
+      const t = $("q").value.trim().toLowerCase();
+      if (t.length < 3) return;
+      const hits = [];
+      allRows.forEach(b => (b._subArr || []).forEach(s => { if (((s.full_name || "") + " " + (s.contract_no || "")).toLowerCase().includes(t)) hits.push([s, b]); }));
+      if (hits.length) toast(hits[0][0].full_name + " gjendet brenda: " + hits[0][1].name + (hits.length > 1 ? " (+" + (hits.length - 1) + " të tjerë)" : ""));
+    }, 700);
+  });
 
   async function drawSubs(pid){
     const box = $("subBox"); if (!box) return;
