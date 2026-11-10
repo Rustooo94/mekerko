@@ -158,7 +158,7 @@ a{color:#0a7d82;font-weight:600}
     <div class="chks"><label class="chk"><input type="checkbox" id="d"> Debitor</label></div>
     <div class="row"><div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div></div>
     <label for="t">Shënim</label><input id="t" maxlength="120">
-    <label for="f">Foto (opsionale)</label><input id="f" type="file" accept="image/*">
+    <label for="f">Foto e pikës (ndërtesa ose kolektori, opsionale)</label><input id="f" type="file" accept="image/*">
     <p class="meta" id="fhint" style="margin:4px 0 0"></p>
     <p class="meta" id="coords" style="margin:10px 0 0">Pika nuk është zgjedhur.</p>
     <div class="bar"><button id="loc" type="button" class="alt"><i data-lucide="locate-fixed"></i> Vendndodhja ime</button><button id="pickmap" type="button" class="alt"><i data-lucide="crosshair"></i> Zgjidh në hartë</button></div>
@@ -751,12 +751,19 @@ icons();
     box.innerHTML = '<h3>Abonentët</h3><div class="meta">Duke ngarkuar…</div>';
     const {data, error} = await sb.from("subscribers").select("*").eq("point_id", pid).order("apartment");
     if (error) { box.innerHTML = '<h3>Abonentët</h3><p class="msg err">S’u lexuan abonentët. Kontrollo që SQL-i u krye.</p>'; return; }
+    const mp = data.filter(s => s.meter_photo_path).map(s => s.meter_photo_path);
+    if (mp.length) {
+      const {data: us} = await sb.storage.from("photos").createSignedUrls(mp, 3600), mm = {};
+      (us || []).forEach(u => { if (u.signedUrl) mm[u.path] = u.signedUrl; });
+      data.forEach(s => { if (s.meter_photo_path) s.meterUrl = mm[s.meter_photo_path]; });
+    }
     cache = data; recalc(pid, data); editing = null;
     box.innerHTML = "<h3>Abonentët (" + data.length + ")</h3>" +
       (data.length ? data.map(s => {
         const mine = isAdm || s.created_by === me.id;
         return '<div class="sub"><b>' + esc(s.full_name) + "</b> " + (s.debtor ? '<span class="badge red">Debitor</span>' : "") +
           '<div class="meta">' + [s.apartment, s.contract_no ? "Kontratë: " + s.contract_no : "", s.phone].filter(Boolean).map(esc).join(" · ") + "</div>" +
+          (s.meterUrl ? '<a href="' + esc(s.meterUrl) + '" target="_blank" rel="noopener"><img alt="Foto e sahatit" src="' + esc(s.meterUrl) + '" style="width:130px;height:96px;object-fit:cover;border-radius:8px;margin-top:6px;display:block"></a>' : "") +
           (mine ? '<div class="acts"><button class="alt" type="button" data-sedit="' + s.id + '">Ndrysho</button><button class="red" type="button" data-sdel="' + s.id + '">Fshij</button></div>' : "") + "</div>";
       }).join("") : '<p class="meta">Asnjë abonent ende.</p>') +
       '<div class="upbox" style="margin-top:10px"><b id="sfT">Shto abonent</b>' +
@@ -765,11 +772,12 @@ icons();
       '<div><label for="sK">Nr. i kontratës</label><input id="sK" maxlength="40"></div></div>' +
       '<div class="row"><div><label for="sP">Telefoni</label><input id="sP" type="tel" maxlength="30"></div>' +
       '<div><label class="chk" style="margin-top:30px"><input type="checkbox" id="sD"> Debitor</label></div></div>' +
+      '<label for="sF">Foto e sahatit (opsionale)</label><input id="sF" type="file" accept="image/*"><p class="meta" id="sFh" style="margin:4px 0 0"></p>' +
       '<div class="bar"><button id="sGo" type="button">Shto</button><button id="sCancel" type="button" class="alt hide">Anulo</button></div><p class="msg" id="sMsg"></p></div>';
   }
   function resetForm(){
     editing = null;
-    ["sName", "sApt", "sK", "sP"].forEach(i => { $(i).value = ""; });
+    ["sName", "sApt", "sK", "sP", "sF"].forEach(i => { $(i).value = ""; }); $("sFh").textContent = "";
     $("sD").checked = false; $("sfT").textContent = "Shto abonent"; $("sGo").textContent = "Shto"; $("sCancel").classList.add("hide");
   }
   document.addEventListener("click", async e => {
@@ -780,12 +788,14 @@ icons();
     if (ed) {
       const s = cache.find(x => String(x.id) === ed.getAttribute("data-sedit")); if (!s) return;
       editing = s.id;
-      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor;
+      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor; $("sF").value = ""; $("sFh").textContent = s.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
       $("sfT").textContent = "Ndrysho abonentin"; $("sGo").textContent = "Ruaj ndryshimin"; $("sCancel").classList.remove("hide");
       $("sName").scrollIntoView({block: "center"});
     }
     if (dl && confirm("Ta fshij këtë abonent?")) {
+      const sdel = cache.find(x => String(x.id) === dl.getAttribute("data-sdel"));
       const {error} = await sb.from("subscribers").delete().eq("id", dl.getAttribute("data-sdel"));
+      if (!error && sdel && sdel.meter_photo_path) await sb.storage.from("photos").remove([sdel.meter_photo_path]);
       if (error) return say("sMsg", "S’u fshi: " + error.message, true);
       await drawSubs(pid); filterRows();
     }
@@ -794,10 +804,20 @@ icons();
       const name = $("sName").value.trim();
       if (!name) return say("sMsg", "Shkruaj emrin dhe mbiemrin.", true);
       const row = {full_name: name, apartment: $("sApt").value.trim(), contract_no: $("sK").value.trim(), phone: $("sP").value.trim(), debtor: $("sD").checked};
+      const sf = $("sF").files[0], oldS = editing ? cache.find(x => x.id === editing) : null;
       $("sGo").disabled = true;
+      if (sf) {
+        try {
+          const blob = await shrink(sf), path = me.id + "/s" + Date.now() + ".jpg";
+          const up = await sb.storage.from("photos").upload(path, blob, {contentType: "image/jpeg"});
+          if (up.error) throw up.error;
+          row.meter_photo_path = path;
+        } catch (e) { $("sGo").disabled = false; return say("sMsg", "Foto nuk u ngarkua: " + (e.message || e), true); }
+      }
       const {error} = editing ? await sb.from("subscribers").update(row).eq("id", editing) : await sb.from("subscribers").insert(Object.assign({point_id: +pid}, row));
       $("sGo").disabled = false;
       if (error) return say("sMsg", "S’u ruajt: " + error.message, true);
+      if (sf && oldS && oldS.meter_photo_path) await sb.storage.from("photos").remove([oldS.meter_photo_path]);
       await drawSubs(pid); filterRows();
     }
   });
