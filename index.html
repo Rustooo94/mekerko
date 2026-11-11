@@ -160,6 +160,7 @@ a{color:#0a7d82;font-weight:600}
     <div class="row"><div><label for="catMain">Kategoria</label><select id="catMain"></select></div><div><label for="catSub">Nënkategoria</label><select id="catSub"></select></div></div>
     <div class="chks" style="margin-top:10px"><label class="chk"><input type="checkbox" id="d"> Debitor</label><label class="chk"><input type="checkbox" id="cu"> Prerë</label></div>
     <div class="row"><div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div></div>
+    <div class="row"><div><label for="meterNo">Nr. i matësit</label><input id="meterNo" maxlength="40"></div><div><label for="sealNo">Nr. i vulës</label><input id="sealNo" maxlength="40"></div></div>
     <label for="t">Shënim</label><input id="t" maxlength="120">
     <label for="f">Foto e pikës (ndërtesa ose kolektori, opsionale)</label><input id="f" type="file" accept="image/*">
     <p class="meta" id="fhint" style="margin:4px 0 0"></p>
@@ -226,6 +227,7 @@ function matchFilter(b){
 function badges(b){
   return shownCats(b).map(c => '<span class="badge">' + esc(c) + "</span>").join("") +
     (b.contract_no ? '<span class="badge">Kontratë: ' + esc(b.contract_no) + "</span>" : "") +
+    (b.meter_no ? '<span class="badge">Matës: ' + esc(b.meter_no) + "</span>" : "") +
     (b.debtor ? '<span class="badge red">Debitor</span>' : "") + (b.is_cut ? '<span class="badge dark">Prerë</span>' : "");
 }
 function setSheet(i){ stateIdx = i; $("app").style.setProperty("--sh", STATES[i]); setTimeout(() => map.invalidateSize(), 300); }
@@ -269,7 +271,7 @@ function filterRows(){
   rows = allRows.filter(b => {
     if (!matchFilter(b)) return false;
     if (!t) return true;
-    return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone].join(" ").toLowerCase().includes(t);
+    return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone, b.meter_no, b.seal_no].join(" ").toLowerCase().includes(t);
   });
   render(!!t);
 }
@@ -313,7 +315,7 @@ function openDetail(id){
     (b.photoUrl ? '<a href="' + esc(b.photoUrl) + '" target="_blank" rel="noopener"><img class="big" alt="Foto" src="' + esc(b.photoUrl) + '"></a>' : '<div class="nophoto">Pa foto</div>') +
     '<div class="dpad"><h2>' + esc(b.name) + "</h2>" + badges(b) +
     '<dl class="dl"><dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd><dt>Debitor</dt><dd>" + (b.debtor ? "Po" : "Jo") + "</dd>" +
-    "<dt>Prerë</dt><dd>" + (b.is_cut ? "Po" : "Jo") + "</dd><dt>Telefoni</dt><dd>" + tel + "</dd><dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
+    "<dt>Nr. i matësit</dt><dd>" + (b.meter_no ? esc(b.meter_no) : "–") + "</dd><dt>Nr. i vulës</dt><dd>" + (b.seal_no ? esc(b.seal_no) : "–") + "</dd><dt>Prerë</dt><dd>" + (b.is_cut ? "Po" : "Jo") + "</dd><dt>Telefoni</dt><dd>" + tel + "</dd><dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
     "<dt>Koordinatat</dt><dd>" + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) + "</dd></dl>" +
     '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">' + ic("navigation") + ' Më ço atje</a>' +
     '<button class="alt" type="button" data-dgo="' + b.id + '">' + ic("map-pin") + " Shfaq në hartë</button>" +
@@ -339,7 +341,7 @@ function openForm(b){
   editingId = b ? b.id : null;
   $("ftitle").textContent = b ? "Ndrysho pikën" : "Shto pikë";
   $("n").value = b ? b.name : ""; $("k").value = b ? (b.contract_no || "") : ""; $("p").value = b ? (b.phone || "") : ""; $("t").value = b ? (b.note || "") : "";
-  $("d").checked = !!(b && b.debtor); $("cu").checked = !!(b && b.is_cut); $("f").value = "";
+  $("d").checked = !!(b && b.debtor); $("cu").checked = !!(b && b.is_cut); $("meterNo").value = b ? (b.meter_no || "") : ""; $("sealNo").value = b ? (b.seal_no || "") : ""; $("f").value = "";
   $("fhint").textContent = b && b.photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
   buildCats(b ? cats(b) : []);
   if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
@@ -443,6 +445,7 @@ $("add").onclick = async () => {
     }
     const fields = {name, categories: cs, category: cs[cs.length - 1], contract_no: $("k").value.trim(), debtor: $("d").checked, phone: $("p").value.trim(), note: $("t").value.trim(), lat: picked.lat, lng: picked.lng, photo_path};
     if ($("cu").checked || (old && old.is_cut)) fields.is_cut = $("cu").checked;
+    if ($("meterNo").value.trim() || $("sealNo").value.trim() || (old && (old.meter_no || old.seal_no))) { fields.meter_no = $("meterNo").value.trim(); fields.seal_no = $("sealNo").value.trim(); }
     if (editingId) {
       const {data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select();
       if (error) throw new Error(error.message);
@@ -716,14 +719,14 @@ icons();
   function recalc(pid, list){
     const b = ptOf(pid); if (!b) return;
     b._n = list.length; b._subArr = list;
-    b._subs = list.map(x => [x.full_name, x.contract_no, x.apartment, x.phone].join(" ")).join(" ");
+    b._subs = list.map(x => [x.full_name, x.contract_no, x.apartment, x.phone, x.meter_no, x.seal_no].join(" ")).join(" ");
   }
   async function loadSubs(){
     const {data: u} = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
     isAdm = !!(u && u.length);
     let all = [], from = 0;
     for (;;) {
-      const {data, error} = await sb.from("subscribers").select("point_id,full_name,contract_no,apartment,phone").range(from, from + 999);
+      const {data, error} = await sb.from("subscribers").select("*").range(from, from + 999);
       if (error || !data) break;
       all = all.concat(data);
       if (data.length < 1000) break;
@@ -742,7 +745,7 @@ icons();
     rows = allRows.filter(b => {
       if (!matchFilter(b)) return false;
       if (!t) return true;
-      return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone, b._subs || ""].join(" ").toLowerCase().includes(t);
+      return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone, b.meter_no, b.seal_no, b._subs || ""].join(" ").toLowerCase().includes(t);
     });
     render(!!t);
   };
@@ -753,7 +756,7 @@ icons();
     let h = obd(b);
     const t = $("q").value.trim().toLowerCase();
     if (t && b._subArr) {
-      const hit = b._subArr.filter(s => ((s.full_name || "") + " " + (s.contract_no || "")).toLowerCase().includes(t));
+      const hit = b._subArr.filter(s => ((s.full_name || "") + " " + (s.contract_no || "") + " " + (s.meter_no || "") + " " + (s.seal_no || "")).toLowerCase().includes(t));
       if (hit.length) h += '<div class="meta" style="color:#0a7d82;font-weight:600">Gjetur brenda: ' + hit.slice(0, 3).map(s => esc(s.full_name) + (s.apartment ? " (" + esc(s.apartment) + ")" : "")).join(", ") + (hit.length > 3 ? " +" + (hit.length - 3) + " të tjerë" : "") + "</div>";
     }
     return h;
@@ -774,7 +777,7 @@ icons();
       const t = $("q").value.trim().toLowerCase();
       if (t.length < 3) return;
       const hits = [];
-      allRows.forEach(b => (b._subArr || []).forEach(s => { if (((s.full_name || "") + " " + (s.contract_no || "")).toLowerCase().includes(t)) hits.push([s, b]); }));
+      allRows.forEach(b => (b._subArr || []).forEach(s => { if (((s.full_name || "") + " " + (s.contract_no || "") + " " + (s.meter_no || "") + " " + (s.seal_no || "")).toLowerCase().includes(t)) hits.push([s, b]); }));
       if (hits.length) toast(hits[0][0].full_name + " gjendet brenda: " + hits[0][1].name + (hits.length > 1 ? " (+" + (hits.length - 1) + " të tjerë)" : ""));
     }, 700);
   });
@@ -796,7 +799,7 @@ icons();
       (data.length ? data.map(s => {
         const mine = isAdm || s.created_by === me.id;
         return '<div class="sub"><b>' + esc(s.full_name) + "</b> " + (s.debtor ? '<span class="badge red">Debitor</span>' : "") + (s.is_cut ? '<span class="badge dark">Prerë</span>' : "") +
-          '<div class="meta">' + [s.apartment, s.contract_no ? "Kontratë: " + s.contract_no : "", s.phone].filter(Boolean).map(esc).join(" · ") + "</div>" +
+          '<div class="meta">' + [s.apartment, s.contract_no ? "Kontratë: " + s.contract_no : "", s.meter_no ? "Matës: " + s.meter_no : "", s.seal_no ? "Vulë: " + s.seal_no : "", s.phone].filter(Boolean).map(esc).join(" · ") + "</div>" +
           (s.meterUrl ? '<a href="' + esc(s.meterUrl) + '" target="_blank" rel="noopener"><img alt="Foto e sahatit" src="' + esc(s.meterUrl) + '" style="width:130px;height:96px;object-fit:cover;border-radius:8px;margin-top:6px;display:block"></a>' : "") +
           (mine ? '<div class="acts"><button class="alt" type="button" data-sedit="' + s.id + '">Ndrysho</button><button class="red" type="button" data-sdel="' + s.id + '">Fshij</button></div>' : "") + "</div>";
       }).join("") : '<p class="meta">Asnjë abonent ende.</p>') +
@@ -806,12 +809,13 @@ icons();
       '<div><label for="sK">Nr. i kontratës</label><input id="sK" maxlength="40"></div></div>' +
       '<div class="row"><div><label for="sP">Telefoni</label><input id="sP" type="tel" maxlength="30"></div>' +
       '<div><label class="chk" style="margin-top:22px"><input type="checkbox" id="sD"> Debitor</label><label class="chk" style="margin-top:6px"><input type="checkbox" id="sC"> Prerë</label></div></div>' +
+      '<div class="row"><div><label for="sM">Nr. i matësit</label><input id="sM" maxlength="40"></div><div><label for="sS">Nr. i vulës</label><input id="sS" maxlength="40"></div></div>' +
       '<label for="sF">Foto e sahatit (opsionale)</label><input id="sF" type="file" accept="image/*"><p class="meta" id="sFh" style="margin:4px 0 0"></p>' +
       '<div class="bar"><button id="sGo" type="button">Shto</button><button id="sCancel" type="button" class="alt hide">Anulo</button></div><p class="msg" id="sMsg"></p></div>';
   }
   function resetForm(){
     editing = null;
-    ["sName", "sApt", "sK", "sP", "sF"].forEach(i => { $(i).value = ""; }); $("sFh").textContent = "";
+    ["sName", "sApt", "sK", "sP", "sF", "sM", "sS"].forEach(i => { $(i).value = ""; }); $("sFh").textContent = "";
     $("sD").checked = false; $("sC").checked = false; $("sfT").textContent = "Shto abonent"; $("sGo").textContent = "Shto"; $("sCancel").classList.add("hide");
   }
   document.addEventListener("click", async e => {
@@ -822,7 +826,7 @@ icons();
     if (ed) {
       const s = cache.find(x => String(x.id) === ed.getAttribute("data-sedit")); if (!s) return;
       editing = s.id;
-      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor; $("sC").checked = !!s.is_cut; $("sF").value = ""; $("sFh").textContent = s.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
+      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor; $("sC").checked = !!s.is_cut; $("sM").value = s.meter_no || ""; $("sS").value = s.seal_no || ""; $("sF").value = ""; $("sFh").textContent = s.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
       $("sfT").textContent = "Ndrysho abonentin"; $("sGo").textContent = "Ruaj ndryshimin"; $("sCancel").classList.remove("hide");
       $("sName").scrollIntoView({block: "center"});
     }
@@ -840,6 +844,7 @@ icons();
       const row = {full_name: name, apartment: $("sApt").value.trim(), contract_no: $("sK").value.trim(), phone: $("sP").value.trim(), debtor: $("sD").checked};
       const sf = $("sF").files[0], oldS = editing ? cache.find(x => x.id === editing) : null;
       if ($("sC").checked || (oldS && oldS.is_cut)) row.is_cut = $("sC").checked;
+      if ($("sM").value.trim() || $("sS").value.trim() || (oldS && (oldS.meter_no || oldS.seal_no))) { row.meter_no = $("sM").value.trim(); row.seal_no = $("sS").value.trim(); }
       $("sGo").disabled = true;
       if (sf) {
         try {
