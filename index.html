@@ -23,7 +23,7 @@ label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 a{color:#0a7d82;font-weight:600}
 #app{position:fixed;inset:0;--sh:42dvh}
 #map{position:absolute;inset:0}
-.leaflet-top.leaflet-right{margin-top:112px}
+.leaflet-top.leaflet-right{margin-top:150px}
 .top{position:absolute;z-index:1000;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px))}
 .search{background:#fff;border-radius:26px;height:46px;display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;box-shadow:0 2px 10px rgba(0,0,0,.3);color:var(--mut)}
 .search input{border:0;padding:0;height:100%;border-radius:0;background:transparent;flex:1;min-width:0}
@@ -78,6 +78,8 @@ a{color:#0a7d82;font-weight:600}
 .pt{position:relative;width:24px;height:24px}
 .pt span{position:absolute;inset:4px;border-radius:50%;background:#13a3a8;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .pt.red span{background:#e24b4a}
+.pt.cut span{background:#546e7a}
+.badge.dark{background:#d9dee0;color:#33444a}
 .pt.pulse::before{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(19,163,168,.6);animation:pulse 1.3s ease-out infinite}
 .pt.red.pulse::before{background:rgba(226,75,74,.6)}
 @keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.8);opacity:0}}
@@ -117,6 +119,7 @@ a{color:#0a7d82;font-weight:600}
       <button id="out" type="button" aria-label="Dil"><i data-lucide="log-out"></i></button>
     </div>
     <div class="chips" id="chips"></div>
+    <div class="chips" id="chips2" style="margin-top:6px"></div>
   </div>
   <div class="fabs">
     <button id="layers" class="fab" type="button" aria-label="Satelit ose hartë normale"><i data-lucide="layers"></i></button>
@@ -154,8 +157,8 @@ a{color:#0a7d82;font-weight:600}
   <div class="mc">
     <h2 id="ftitle">Shto pikë</h2>
     <label for="n">Emri</label><input id="n" maxlength="80">
-    <label>Kategoritë (mund të zgjedhësh disa)</label><div class="chks" id="cats"></div>
-    <div class="chks"><label class="chk"><input type="checkbox" id="d"> Debitor</label></div>
+    <div class="row"><div><label for="catMain">Kategoria</label><select id="catMain"></select></div><div><label for="catSub">Nënkategoria</label><select id="catSub"></select></div></div>
+    <div class="chks" style="margin-top:10px"><label class="chk"><input type="checkbox" id="d"> Debitor</label><label class="chk"><input type="checkbox" id="cu"> Prerë</label></div>
     <div class="row"><div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div></div>
     <label for="t">Shënim</label><input id="t" maxlength="120">
     <label for="f">Foto e pikës (ndërtesa ose kolektori, opsionale)</label><input id="f" type="file" accept="image/*">
@@ -175,10 +178,19 @@ a{color:#0a7d82;font-weight:600}
 if (typeof SUPABASE_URL === "undefined") { document.body.innerHTML = '<p style="padding:20px;font:16px system-ui">Mungon skedari <b>config.js</b> në GitHub.</p>'; throw new Error("config.js missing"); }
 const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const CATS = ["Dyqan", "Lokal", "Institucion", "Guest house", "Hotel", "Kolektor"];
+const TREE = [
+  {key: "Banesa", label: "Banesa", subs: ["Shtëpi private", "Pallat"]},
+  {key: "Institucion", label: "Institucione", subs: ["Bashki", "Shkollë", "Qendër shëndetësore", "Institucione të tjera"]},
+  {key: "Biznese", label: "Biznese", subs: ["Hotel", "Guest house / Bujtinë", "Dyqan", "Lokal", "Restorant", "Bar-kafe", "Farmaci", "Market", "Zyrë", "Pikë karburanti", "Biznese të tjera"]},
+  {key: "Kolektor", label: "Kolektorë", subs: []}];
+const CATS = TREE.map(t => t.key);
+const MAIN = {};
+TREE.forEach(t => { MAIN[t.key] = t.key; t.subs.forEach(x => { MAIN[x] = t.key; }); });
+Object.assign(MAIN, {"Familje": "Banesa", "Guest house": "Biznese"});
+const LEGACY_SUB = {"Familje": "Shtëpi private", "Guest house": "Guest house / Bujtinë", "Institucion": "Institucione të tjera"};
 const STATES = ["56px", "42dvh", "80dvh"];
 let me = null, picked = null, pickMarker = null, pickMode = false, editingId = null;
-let rows = [], allRows = [], filter = "all", limit = 5, stateIdx = 1;
+let rows = [], allRows = [], filter = "all", subFilter = null, limit = 5, stateIdx = 1;
 let watchId = null, meMarker = null, firstFix = true, sat = true, timer = null, hadSearch = false;
 
 function icons(){ if (window.lucide) lucide.createIcons(); }
@@ -193,16 +205,28 @@ const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {ma
 satellite.addTo(map);
 const layer = L.layerGroup().addTo(map);
 const meIcon = L.divIcon({className: "", html: '<div class="me"><span></span></div>', iconSize: [22, 22]});
-function ptIcon(b, pulse){ return L.divIcon({className: "", iconSize: [24, 24], html: '<div class="pt' + (b.debtor ? " red" : "") + (pulse ? " pulse" : "") + '"><span></span></div>'}); }
+function ptIcon(b, pulse){ return L.divIcon({className: "", iconSize: [24, 24], html: '<div class="pt' + (b.debtor ? " red" : "") + (b.is_cut ? " cut" : "") + (pulse ? " pulse" : "") + '"><span></span></div>'}); }
 
 function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
 function say(id, t, err){ const e = $(id); e.textContent = t || ""; e.className = "msg" + (err ? " err" : ""); }
 function dirUrl(b){ return "https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng; }
 function cats(b){ return (b.categories && b.categories.length) ? b.categories : (b.category ? [b.category] : []); }
+function shownCats(b){
+  const cs = cats(b), sub = cs.filter(c => { const t = TREE.find(x => x.key === c); return !t || t.subs.length === 0; });
+  return sub.length ? sub : cs;
+}
+function matchFilter(b){
+  const cs = cats(b);
+  if (filter === "all") return true;
+  if (filter === "debt") return !!b.debtor;
+  if (filter === "cut") return !!b.is_cut;
+  if (!cs.some(c => MAIN[c] === filter)) return false;
+  return !subFilter || cs.indexOf(subFilter) >= 0 || (subFilter === "Shtëpi private" && cs.indexOf("Familje") >= 0) || (subFilter === "Guest house / Bujtinë" && cs.indexOf("Guest house") >= 0) || (subFilter === "Institucione të tjera" && cs.indexOf("Institucion") >= 0 && cs.length === 1);
+}
 function badges(b){
-  return cats(b).map(c => '<span class="badge">' + esc(c) + "</span>").join("") +
+  return shownCats(b).map(c => '<span class="badge">' + esc(c) + "</span>").join("") +
     (b.contract_no ? '<span class="badge">Kontratë: ' + esc(b.contract_no) + "</span>" : "") +
-    (b.debtor ? '<span class="badge red">Debitor</span>' : "");
+    (b.debtor ? '<span class="badge red">Debitor</span>' : "") + (b.is_cut ? '<span class="badge dark">Prerë</span>' : "");
 }
 function setSheet(i){ stateIdx = i; $("app").style.setProperty("--sh", STATES[i]); setTimeout(() => map.invalidateSize(), 300); }
 
@@ -243,8 +267,7 @@ function render(pulse){
 function filterRows(){
   const t = $("q").value.trim().toLowerCase();
   rows = allRows.filter(b => {
-    if (filter === "debt" && !b.debtor) return false;
-    if (filter !== "all" && filter !== "debt" && cats(b).indexOf(filter) < 0) return false;
+    if (!matchFilter(b)) return false;
     if (!t) return true;
     return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone].join(" ").toLowerCase().includes(t);
   });
@@ -261,8 +284,10 @@ $("q").addEventListener("input", () => {
   timer = setTimeout(() => { if ($("q").value.trim()) { hadSearch = true; fitRows(); } else if (hadSearch) { hadSearch = false; fitRows(); } }, 450);
 });
 function drawChips(){
-  const list = [["all", "Të gjitha"]].concat(CATS.map(c => [c, c]), [["debt", "Debitorë"]]);
-  $("chips").innerHTML = list.map(x => '<button type="button" class="chip' + (filter === x[0] ? " on" : "") + '" data-chip="' + esc(x[0]) + '">' + esc(x[1]) + "</button>").join("");
+  const main = [["all", "Të gjitha"]].concat(TREE.map(t => [t.key, t.label]), [["debt", "Debitorë"], ["cut", "Prerë"]]);
+  $("chips").innerHTML = main.map(x => '<button type="button" class="chip' + (filter === x[0] ? " on" : "") + '" data-chip="' + esc(x[0]) + '">' + esc(x[1]) + "</button>").join("");
+  const t = TREE.find(x => x.key === filter);
+  $("chips2").innerHTML = t && t.subs.length ? t.subs.map(x => '<button type="button" class="chip' + (subFilter === x ? " on" : "") + '" data-sub="' + esc(x) + '">' + esc(x) + "</button>").join("") : "";
 }
 drawChips();
 
@@ -288,7 +313,7 @@ function openDetail(id){
     (b.photoUrl ? '<a href="' + esc(b.photoUrl) + '" target="_blank" rel="noopener"><img class="big" alt="Foto" src="' + esc(b.photoUrl) + '"></a>' : '<div class="nophoto">Pa foto</div>') +
     '<div class="dpad"><h2>' + esc(b.name) + "</h2>" + badges(b) +
     '<dl class="dl"><dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd><dt>Debitor</dt><dd>" + (b.debtor ? "Po" : "Jo") + "</dd>" +
-    "<dt>Telefoni</dt><dd>" + tel + "</dd><dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
+    "<dt>Prerë</dt><dd>" + (b.is_cut ? "Po" : "Jo") + "</dd><dt>Telefoni</dt><dd>" + tel + "</dd><dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
     "<dt>Koordinatat</dt><dd>" + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) + "</dd></dl>" +
     '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">' + ic("navigation") + ' Më ço atje</a>' +
     '<button class="alt" type="button" data-dgo="' + b.id + '">' + ic("map-pin") + " Shfaq në hartë</button>" +
@@ -297,15 +322,24 @@ function openDetail(id){
   $("detail").classList.remove("hide"); $("detail").scrollTop = 0; icons();
 }
 function closeDetail(){ $("detail").classList.add("hide"); }
-function buildCats(sel){
-  const all = CATS.concat(sel.filter(x => CATS.indexOf(x) < 0));
-  $("cats").innerHTML = all.map(c => '<label class="chk"><input type="checkbox" name="cat" value="' + esc(c) + '"' + (sel.indexOf(c) >= 0 ? " checked" : "") + "> " + esc(c) + "</label>").join("");
+function fillSub(main, sel){
+  const t = TREE.find(x => x.key === main), has = !!(t && t.subs.length);
+  $("catSub").innerHTML = has ? t.subs.map(x => "<option>" + esc(x) + "</option>").join("") : '<option value="">–</option>';
+  $("catSub").disabled = !has;
+  if (has && sel && t.subs.indexOf(sel) >= 0) $("catSub").value = sel;
 }
+function buildCats(sel){
+  $("catMain").innerHTML = TREE.map(t => '<option value="' + esc(t.key) + '">' + esc(t.label) + "</option>").join("");
+  let main = TREE[0].key, sub = "";
+  sel.forEach(c => { const m = MAIN[c]; if (m) { main = m; if (c !== m) sub = LEGACY_SUB[c] || c; else if (LEGACY_SUB[c]) sub = LEGACY_SUB[c]; } });
+  $("catMain").value = main; fillSub(main, sub);
+}
+$("catMain").addEventListener("change", () => fillSub($("catMain").value, ""));
 function openForm(b){
   editingId = b ? b.id : null;
   $("ftitle").textContent = b ? "Ndrysho pikën" : "Shto pikë";
   $("n").value = b ? b.name : ""; $("k").value = b ? (b.contract_no || "") : ""; $("p").value = b ? (b.phone || "") : ""; $("t").value = b ? (b.note || "") : "";
-  $("d").checked = !!(b && b.debtor); $("f").value = "";
+  $("d").checked = !!(b && b.debtor); $("cu").checked = !!(b && b.is_cut); $("f").value = "";
   $("fhint").textContent = b && b.photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
   buildCats(b ? cats(b) : []);
   if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
@@ -319,10 +353,12 @@ function closeForm(){
   if (editingId) openDetail(editingId);
 }
 document.addEventListener("click", async e => {
-  const t = e.target.closest ? (e.target.closest("[data-chip],[data-go],[data-dgo],[data-edit],[data-ddel],#moreBtn,#dback") || e.target) : e.target;
+  const t = e.target.closest ? (e.target.closest("[data-chip],[data-sub],[data-go],[data-dgo],[data-edit],[data-ddel],#moreBtn,#dback") || e.target) : e.target;
   if (!t.getAttribute) return;
   const chip = t.getAttribute("data-chip"), go = t.getAttribute("data-go"), dgo = t.getAttribute("data-dgo"), edit = t.getAttribute("data-edit"), ddel = t.getAttribute("data-ddel");
-  if (chip !== null) { filter = chip; drawChips(); limit = 5; filterRows(); return; }
+  const sub = t.getAttribute("data-sub");
+  if (sub !== null) { subFilter = subFilter === sub ? null : sub; drawChips(); limit = 5; filterRows(); return; }
+  if (chip !== null) { filter = chip; subFilter = null; drawChips(); limit = 5; filterRows(); return; }
   if (t.id === "moreBtn") { limit += 5; render(!!$("q").value.trim()); return; }
   if (t.id === "dback") { closeDetail(); return; }
   if (go || dgo) {
@@ -390,7 +426,7 @@ $("loc").onclick = () => {
   navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); say("msg", ""); }, () => say("msg", "Vendndodhja nuk u lejua. Përdor “Zgjidh në hartë”.", true), {enableHighAccuracy: true});
 };
 $("add").onclick = async () => {
-  const name = $("n").value.trim(), cs = Array.from(document.querySelectorAll('input[name="cat"]:checked')).map(i => i.value);
+  const name = $("n").value.trim(), mainSel = $("catMain").value, subSel = $("catSub").value, cs = subSel ? [mainSel, subSel] : [mainSel];
   if (!name) return say("msg", "Shkruaj emrin.", true);
   if (!cs.length) return say("msg", "Zgjidh të paktën një kategori.", true);
   if (!picked) return say("msg", "Zgjidh një pikë: vendndodhjen tënde ose në hartë.", true);
@@ -405,7 +441,8 @@ $("add").onclick = async () => {
       if (upErr) throw new Error("Foto nuk u ngarkua: " + upErr.message);
       photo_path = path; newPhoto = true;
     }
-    const fields = {name, categories: cs, category: cs[0], contract_no: $("k").value.trim(), debtor: $("d").checked, phone: $("p").value.trim(), note: $("t").value.trim(), lat: picked.lat, lng: picked.lng, photo_path};
+    const fields = {name, categories: cs, category: cs[cs.length - 1], contract_no: $("k").value.trim(), debtor: $("d").checked, phone: $("p").value.trim(), note: $("t").value.trim(), lat: picked.lat, lng: picked.lng, photo_path};
+    if ($("cu").checked || (old && old.is_cut)) fields.is_cut = $("cu").checked;
     if (editingId) {
       const {data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select();
       if (error) throw new Error(error.message);
@@ -674,8 +711,6 @@ icons();
 </script>
 <script>
 (function(){
-  if (CATS.indexOf("Pallat") < 0) CATS.push("Familje", "Pallat");
-  drawChips();
   let isAdm = false, cache = [], editing = null;
   const ptOf = id => allRows.find(x => String(x.id) === String(id));
   function recalc(pid, list){
@@ -705,8 +740,7 @@ icons();
   filterRows = function(){
     const t = $("q").value.trim().toLowerCase();
     rows = allRows.filter(b => {
-      if (filter === "debt" && !b.debtor) return false;
-      if (filter !== "all" && filter !== "debt" && cats(b).indexOf(filter) < 0) return false;
+      if (!matchFilter(b)) return false;
       if (!t) return true;
       return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone, b._subs || ""].join(" ").toLowerCase().includes(t);
     });
@@ -761,7 +795,7 @@ icons();
     box.innerHTML = "<h3>Abonentët (" + data.length + ")</h3>" +
       (data.length ? data.map(s => {
         const mine = isAdm || s.created_by === me.id;
-        return '<div class="sub"><b>' + esc(s.full_name) + "</b> " + (s.debtor ? '<span class="badge red">Debitor</span>' : "") +
+        return '<div class="sub"><b>' + esc(s.full_name) + "</b> " + (s.debtor ? '<span class="badge red">Debitor</span>' : "") + (s.is_cut ? '<span class="badge dark">Prerë</span>' : "") +
           '<div class="meta">' + [s.apartment, s.contract_no ? "Kontratë: " + s.contract_no : "", s.phone].filter(Boolean).map(esc).join(" · ") + "</div>" +
           (s.meterUrl ? '<a href="' + esc(s.meterUrl) + '" target="_blank" rel="noopener"><img alt="Foto e sahatit" src="' + esc(s.meterUrl) + '" style="width:130px;height:96px;object-fit:cover;border-radius:8px;margin-top:6px;display:block"></a>' : "") +
           (mine ? '<div class="acts"><button class="alt" type="button" data-sedit="' + s.id + '">Ndrysho</button><button class="red" type="button" data-sdel="' + s.id + '">Fshij</button></div>' : "") + "</div>";
@@ -771,14 +805,14 @@ icons();
       '<div class="row"><div><label for="sApt">Hyrja, kati, apartamenti</label><input id="sApt" maxlength="60" placeholder="p.sh. Hyrja 2, kati 3, ap. 12"></div>' +
       '<div><label for="sK">Nr. i kontratës</label><input id="sK" maxlength="40"></div></div>' +
       '<div class="row"><div><label for="sP">Telefoni</label><input id="sP" type="tel" maxlength="30"></div>' +
-      '<div><label class="chk" style="margin-top:30px"><input type="checkbox" id="sD"> Debitor</label></div></div>' +
+      '<div><label class="chk" style="margin-top:22px"><input type="checkbox" id="sD"> Debitor</label><label class="chk" style="margin-top:6px"><input type="checkbox" id="sC"> Prerë</label></div></div>' +
       '<label for="sF">Foto e sahatit (opsionale)</label><input id="sF" type="file" accept="image/*"><p class="meta" id="sFh" style="margin:4px 0 0"></p>' +
       '<div class="bar"><button id="sGo" type="button">Shto</button><button id="sCancel" type="button" class="alt hide">Anulo</button></div><p class="msg" id="sMsg"></p></div>';
   }
   function resetForm(){
     editing = null;
     ["sName", "sApt", "sK", "sP", "sF"].forEach(i => { $(i).value = ""; }); $("sFh").textContent = "";
-    $("sD").checked = false; $("sfT").textContent = "Shto abonent"; $("sGo").textContent = "Shto"; $("sCancel").classList.add("hide");
+    $("sD").checked = false; $("sC").checked = false; $("sfT").textContent = "Shto abonent"; $("sGo").textContent = "Shto"; $("sCancel").classList.add("hide");
   }
   document.addEventListener("click", async e => {
     const box = e.target.closest ? e.target.closest("#subBox") : null;
@@ -788,7 +822,7 @@ icons();
     if (ed) {
       const s = cache.find(x => String(x.id) === ed.getAttribute("data-sedit")); if (!s) return;
       editing = s.id;
-      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor; $("sF").value = ""; $("sFh").textContent = s.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
+      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor; $("sC").checked = !!s.is_cut; $("sF").value = ""; $("sFh").textContent = s.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
       $("sfT").textContent = "Ndrysho abonentin"; $("sGo").textContent = "Ruaj ndryshimin"; $("sCancel").classList.remove("hide");
       $("sName").scrollIntoView({block: "center"});
     }
@@ -805,6 +839,7 @@ icons();
       if (!name) return say("sMsg", "Shkruaj emrin dhe mbiemrin.", true);
       const row = {full_name: name, apartment: $("sApt").value.trim(), contract_no: $("sK").value.trim(), phone: $("sP").value.trim(), debtor: $("sD").checked};
       const sf = $("sF").files[0], oldS = editing ? cache.find(x => x.id === editing) : null;
+      if ($("sC").checked || (oldS && oldS.is_cut)) row.is_cut = $("sC").checked;
       $("sGo").disabled = true;
       if (sf) {
         try {
