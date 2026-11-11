@@ -1131,10 +1131,12 @@ icons();
     ov.classList.remove("hide"); lucide.createIcons();
   }
 
-  async function loadProfile(){
-    const [p, u] = await Promise.all([sb.from("staff_profiles").select("*").eq("user_id", me.id).maybeSingle(), sb.from("uploaders").select("user_id").eq("user_id", me.id)]);
+  async function loadProfile(user){
+    const [p, u] = await Promise.all([sb.from("staff_profiles").select("*").eq("user_id", user.id).maybeSingle(), sb.from("uploaders").select("user_id").eq("user_id", user.id)]);
     prof = p.error ? null : p.data; isAdm = !!(u.data && u.data.length);
-    if (p.error && isAdm) toastMsg("Profili i stafit nuk u lexua: " + p.error.message + ". Kontrollo që SQL-i u krye.");
+    console.log("PikaBlu profili:", p.error ? p.error.message : p.data, "admin:", isAdm);
+    if (p.error) toastMsg("Profili i stafit nuk u lexua: " + p.error.message);
+    else if (!p.data) toastMsg("Nuk u gjet profil stafi për " + (user.email || "këtë llogari") + ". Kontrollo SQL-in e profilit.");
     btn.classList.toggle("hide", !canLog());
     applyLimits();
     if (prof && !shown) { shown = true; showWelcome(); }
@@ -1171,8 +1173,15 @@ icons();
   }
   tk.addEventListener("click", e => { if (e.target.closest("#tBack")) tk.classList.add("hide"); if (e.target.closest("#tRep")) { tk.classList.add("hide"); openReport(); } });
   const ol = load;
-  load = async function(){ await ol(); try { if (me) await loadProfile(); } catch (e) {} };
-  sb.auth.onAuthStateChange((_e, s) => { if (!s) { shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); applyLimits(); } });
+  load = async function(){ try { await ol(); } finally { applyLimits(); } };
+  let profFor = null;
+  function startProfile(user){
+    if (!user || profFor === user.id) return;
+    profFor = user.id;
+    setTimeout(() => { loadProfile(user).catch(err => { console.log("PikaBlu profili gabim:", err); toastMsg("Profili i stafit nuk u lexua: " + (err.message || err)); }); }, 300);
+  }
+  sb.auth.getSession().then(({data}) => { if (data.session) startProfile(data.session.user); });
+  sb.auth.onAuthStateChange((_e, s) => { if (s) startProfile(s.user); if (!s) { profFor = null; shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); applyLimits(); } });
 
   async function openReport(){
     ov.classList.add("hide");
