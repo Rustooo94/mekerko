@@ -105,6 +105,23 @@ a{color:#0a7d82;font-weight:600}
 .zr{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
 .rd{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none}
 .zr.on .rd{border:7px solid #0d3b45}
+.wcard{display:flex;background:#fff;border-radius:18px;max-width:640px;width:100%;max-height:92dvh;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.wside{flex:0 0 180px;background:linear-gradient(160deg,#0b5ed7,#13a3a8);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px;text-align:center}
+.wbrand{font-size:28px;font-weight:700}.wbrand b{color:#bff3f1}
+.wslogan{font-style:italic;font-size:14px;opacity:.9}
+.wmain{position:relative;flex:1;padding:22px 22px 18px;overflow-y:auto}
+.wx{position:absolute;right:10px;top:10px;background:transparent;color:#58797d;padding:4px}
+.wbell{width:46px;height:46px;border-radius:50%;background:#e6f0fd;color:#0b5ed7;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.wmain h2{margin:0 0 4px;font-size:23px;color:#0d2f5a}
+.wrole{font-weight:700;color:#0a7d82}
+.wtext{margin:12px 0;line-height:1.45;color:#26404a}
+.wchips{display:flex;flex-direction:column;gap:8px}
+.wchip{justify-content:flex-start;background:#eef5fd;color:#0d2f5a;border:1px solid #d6e6f8;font-weight:600}
+.wchip span{flex:1;text-align:left}
+.wsafe{display:flex;gap:8px;align-items:flex-start;margin-top:10px;background:#fff7e6;border:1px solid #f3d9a4;border-radius:10px;padding:8px 10px;font-size:13px;color:#6b4e16}
+.wbar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.wbar button:last-child{background:#0b5ed7}
+@media (max-width:560px){.wcard{flex-direction:column}.wside{flex:none;flex-direction:row;padding:12px 16px;justify-content:flex-start}.wside svg{width:34px;height:34px}.wslogan{display:none}.wbrand{font-size:22px}}
 </style>
 </head>
 <body>
@@ -1071,7 +1088,8 @@ icons();
 <script>
 (function(){
   const ROLES = {
-    prerje: {tasks: ["Kontrollon listën e abonentëve debitorë.", "Verifikon detyrimet dhe numrat e kontratave.", "Përgatit njoftimet për abonentët.", "Përgatit listat për ndërprerje.", "Koordinon ekipin teknik.", "Regjistron ndërprerjet e realizuara.", "Ndjek procedurat e rilidhjes.", "Përgatit raportin në fund të ditës."]}
+    admin: {tasks: [], safety: []},
+    prerje: {safety: ["Vish uniformën e punës dhe jelekun reflektues para se të dalësh në terren.", "Përdor këpucë sigurie dhe doreza pune gjatë hapjes së kasetave dhe kolektorëve.", "Mbaj me vete kartën e identifikimit të punonjësit dhe tregoja abonentit kur të kërkohet.", "Prerja kryhet gjithmonë e shoqëruar nga hidrauliku ose specialisti, asnjëherë vetëm.", "Sinjalizo zonën e punës kur hap kapakë pusetash ose punon pranë rrugës.", "Fotografo sahatin ose kasetën para dhe pas ndërhyrjes.", "Sillu me qetësi dhe respekt me abonentin. Në rast konflikti, ndërpre punën dhe njofto përgjegjësin.", "Mos prit ose rilidh pa u siguruar që numri i kontratës dhe abonenti janë të saktë."], tasks: ["Kontrollon listën e abonentëve debitorë.", "Verifikon detyrimet dhe numrat e kontratave.", "Përgatit njoftimet për abonentët.", "Përgatit listat për ndërprerje.", "Koordinon ekipin teknik.", "Regjistron ndërprerjet e realizuara.", "Ndjek procedurat e rilidhjes.", "Përgatit raportin në fund të ditës."]}
   };
   const ACTIONS = ["Kontroll", "Paralajmërim", "Prerje", "Rilidhje"];
   let prof = null, isAdm = false, shown = false, subsCache = [];
@@ -1091,25 +1109,70 @@ icons();
   btn.innerHTML = '<i data-lucide="clipboard-list"></i>';
   $("infoBtn").before(btn); lucide.createIcons();
 
-  function showWelcome(){
+  async function showWelcome(){
     const r = ROLES[prof.role] || {tasks: []};
-    ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:90dvh;overflow-y:auto;padding:22px">' +
-      '<p class="meta" style="margin:0">PikaBlu</p><h2 style="margin:2px 0 4px;font-size:22px">Përshëndetje, ' + esc((prof.salutation ? prof.salutation + " " : "") + prof.full_name) + "</h2>" +
-      '<div style="font-weight:600;color:#0a7d82">' + esc(prof.title || "") + '</div><div class="meta">' + esc(prof.sector || "") + "</div>" +
-      (r.tasks.length ? '<h3 style="margin:16px 0 6px;font-size:16px">Detyrat e tua</h3><ul style="margin:0;padding-left:20px;line-height:1.5">' + r.tasks.map(t => "<li>" + esc(t) + "</li>").join("") + "</ul>" : "") +
-      '<p class="meta" style="margin:12px 0 0">Hap një pikë në hartë (ose një debitor nga lista) dhe te seksioni <b>Ndërhyrjet</b> regjistro kontrollin, paralajmërimin, prerjen ose rilidhjen.</p>' +
-      '<div class="bar"><button type="button" id="wGo">Fillo punën</button><button type="button" class="alt" id="wRep">Raporti i ditës</button></div></div>';
-    ov.classList.remove("hide");
+    const nm = (prof.salutation ? prof.salutation + " " : "") + prof.full_name;
+    let nd = null;
+    try { const c = await sb.from("debtors").select("id", {count: "exact", head: true}); if (!c.error) nd = c.count; } catch (e) {}
+    const chip = (ic2, t, id) => '<button type="button" class="wchip" id="' + id + '"><i data-lucide="' + ic2 + '"></i><span>' + t + '</span><i data-lucide="chevron-right"></i></button>';
+    ov.innerHTML = '<div class="wcard">' +
+      '<div class="wside"><svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="#fff" stroke-width="1.6" aria-hidden="true"><path d="M12 2.7C9 6.6 5.5 10.6 5.5 14.4a6.5 6.5 0 0 0 13 0c0-3.8-3.5-7.8-6.5-11.7z" fill="rgba(255,255,255,.18)"/><path d="M9 15.2a3 3 0 0 0 3 2.8"/></svg>' +
+      '<div class="wbrand">Pika<b>Blu</b></div><div class="wslogan">Ujë për një jetë më të mirë</div></div>' +
+      '<div class="wmain"><button type="button" class="wx" id="wClose" aria-label="Mbyll"><i data-lucide="x"></i></button>' +
+      '<div class="wbell"><i data-lucide="bell"></i></div>' +
+      '<h2>Përshëndetje, ' + esc(nm) + '!</h2>' +
+      '<div class="wrole">' + esc(prof.title || "") + '</div><div class="meta">' + esc(prof.sector || "") + '</div>' +
+      '<p class="wtext">Jeni identifikuar me sukses në sistemin PikaBlu. Kontrolloni detyrat dhe listën e debitorëve për sot.</p>' +
+      '<div class="wchips">' + (r.tasks.length ? chip("clipboard-list", "Keni " + r.tasks.length + " detyra për sot", "wTasks") : "") +
+      chip("banknote", nd != null ? nd + " debitorë në listë" : "Lista e debitorëve", "wDebts") + "</div>" +
+      (r.safety && r.safety.length ? '<div class="wsafe"><i data-lucide="hard-hat"></i><span>' + esc(r.safety[0]) + "</span></div>" : "") +
+      '<div class="wbar"><button type="button" class="alt" id="wRep">Raporti i ditës</button>' +
+      (r.tasks.length ? '<button type="button" id="wTasks2">Shiko detyrat <i data-lucide="arrow-right"></i></button>' : '<button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button>') + "</div></div></div>";
+    ov.classList.remove("hide"); lucide.createIcons();
   }
+
   async function loadProfile(){
     const [p, u] = await Promise.all([sb.from("staff_profiles").select("*").eq("user_id", me.id).maybeSingle(), sb.from("uploaders").select("user_id").eq("user_id", me.id)]);
     prof = p.error ? null : p.data; isAdm = !!(u.data && u.data.length);
+    if (p.error && isAdm) toastMsg("Profili i stafit nuk u lexua: " + p.error.message + ". Kontrollo që SQL-i u krye.");
     btn.classList.toggle("hide", !canLog());
+    applyLimits();
     if (prof && !shown) { shown = true; showWelcome(); }
   }
+  function toastMsg(t){
+    let el = $("stToast");
+    if (!el) { el = document.createElement("div"); el.id = "stToast"; el.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:3600;background:#a32d2d;color:#fff;padding:10px 16px;border-radius:12px;max-width:90vw;font-size:14px"; document.body.appendChild(el); }
+    el.textContent = t; el.style.display = "block"; setTimeout(() => { el.style.display = "none"; }, 9000);
+  }
+  function limited(){ return !!(prof && prof.role === "prerje") && !isAdm; }
+  function applyLimits(){
+    const lim = limited();
+    ["addBtn", "planBtn2", "netBtn3"].forEach(id => { const e = $(id); if (e) e.classList.toggle("hide", lim); });
+    if (lim) {
+      const pn = $("netpanel3"); if (pn) pn.classList.add("hide");
+      const cb = $("nT3"); if (cb && cb.checked) { cb.checked = false; cb.dispatchEvent(new Event("change")); }
+      document.querySelectorAll("[data-edit],[data-ddel]").forEach(e => e.classList.add("hide"));
+    }
+  }
+  const tk = document.createElement("div");
+  tk.id = "tasksPage"; tk.className = "hide";
+  tk.style.cssText = "position:fixed;inset:0;z-index:2560;background:#fff;overflow-y:auto";
+  document.body.appendChild(tk);
+  function openTasks(){
+    ov.classList.add("hide");
+    const r = ROLES[prof.role] || {tasks: [], safety: []};
+    tk.innerHTML = '<div class="dhead"><button type="button" id="tBack"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Detyrat e mia</b></div><div class="dpad" style="max-width:640px;margin:0 auto">' +
+      '<h2>' + esc((prof.salutation ? prof.salutation + " " : "") + prof.full_name) + '</h2><div style="font-weight:600;color:#0a7d82">' + esc(prof.title || "") + '</div><div class="meta">' + esc(prof.sector || "") + "</div>" +
+      '<div class="pfc" style="margin-top:14px;flex-direction:column;align-items:stretch"><b><i data-lucide="list-checks"></i> Detyrat</b><ol style="margin:6px 0 0;padding-left:22px;line-height:1.6">' + r.tasks.map(t => "<li>" + esc(t) + "</li>").join("") + "</ol></div>" +
+      '<div class="pfc" style="flex-direction:column;align-items:stretch;background:#fff7e6;border-color:#f3d9a4"><b><i data-lucide="hard-hat"></i> Siguria në punë</b><ul style="margin:6px 0 0;padding-left:22px;line-height:1.6">' + (r.safety || []).map(t => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
+      '<div class="pfc" style="flex-direction:column;align-items:stretch"><b><i data-lucide="map"></i> Si punohet me hartën</b><ol style="margin:6px 0 0;padding-left:22px;line-height:1.6"><li>Hap <b>Listën e debitorëve</b> (ikona e kartëmonedhës) dhe zgjidh zonën.</li><li>Te debitori shtyp <b>Shfaq në hartë</b> dhe hapet pika e tij.</li><li>Te seksioni <b>Ndërhyrjet</b> zgjidh abonentin, veprimin, stafin shoqërues dhe shto foto e shënime.</li><li>Në fund të ditës hap <b>Raporti i ditës</b> dhe shkarko Excel-in.</li></ol></div>' +
+      '<div class="bar"><button type="button" id="tRep"><i data-lucide="file-text"></i> Raporti i ditës</button></div></div>';
+    tk.classList.remove("hide"); lucide.createIcons();
+  }
+  tk.addEventListener("click", e => { if (e.target.closest("#tBack")) tk.classList.add("hide"); if (e.target.closest("#tRep")) { tk.classList.add("hide"); openReport(); } });
   const ol = load;
   load = async function(){ await ol(); try { if (me) await loadProfile(); } catch (e) {} };
-  sb.auth.onAuthStateChange((_e, s) => { if (!s) { shown = false; prof = null; ov.classList.add("hide"); rp.classList.add("hide"); btn.classList.add("hide"); } });
+  sb.auth.onAuthStateChange((_e, s) => { if (!s) { shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); applyLimits(); } });
 
   async function openReport(){
     ov.classList.add("hide");
@@ -1139,8 +1202,13 @@ icons();
     }
   });
   rp.addEventListener("change", e => { if (e.target.id === "rDay") drawReport(); });
-  ov.addEventListener("click", e => { if (e.target.closest("#wGo")) ov.classList.add("hide"); if (e.target.closest("#wRep")) openReport(); });
-  btn.onclick = () => { if (prof) showWelcome(); else openReport(); };
+  ov.addEventListener("click", e => {
+    if (e.target === ov || e.target.closest("#wGo") || e.target.closest("#wClose")) ov.classList.add("hide");
+    if (e.target.closest("#wRep")) openReport();
+    if (e.target.closest("#wTasks") || e.target.closest("#wTasks2")) openTasks();
+    if (e.target.closest("#wDebts")) { ov.classList.add("hide"); const d = $("debtBtn"); if (d) d.click(); }
+  });
+  btn.onclick = () => { if (prof && (ROLES[prof.role] || {tasks: []}).tasks.length) openTasks(); else if (prof) showWelcome(); else openReport(); };
 
   async function drawIv(pid){
     const box = $("ivBox"); if (!box) return;
@@ -1206,7 +1274,7 @@ icons();
     od(id);
     const d = document.querySelector("#detail .dpad"); if (!d || !allRows.find(x => String(x.id) === String(id))) return;
     const box = document.createElement("div"); box.id = "ivBox"; d.appendChild(box);
-    drawIv(id);
+    drawIv(id); applyLimits();
   };
 })();
 </script>
