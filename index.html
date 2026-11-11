@@ -1068,5 +1068,147 @@ icons();
 })();
 
 </script>
+<script>
+(function(){
+  const ROLES = {
+    prerje: {tasks: ["Kontrollon listën e abonentëve debitorë.", "Verifikon detyrimet dhe numrat e kontratave.", "Përgatit njoftimet për abonentët.", "Përgatit listat për ndërprerje.", "Koordinon ekipin teknik.", "Regjistron ndërprerjet e realizuara.", "Ndjek procedurat e rilidhjes.", "Përgatit raportin në fund të ditës."]}
+  };
+  const ACTIONS = ["Kontroll", "Paralajmërim", "Prerje", "Rilidhje"];
+  let prof = null, isAdm = false, shown = false, subsCache = [];
+  const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const canLog = () => !!(prof && ROLES[prof.role]) || isAdm;
+
+  const ov = document.createElement("div");
+  ov.id = "welcome"; ov.className = "hide";
+  ov.style.cssText = "position:fixed;inset:0;z-index:2600;background:rgba(6,30,40,.65);display:flex;align-items:center;justify-content:center;padding:16px";
+  document.body.appendChild(ov);
+  const rp = document.createElement("div");
+  rp.id = "report"; rp.className = "hide";
+  rp.style.cssText = "position:fixed;inset:0;z-index:2550;background:#fff;overflow-y:auto";
+  document.body.appendChild(rp);
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.id = "staffBtn"; btn.className = "hide"; btn.setAttribute("aria-label", "Detyrat dhe raporti");
+  btn.innerHTML = '<i data-lucide="clipboard-list"></i>';
+  $("infoBtn").before(btn); lucide.createIcons();
+
+  function showWelcome(){
+    const r = ROLES[prof.role] || {tasks: []};
+    ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:90dvh;overflow-y:auto;padding:22px">' +
+      '<p class="meta" style="margin:0">PikaBlu</p><h2 style="margin:2px 0 4px;font-size:22px">Përshëndetje, ' + esc((prof.salutation ? prof.salutation + " " : "") + prof.full_name) + "</h2>" +
+      '<div style="font-weight:600;color:#0a7d82">' + esc(prof.title || "") + '</div><div class="meta">' + esc(prof.sector || "") + "</div>" +
+      (r.tasks.length ? '<h3 style="margin:16px 0 6px;font-size:16px">Detyrat e tua</h3><ul style="margin:0;padding-left:20px;line-height:1.5">' + r.tasks.map(t => "<li>" + esc(t) + "</li>").join("") + "</ul>" : "") +
+      '<p class="meta" style="margin:12px 0 0">Hap një pikë në hartë (ose një debitor nga lista) dhe te seksioni <b>Ndërhyrjet</b> regjistro kontrollin, paralajmërimin, prerjen ose rilidhjen.</p>' +
+      '<div class="bar"><button type="button" id="wGo">Fillo punën</button><button type="button" class="alt" id="wRep">Raporti i ditës</button></div></div>';
+    ov.classList.remove("hide");
+  }
+  async function loadProfile(){
+    const [p, u] = await Promise.all([sb.from("staff_profiles").select("*").eq("user_id", me.id).maybeSingle(), sb.from("uploaders").select("user_id").eq("user_id", me.id)]);
+    prof = p.error ? null : p.data; isAdm = !!(u.data && u.data.length);
+    btn.classList.toggle("hide", !canLog());
+    if (prof && !shown) { shown = true; showWelcome(); }
+  }
+  const ol = load;
+  load = async function(){ await ol(); try { if (me) await loadProfile(); } catch (e) {} };
+  sb.auth.onAuthStateChange((_e, s) => { if (!s) { shown = false; prof = null; ov.classList.add("hide"); rp.classList.add("hide"); btn.classList.add("hide"); } });
+
+  async function openReport(){
+    ov.classList.add("hide");
+    rp.innerHTML = '<div class="dhead"><button type="button" id="rBack"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Raporti i ditës</b></div><div class="dpad" style="max-width:720px;margin:0 auto">' +
+      '<div class="bar" style="margin:0 0 10px"><input type="date" id="rDay" value="' + today() + '" style="width:auto"><button type="button" class="alt" id="rXls"><i data-lucide="download"></i> Shkarko Excel</button></div><div id="rBody" class="meta">Duke ngarkuar…</div></div>';
+    rp.classList.remove("hide"); lucide.createIcons(); drawReport();
+  }
+  let repRows = [];
+  async function drawReport(){
+    const day = $("rDay").value;
+    let q = sb.from("interventions").select("*").eq("check_date", day).order("created_at");
+    if (!isAdm) q = q.eq("created_by", me.id);
+    const {data, error} = await q;
+    if (error) { $("rBody").innerHTML = '<p class="msg err">S’u lexua raporti. Kontrollo që SQL-i u krye.</p>'; return; }
+    repRows = data;
+    const cnt = {}; ACTIONS.forEach(a => cnt[a] = 0); data.forEach(r => { cnt[r.action] = (cnt[r.action] || 0) + 1; });
+    const pt = id => { const b = allRows.find(x => x.id === id); return b ? b.name : "–"; };
+    $("rBody").innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">' + ACTIONS.map(a => '<div class="upbox" style="margin:0;text-align:center"><div style="font-size:24px;font-weight:700;color:#0a7d82">' + cnt[a] + '</div><div class="meta">' + a + "</div></div>").join("") + "</div>" +
+      (data.length ? data.map(r => '<div class="drow"><b>' + esc(r.action) + " · " + esc(r.subscriber_name || pt(r.point_id)) + '</b><div class="meta">' + esc(pt(r.point_id)) + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + " · " + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + "</div>" + (r.note ? "<div>" + esc(r.note) + "</div>" : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje e regjistruar për këtë ditë.</p>');
+  }
+  rp.addEventListener("click", e => {
+    if (e.target.closest("#rBack")) rp.classList.add("hide");
+    if (e.target.closest("#rXls")) {
+      const pt = id => { const b = allRows.find(x => x.id === id); return b ? b.name : ""; };
+      const ws = XLSX.utils.json_to_sheet(repRows.map(r => ({"Data": r.check_date, "Veprimi": r.action, "Pika": pt(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Stafi": r.staff_kind || "", "Emri i stafit": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""})));
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Raporti"); XLSX.writeFile(wb, "raporti_" + $("rDay").value + ".xlsx");
+    }
+  });
+  rp.addEventListener("change", e => { if (e.target.id === "rDay") drawReport(); });
+  ov.addEventListener("click", e => { if (e.target.closest("#wGo")) ov.classList.add("hide"); if (e.target.closest("#wRep")) openReport(); });
+  btn.onclick = () => { if (prof) showWelcome(); else openReport(); };
+
+  async function drawIv(pid){
+    const box = $("ivBox"); if (!box) return;
+    const b = allRows.find(x => String(x.id) === String(pid));
+    const [iv, sb2] = await Promise.all([sb.from("interventions").select("*").eq("point_id", pid).order("check_date", {ascending: false}).order("created_at", {ascending: false}),
+      sb.from("subscribers").select("id,full_name,contract_no,apartment").eq("point_id", pid).order("apartment")]);
+    if (iv.error) { box.innerHTML = '<h3>Ndërhyrjet</h3><p class="msg err">S’u lexuan ndërhyrjet. Kontrollo që SQL-i u krye.</p>'; return; }
+    subsCache = sb2.data || [];
+    const ph = iv.data.filter(r => r.photo_path).map(r => r.photo_path), um = {};
+    if (ph.length) { const {data: us} = await sb.storage.from("photos").createSignedUrls(ph, 3600); (us || []).forEach(u => { if (u.signedUrl) um[u.path] = u.signedUrl; }); }
+    let h = "<h3>Ndërhyrjet (" + iv.data.length + ")</h3>" + (iv.data.length ? iv.data.slice(0, 20).map(r =>
+      '<div class="sub"><b>' + esc(r.action) + "</b> · " + esc(r.check_date) + (r.subscriber_name ? " · " + esc(r.subscriber_name) : "") +
+      '<div class="meta">' + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + (r.created_name ? " · regjistruar nga " + esc(r.created_name) : "") + "</div>" +
+      (r.note ? "<div>" + esc(r.note) + "</div>" : "") +
+      (um[r.photo_path] ? '<a href="' + esc(um[r.photo_path]) + '" target="_blank" rel="noopener"><img alt="Foto e ndërhyrjes" src="' + esc(um[r.photo_path]) + '" style="width:130px;height:96px;object-fit:cover;border-radius:8px;margin-top:6px;display:block"></a>' : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje ende.</p>');
+    if (canLog()) {
+      h += '<div class="upbox" style="margin-top:10px"><b>Regjistro ndërhyrje</b>' +
+        (subsCache.length ? '<label for="ivSub">Abonenti</label><select id="ivSub"><option value="">E gjithë pika</option>' + subsCache.map(x => '<option value="' + x.id + '">' + esc(x.full_name + (x.apartment ? " (" + x.apartment + ")" : "")) + "</option>").join("") + "</select>" : "") +
+        '<div class="row"><div><label for="ivDate">Data e kontrollit</label><input id="ivDate" type="date" value="' + today() + '"></div>' +
+        '<div><label for="ivAct">Veprimi</label><select id="ivAct">' + ACTIONS.map(a => "<option>" + a + "</option>").join("") + "</select></div></div>" +
+        '<div class="row"><div><label for="ivKind">Stafi shoqërues</label><select id="ivKind"><option>Hidraulik</option><option>Specialist</option></select></div>' +
+        '<div><label for="ivName">Emri i stafit</label><input id="ivName" maxlength="80"></div></div>' +
+        '<label for="ivNote">Shënime dhe dokumentacion</label><input id="ivNote" maxlength="300">' +
+        '<label for="ivF">Foto e ndërhyrjes (opsionale)</label><input id="ivF" type="file" accept="image/*">' +
+        '<label class="chk" style="margin-top:8px"><input type="checkbox" id="ivSet" checked> Përditëso statusin “Prerë” sipas veprimit</label>' +
+        '<div class="bar"><button type="button" id="ivGo">Ruaj ndërhyrjen</button></div><p class="msg" id="ivMsg"></p></div>';
+    }
+    box.innerHTML = h; box.dataset.pid = pid;
+  }
+  document.addEventListener("click", async e => {
+    if (!e.target.closest || !e.target.closest("#ivGo")) return;
+    const box = $("ivBox"), pid = +box.dataset.pid, b = allRows.find(x => x.id === pid);
+    const sid = $("ivSub") ? $("ivSub").value : "", s = subsCache.find(x => String(x.id) === sid);
+    const act = $("ivAct").value, f = $("ivF").files[0];
+    if (!$("ivDate").value) return say("ivMsg", "Zgjidh datën.", true);
+    $("ivGo").disabled = true; say("ivMsg", "Duke ruajtur…");
+    try {
+      let photo_path = null;
+      if (f) {
+        const blob = await shrink(f), path = me.id + "/i" + Date.now() + ".jpg";
+        const up = await sb.storage.from("photos").upload(path, blob, {contentType: "image/jpeg"});
+        if (up.error) throw up.error;
+        photo_path = path;
+      }
+      const row = {point_id: pid, subscriber_id: s ? s.id : null, subscriber_name: s ? s.full_name : null, contract_no: s ? (s.contract_no || null) : (b ? b.contract_no || null : null),
+        check_date: $("ivDate").value, action: act, staff_kind: $("ivKind").value, staff_name: $("ivName").value.trim(), note: $("ivNote").value.trim(), photo_path,
+        created_name: prof ? prof.full_name : ((me.user_metadata && me.user_metadata.username) || me.email)};
+      const {error} = await sb.from("interventions").insert(row);
+      if (error) throw error;
+      let warn = "";
+      if ($("ivSet").checked && (act === "Prerje" || act === "Rilidhje")) {
+        const v = act === "Prerje";
+        const r2 = s ? await sb.from("subscribers").update({is_cut: v}).eq("id", s.id).select() : await sb.from("businesses").update({is_cut: v}).eq("id", pid).select();
+        if (r2.error || !r2.data || !r2.data.length) warn = " Statusi “Prerë” nuk u përditësua (mungon leja).";
+      }
+      say("ivMsg", "U ruajt." + warn, !!warn);
+      if (!s && !warn && (act === "Prerje" || act === "Rilidhje") && $("ivSet").checked) { await load(); openDetail(pid); return; }
+      await drawIv(pid);
+    } catch (err) { say("ivMsg", "S’u ruajt: " + (err.message || err), true); $("ivGo").disabled = false; }
+  });
+  const od = openDetail;
+  openDetail = function(id){
+    od(id);
+    const d = document.querySelector("#detail .dpad"); if (!d || !allRows.find(x => String(x.id) === String(id))) return;
+    const box = document.createElement("div"); box.id = "ivBox"; d.appendChild(box);
+    drawIv(id);
+  };
+})();
+</script>
 </body>
 </html>
