@@ -165,7 +165,8 @@ a{color:#0a7d82;font-weight:600}
     <div class="row"><div><label for="meterNo">Nr. i matësit</label><input id="meterNo" maxlength="40"></div><div><label for="sealNo">Nr. i vulës</label><input id="sealNo" maxlength="40"></div></div>
     </div>
     <label for="t">Shënim</label><input id="t" maxlength="120">
-    <label for="f">Foto e pikës (ndërtesa ose kolektori, opsionale)</label><input id="f" type="file" accept="image/*">
+    <label for="f" id="fLbl">Foto e pikës (ndërtesa ose kolektori, opsionale)</label><input id="f" type="file" accept="image/*">
+    <div id="casBox" class="hide"><label for="f2">Foto e kasetës së përbashkët (opsionale)</label><input id="f2" type="file" accept="image/*"><p class="meta" id="fhint2" style="margin:4px 0 0"></p></div>
     <p class="meta" id="fhint" style="margin:4px 0 0"></p>
     <p class="meta" id="coords" style="margin:10px 0 0">Pika nuk është zgjedhur.</p>
     <div class="bar"><button id="loc" type="button" class="alt"><i data-lucide="locate-fixed"></i> Vendndodhja ime</button><button id="pickmap" type="button" class="alt"><i data-lucide="crosshair"></i> Zgjidh në hartë</button></div>
@@ -183,7 +184,7 @@ if (typeof SUPABASE_URL === "undefined") { document.body.innerHTML = '<p style="
 const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const TREE = [
-  {key: "Banesa", label: "Banesa", subs: ["Shtëpi private", "Pallat"]},
+  {key: "Banesa", label: "Banesa", subs: ["Shtëpi private", "Pallat", "Pallat me kasetë të përbashkët"]},
   {key: "Institucion", label: "Institucione", subs: ["Bashki", "Shkollë", "Qendër shëndetësore", "Institucione të tjera"]},
   {key: "Biznese", label: "Biznese", subs: ["Hotel", "Guest house / Bujtinë", "Dyqan", "Lokal", "Restorant", "Bar-kafe", "Farmaci", "Market", "Zyrë", "Pikë karburanti", "Biznese të tjera"]},
   {key: "Kolektor", label: "Kolektorë", subs: []}];
@@ -299,11 +300,12 @@ drawChips();
 async function load(){
   const {data, error} = await sb.from("businesses").select("*").order("created_at", {ascending: false});
   if (error) { $("list").innerHTML = '<p class="msg err">S’u lexuan të dhënat. Kontrollo kodet e Supabase.</p>'; return; }
-  const paths = data.filter(b => b.photo_path).map(b => b.photo_path);
+  const paths = [];
+  data.forEach(b => { if (b.photo_path) paths.push(b.photo_path); if (b.meter_photo_path) paths.push(b.meter_photo_path); });
   if (paths.length) {
     const {data: urls} = await sb.storage.from("photos").createSignedUrls(paths, 3600), m = {};
     (urls || []).forEach(u => { if (u.signedUrl) m[u.path] = u.signedUrl; });
-    data.forEach(b => { if (b.photo_path) b.photoUrl = m[b.photo_path]; });
+    data.forEach(b => { if (b.photo_path) b.photoUrl = m[b.photo_path]; if (b.meter_photo_path) b.casUrl = m[b.meter_photo_path]; });
   }
   allRows = data; filterRows();
 }
@@ -312,14 +314,16 @@ function openDetail(id){
   const b = allRows.find(x => String(x.id) === String(id));
   if (!b) return;
   const own = me && b.owner === me.id;
+  const hideOwn = isMultiPoint(b) && !(b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut);
   const tel = b.phone ? '<a href="tel:' + esc(b.phone.replace(/[^\d+]/g, "")) + '">' + esc(b.phone) + "</a>" : "–";
   $("detail").innerHTML =
     '<div class="dhead"><button id="dback" type="button">' + ic("arrow-left") + ' Mbrapa</button><b>Detajet e pikës</b></div><div class="dbody">' +
     (b.photoUrl ? '<a href="' + esc(b.photoUrl) + '" target="_blank" rel="noopener"><img class="big" alt="Foto" src="' + esc(b.photoUrl) + '"></a>' : '<div class="nophoto">Pa foto</div>') +
     '<div class="dpad"><h2>' + esc(b.name) + "</h2>" + badges(b) +
-    '<dl class="dl"><dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd><dt>Debitor</dt><dd>" + (b.debtor ? "Po" : "Jo") + "</dd>" +
-    "<dt>Nr. i matësit</dt><dd>" + (b.meter_no ? esc(b.meter_no) : "–") + "</dd><dt>Nr. i vulës</dt><dd>" + (b.seal_no ? esc(b.seal_no) : "–") + "</dd><dt>Prerë</dt><dd>" + (b.is_cut ? "Po" : "Jo") + "</dd><dt>Telefoni</dt><dd>" + tel + "</dd><dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
+    '<dl class="dl">' + (hideOwn ? "" : '<dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd><dt>Debitor</dt><dd>" + (b.debtor ? "Po" : "Jo") + "</dd>" +
+    "<dt>Nr. i matësit</dt><dd>" + (b.meter_no ? esc(b.meter_no) : "–") + "</dd><dt>Nr. i vulës</dt><dd>" + (b.seal_no ? esc(b.seal_no) : "–") + "</dd><dt>Prerë</dt><dd>" + (b.is_cut ? "Po" : "Jo") + "</dd><dt>Telefoni</dt><dd>" + tel + "</dd>") + "<dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
     "<dt>Koordinatat</dt><dd>" + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) + "</dd></dl>" +
+    (b.casUrl ? '<h3>Foto e kasetës së përbashkët</h3><a href="' + esc(b.casUrl) + '" target="_blank" rel="noopener"><img alt="Foto e kasetës" src="' + esc(b.casUrl) + '" style="width:100%;border-radius:12px;max-height:50vh;object-fit:cover;margin-bottom:8px"></a>' : "") +
     '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">' + ic("navigation") + ' Më ço atje</a>' +
     '<button class="alt" type="button" data-dgo="' + b.id + '">' + ic("map-pin") + " Shfaq në hartë</button>" +
     (own ? '<button type="button" data-edit="' + b.id + '">' + ic("pencil") + ' Ndrysho</button><button class="red" type="button" data-ddel="' + b.id + '">' + ic("trash-2") + " Fshij</button>" : "") +
@@ -339,9 +343,13 @@ function buildCats(sel){
   sel.forEach(c => { const m = MAIN[c]; if (m) { main = m; if (c !== m) sub = LEGACY_SUB[c] || c; else if (LEGACY_SUB[c]) sub = LEGACY_SUB[c]; } });
   $("catMain").value = main; fillSub(main, sub);
 }
-function isMulti(){ const m = $("catMain").value, sb2 = $("catSub").value; return m === "Kolektor" || (m === "Banesa" && sb2 === "Pallat"); }
+const MULTI = ["Kolektor", "Pallat", "Pallat me kasetë të përbashkët"];
+function isMultiPoint(b){ return cats(b).some(c => MULTI.indexOf(c) >= 0); }
+function isMulti(){ const m = $("catMain").value, sb2 = $("catSub").value; return m === "Kolektor" || (m === "Banesa" && (sb2 === "Pallat" || sb2 === "Pallat me kasetë të përbashkët")); }
 function syncOwn(){
-  const multi = isMulti();
+  const multi = isMulti(), cas = $("catMain").value === "Banesa" && $("catSub").value === "Pallat me kasetë të përbashkët";
+  $("casBox").classList.toggle("hide", !cas);
+  $("fLbl").textContent = cas ? "Foto e hyrjes së pallatit (opsionale)" : "Foto e pikës (ndërtesa ose kolektori, opsionale)";
   $("multiNote").classList.toggle("hide", !multi);
   $("ownFields").classList.toggle("hide", multi && !$("ownData").checked);
 }
@@ -355,7 +363,8 @@ function openForm(b){
   $("d").checked = !!(b && b.debtor); $("cu").checked = !!(b && b.is_cut); $("meterNo").value = b ? (b.meter_no || "") : ""; $("sealNo").value = b ? (b.seal_no || "") : ""; $("f").value = "";
   $("fhint").textContent = b && b.photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
   buildCats(b ? cats(b) : []);
-  $("ownData").checked = !!(b && (b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut)); syncOwn();
+  $("ownData").checked = !!(b && (b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut));
+  $("f2").value = ""; $("fhint2").textContent = b && b.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : ""; syncOwn();
   if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
   picked = b ? {lat: b.lat, lng: b.lng} : null;
   $("coords").textContent = b ? "Pika aktuale: " + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) : "Pika nuk është zgjedhur.";
@@ -387,7 +396,7 @@ document.addEventListener("click", async e => {
     const b = allRows.find(x => String(x.id) === ddel);
     const {error} = await sb.from("businesses").delete().eq("id", ddel);
     if (error) return alert("S’u fshi.");
-    if (b && b.photo_path) await sb.storage.from("photos").remove([b.photo_path]);
+    if (b) { const rm = [b.photo_path, b.meter_photo_path].filter(Boolean); if (rm.length) await sb.storage.from("photos").remove(rm); }
     closeDetail(); load(); return;
   }
   const it = e.target.closest ? e.target.closest(".item") : null;
@@ -455,14 +464,29 @@ $("add").onclick = async () => {
       if (upErr) throw new Error("Foto nuk u ngarkua: " + upErr.message);
       photo_path = path; newPhoto = true;
     }
+    let cas_path = old ? (old.meter_photo_path || null) : null, newCas = false;
+    const file2 = $("f2").files[0], isCas = cs.indexOf("Pallat me kasetë të përbashkët") >= 0;
+    if (file2 && isCas) {
+      const blob2 = await shrink(file2), path2 = me.id + "/k" + Date.now() + ".jpg";
+      const {error: upErr2} = await sb.storage.from("photos").upload(path2, blob2, {contentType: "image/jpeg"});
+      if (upErr2) throw new Error("Foto e kasetës nuk u ngarkua: " + upErr2.message);
+      cas_path = path2; newCas = true;
+    }
     const fields = {name, categories: cs, category: cs[cs.length - 1], contract_no: $("k").value.trim(), debtor: $("d").checked, phone: $("p").value.trim(), note: $("t").value.trim(), lat: picked.lat, lng: picked.lng, photo_path};
     if ($("cu").checked || (old && old.is_cut)) fields.is_cut = $("cu").checked;
     if ($("meterNo").value.trim() || $("sealNo").value.trim() || (old && (old.meter_no || old.seal_no))) { fields.meter_no = $("meterNo").value.trim(); fields.seal_no = $("sealNo").value.trim(); }
+    if (isMulti() && !$("ownData").checked) {
+      fields.contract_no = ""; fields.phone = ""; fields.debtor = false;
+      if (old && old.is_cut) fields.is_cut = false; else delete fields.is_cut;
+      if (old && (old.meter_no || old.seal_no)) { fields.meter_no = ""; fields.seal_no = ""; } else { delete fields.meter_no; delete fields.seal_no; }
+    }
+    if (newCas) fields.meter_photo_path = cas_path;
     if (editingId) {
       const {data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select();
       if (error) throw new Error(error.message);
       if (!data || !data.length) throw new Error("Nuk ke leje ta ndryshosh këtë pikë.");
       if (newPhoto && old && old.photo_path) await sb.storage.from("photos").remove([old.photo_path]);
+      if (newCas && old && old.meter_photo_path) await sb.storage.from("photos").remove([old.meter_photo_path]);
     } else {
       fields.owner = me.id; fields.owner_name = (me.user_metadata && me.user_metadata.username) || me.email;
       const {error} = await sb.from("businesses").insert(fields);
