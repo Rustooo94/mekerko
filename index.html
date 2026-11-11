@@ -158,9 +158,12 @@ a{color:#0a7d82;font-weight:600}
     <h2 id="ftitle">Shto pikë</h2>
     <label for="n">Emri</label><input id="n" maxlength="80">
     <div class="row"><div><label for="catMain">Kategoria</label><select id="catMain"></select></div><div><label for="catSub">Nënkategoria</label><select id="catSub"></select></div></div>
+    <div id="multiNote" class="upbox hide" style="margin:10px 0 0;padding:10px 12px"><label class="chk"><input type="checkbox" id="ownData"> Kjo pikë ka edhe të dhënat e veta (kontratë, matës, vulë)</label><p class="meta" style="margin:4px 0 0">Për pallatet dhe kolektorët, kontrata, matësi dhe statusi shtohen te çdo abonent, brenda pikës.</p></div>
+    <div id="ownFields">
     <div class="chks" style="margin-top:10px"><label class="chk"><input type="checkbox" id="d"> Debitor</label><label class="chk"><input type="checkbox" id="cu"> Prerë</label></div>
     <div class="row"><div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div></div>
     <div class="row"><div><label for="meterNo">Nr. i matësit</label><input id="meterNo" maxlength="40"></div><div><label for="sealNo">Nr. i vulës</label><input id="sealNo" maxlength="40"></div></div>
+    </div>
     <label for="t">Shënim</label><input id="t" maxlength="120">
     <label for="f">Foto e pikës (ndërtesa ose kolektori, opsionale)</label><input id="f" type="file" accept="image/*">
     <p class="meta" id="fhint" style="margin:4px 0 0"></p>
@@ -336,7 +339,15 @@ function buildCats(sel){
   sel.forEach(c => { const m = MAIN[c]; if (m) { main = m; if (c !== m) sub = LEGACY_SUB[c] || c; else if (LEGACY_SUB[c]) sub = LEGACY_SUB[c]; } });
   $("catMain").value = main; fillSub(main, sub);
 }
-$("catMain").addEventListener("change", () => fillSub($("catMain").value, ""));
+function isMulti(){ const m = $("catMain").value, sb2 = $("catSub").value; return m === "Kolektor" || (m === "Banesa" && sb2 === "Pallat"); }
+function syncOwn(){
+  const multi = isMulti();
+  $("multiNote").classList.toggle("hide", !multi);
+  $("ownFields").classList.toggle("hide", multi && !$("ownData").checked);
+}
+$("catMain").addEventListener("change", () => { fillSub($("catMain").value, ""); syncOwn(); });
+$("catSub").addEventListener("change", syncOwn);
+$("ownData").addEventListener("change", syncOwn);
 function openForm(b){
   editingId = b ? b.id : null;
   $("ftitle").textContent = b ? "Ndrysho pikën" : "Shto pikë";
@@ -344,6 +355,7 @@ function openForm(b){
   $("d").checked = !!(b && b.debtor); $("cu").checked = !!(b && b.is_cut); $("meterNo").value = b ? (b.meter_no || "") : ""; $("sealNo").value = b ? (b.seal_no || "") : ""; $("f").value = "";
   $("fhint").textContent = b && b.photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
   buildCats(b ? cats(b) : []);
+  $("ownData").checked = !!(b && (b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut)); syncOwn();
   if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
   picked = b ? {lat: b.lat, lng: b.lng} : null;
   $("coords").textContent = b ? "Pika aktuale: " + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) : "Pika nuk është zgjedhur.";
