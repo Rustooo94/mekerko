@@ -475,85 +475,132 @@ icons();
   ov.id = "debts"; ov.className = "hide";
   ov.innerHTML =
     '<div class="dhead"><button id="dbBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Lista e debitorëve</b></div>' +
-    '<div class="dp"><div class="upbox hide" id="upbox"><b>Shto listë nga Excel</b>' +
-    '<p class="meta" style="margin:4px 0 8px">Kolonat: Emri, Mbiemri, Nr. i kontratës, Shuma (opsionale), Shënim (opsionale). Rreshti i parë duhet të jenë titujt.</p>' +
-    '<input id="dbFile" type="file" accept=".xlsx,.xls,.csv"><div class="bar"><button id="dbGo" type="button" disabled>Ngarko listën</button></div>' +
-    '<p class="msg" id="dbMsg"></p><div id="dbBatches" style="margin-top:8px"></div></div>' +
+    '<div class="dp">' +
+    '<div class="zk" id="dbTabs"><button type="button" class="zkb" data-dz="qytet"><i data-lucide="building-2"></i>Qyteti</button>' +
+    '<button type="button" class="zkb" data-dz="fshat"><i data-lucide="house"></i>Fshatrat</button></div>' +
+    '<div class="bar" style="margin:-4px 0 12px"><button type="button" class="alt" id="dbAll">Shfaq të gjitha zonat</button></div>' +
+    '<div class="upbox hide" id="upbox"><b id="dbUpT">Shto lista nga Excel</b>' +
+    '<p class="meta" style="margin:4px 0 8px">Mund të zgjedhësh disa skedarë njëkohësisht. Kolonat: Emri, Mbiemri, Nr. i kontratës, Shuma (opsionale), Shënim (opsionale). Rreshti i parë duhet të jenë titujt.</p>' +
+    '<input id="dbFile" type="file" accept=".xlsx,.xls,.csv" multiple><div id="dbParsed" style="margin-top:6px"></div>' +
+    '<div class="bar"><button id="dbGo" type="button" disabled>Ngarko listat</button></div>' +
+    '<p class="msg" id="dbMsg"></p></div>' +
+    '<div id="dbBatches" style="margin-bottom:12px"></div>' +
     '<input id="dbQ" type="search" placeholder="Kërko emër ose nr. kontrate" style="margin-bottom:8px"><p class="meta" id="dbCount"></p><div id="dbList"></div></div>';
   document.body.appendChild(ov);
-  let debs = [], parsed = [], batches = [], fname = "";
+  let debs = [], files = [], batches = [], zone = "qytet", staff = false;
+  const ZN = {qytet: "Qyteti", fshat: "Fshatrat", all: "Të gjitha zonat"};
   const btn = document.createElement("button");
   btn.type = "button"; btn.id = "debtBtn"; btn.setAttribute("aria-label", "Lista e debitorëve");
   btn.innerHTML = '<i data-lucide="banknote"></i>';
   $("infoBtn").before(btn); lucide.createIcons();
-  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
   const pick = (keys, names) => keys.find(k => names.some(n => norm(k).includes(n)));
+  const inZone = d => zone === "all" || d.zone_kind === zone;
+
   function draw(){
+    document.querySelectorAll("#dbTabs .zkb").forEach(b => b.classList.toggle("on", b.getAttribute("data-dz") === zone));
+    $("dbAll").classList.toggle("hide", zone === "all");
+    $("upbox").classList.toggle("hide", !staff || zone === "all");
+    $("dbUpT").textContent = "Shto lista nga Excel te: " + ZN[zone];
+    const zd = debs.filter(inZone), m = {};
+    zd.forEach(d => { const k = (d.zone_kind || "") + "|" + (d.batch || ""); m[k] = m[k] || {zone: d.zone_kind || null, batch: d.batch || null, n: 0}; m[k].n++; });
+    batches = Object.values(m);
+    $("dbBatches").innerHTML = batches.length ? "<b>Listat e ngarkuara: " + ZN[zone] + " (" + batches.length + ")</b>" + batches.map((g, i) =>
+      '<div class="pfc"><i data-lucide="file-spreadsheet"></i><div class="pft"><b>' + esc(g.batch || "Pa emër") + '</b><div class="meta">' + g.n + " rreshta" +
+      (zone === "all" ? " · " + (g.zone ? ZN[g.zone] : "Pa zonë") : "") + "</div></div>" +
+      (staff ? '<button class="red" type="button" data-delb="' + i + '">Hiq</button>' : "") + "</div>").join("")
+      : '<p class="meta">Asnjë listë e ngarkuar për ' + ZN[zone] + ".</p>";
     const t = $("dbQ").value.trim().toLowerCase();
-    const l = debs.filter(d => !t || ((d.full_name || "") + " " + (d.contract_no || "")).toLowerCase().includes(t));
-    $("dbCount").textContent = l.length + " debitorë";
+    const l = zd.filter(d => !t || ((d.full_name || "") + " " + (d.contract_no || "")).toLowerCase().includes(t));
+    $("dbCount").textContent = l.length + " debitorë · " + ZN[zone];
     $("dbList").innerHTML = (l.length ? l.slice(0, 100).map(d => {
       const b = allRows.find(x => x.contract_no && d.contract_no && String(x.contract_no).trim() === String(d.contract_no).trim());
-      return '<div class="drow"><b>' + esc(d.full_name) + '</b><div class="meta">Kontratë: ' + esc(d.contract_no) + (d.amount != null ? " · Shuma: " + esc(d.amount) : "") + "</div>" +
+      return '<div class="drow"><b>' + esc(d.full_name) + '</b><div class="meta">Kontratë: ' + esc(d.contract_no) + (d.amount != null ? " · Shuma: " + esc(d.amount) : "") +
+        (d.batch ? " · " + esc(d.batch) : "") + "</div>" +
         (d.note ? "<div>" + esc(d.note) + "</div>" : "") + (b ? '<a href="#" data-dmap="' + b.id + '">Shfaq në hartë</a>' : "") + "</div>";
     }).join("") : '<p class="meta">Lista është bosh.</p>') + (l.length > 100 ? '<p class="meta">Po shfaqen 100 të parët. Kërko për të gjetur të tjerët.</p>' : "");
+    lucide.createIcons();
   }
   async function loadDebs(){
-    const {data, error} = await sb.from("debtors").select("*").order("full_name");
-    if (error) { $("dbList").innerHTML = '<p class="msg err">S’u lexua lista. Kontrollo që SQL-i u krye.</p>'; return; }
-    debs = data;
+    let all = [], from = 0;
+    for (;;) {
+      const {data, error} = await sb.from("debtors").select("*").order("full_name").range(from, from + 999);
+      if (error) { $("dbList").innerHTML = '<p class="msg err">S’u lexua lista. Kontrollo që SQL-i u krye.</p>'; return; }
+      all = all.concat(data);
+      if (data.length < 1000) break;
+      from += 1000;
+    }
+    debs = all;
     const r = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
-    $("upbox").classList.toggle("hide", !(r.data && r.data.length));
-    const m = {}; debs.forEach(d => { const k = d.batch || "Pa emër"; m[k] = (m[k] || 0) + 1; });
-    batches = Object.keys(m);
-    $("dbBatches").innerHTML = batches.length ? "<b>Listat e ngarkuara</b>" + batches.map((k, i) =>
-      '<div class="drow"><div>' + esc(k) + '</div><div class="meta">' + m[k] + ' rreshta</div><button class="red" type="button" data-delb="' + i + '">Hiq listën</button></div>').join("") : "";
-    draw(); lucide.createIcons();
+    staff = !!(r.data && r.data.length);
+    draw();
   }
-  btn.onclick = () => { $("debts").classList.remove("hide"); loadDebs(); };
+  function resetFiles(){ files = []; $("dbFile").value = ""; $("dbParsed").innerHTML = ""; $("dbGo").disabled = true; }
+  btn.onclick = () => { say("dbMsg", ""); resetFiles(); $("debts").classList.remove("hide"); loadDebs(); };
   $("dbBack").onclick = () => $("debts").classList.add("hide");
   $("dbQ").addEventListener("input", draw);
+  $("dbAll").onclick = () => { zone = "all"; resetFiles(); say("dbMsg", ""); draw(); };
+  $("dbTabs").onclick = e => { const b = e.target.closest("[data-dz]"); if (!b) return; zone = b.getAttribute("data-dz"); resetFiles(); say("dbMsg", ""); draw(); };
   $("dbList").onclick = e => { const a = e.target.closest("[data-dmap]"); if (!a) return; e.preventDefault(); $("debts").classList.add("hide"); openDetail(a.getAttribute("data-dmap")); };
   $("dbBatches").onclick = async e => {
     const b = e.target.closest("[data-delb]"); if (!b) return;
-    const k = batches[+b.getAttribute("data-delb")];
-    if (!confirm("Ta heq listën “" + k + "”?")) return;
-    const q = sb.from("debtors").delete();
-    const {error} = await (k === "Pa emër" ? q.is("batch", null) : q.eq("batch", k));
+    const g = batches[+b.getAttribute("data-delb")];
+    if (!confirm("Ta heq listën “" + (g.batch || "Pa emër") + "” (" + g.n + " rreshta)?")) return;
+    let q = sb.from("debtors").delete();
+    q = g.batch ? q.eq("batch", g.batch) : q.is("batch", null);
+    q = g.zone ? q.eq("zone_kind", g.zone) : q.is("zone_kind", null);
+    const {error} = await q;
     if (error) return say("dbMsg", "S’u hoq: " + error.message, true);
     say("dbMsg", "Lista u hoq."); loadDebs();
   };
+  async function parseFile(f){
+    const wb = XLSX.read(await f.arrayBuffer(), {type: "array"});
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: "", raw: false});
+    if (!data.length) throw new Error("skedari është bosh");
+    const keys = Object.keys(data[0]);
+    const sn = pick(keys, ["mbiem", "surname"]);
+    const nm = keys.find(k => k !== sn && ["emri", "emer", "name"].some(n => norm(k).includes(n)));
+    const ck = pick(keys, ["kontrat", "contract"]), ak = pick(keys, ["shum", "borxh", "amount", "detyr"]), nk = pick(keys, ["shenim", "note", "koment"]);
+    if (!ck || (!nm && !sn)) throw new Error("nuk gjeta kolonat. Titujt: " + keys.join(", "));
+    return data.map(r => {
+      const a = ak ? parseFloat(String(r[ak]).replace(/\s/g, "").replace(",", ".")) : NaN;
+      return {full_name: [nm ? r[nm] : "", sn ? r[sn] : ""].join(" ").trim(), contract_no: String(r[ck]).trim(), amount: isNaN(a) ? null : a, note: nk ? String(r[nk]).trim() : null};
+    }).filter(x => x.full_name || x.contract_no);
+  }
   $("dbFile").onchange = async e => {
-    parsed = []; $("dbGo").disabled = true;
-    const f = e.target.files[0]; if (!f) return;
-    fname = f.name;
-    try {
-      const wb = XLSX.read(await f.arrayBuffer(), {type: "array"});
-      const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: "", raw: false});
-      if (!data.length) throw new Error("Skedari është bosh.");
-      const keys = Object.keys(data[0]);
-      const sn = pick(keys, ["mbiem", "surname"]);
-      const nm = keys.find(k => k !== sn && ["emri", "emer", "name"].some(n => norm(k).includes(n)));
-      const ck = pick(keys, ["kontrat", "contract"]), ak = pick(keys, ["shum", "borxh", "amount", "detyr"]), nk = pick(keys, ["shenim", "note", "koment"]);
-      if (!ck || (!nm && !sn)) throw new Error("Nuk gjeta kolonat. Titujt që gjeta: " + keys.join(", "));
-      parsed = data.map(r => {
-        const a = ak ? parseFloat(String(r[ak]).replace(/\s/g, "").replace(",", ".")) : NaN;
-        return {full_name: [nm ? r[nm] : "", sn ? r[sn] : ""].join(" ").trim(), contract_no: String(r[ck]).trim(), amount: isNaN(a) ? null : a, note: nk ? String(r[nk]).trim() : null};
-      }).filter(x => x.full_name || x.contract_no);
-      say("dbMsg", "U gjetën " + parsed.length + " rreshta. Shtyp “Ngarko listën”.");
-      $("dbGo").disabled = !parsed.length;
-    } catch (err) { say("dbMsg", err.message, true); }
+    files = []; $("dbGo").disabled = true; say("dbMsg", "");
+    const list = Array.from(e.target.files || []);
+    for (const f of list) {
+      try { files.push({name: f.name, rows: await parseFile(f)}); }
+      catch (err) { files.push({name: f.name, err: err.message}); }
+    }
+    const ok = files.filter(x => x.rows && x.rows.length);
+    $("dbParsed").innerHTML = files.map(x => '<div class="meta">' + (x.err ? '<span style="color:#b3402a">✕ ' + esc(x.name) + ": " + esc(x.err) + "</span>" : "✓ " + esc(x.name) + ": " + x.rows.length + " rreshta") + "</div>").join("");
+    $("dbGo").disabled = !ok.length;
+    $("dbGo").textContent = ok.length > 1 ? "Ngarko " + ok.length + " listat" : "Ngarko listën";
   };
   $("dbGo").onclick = async () => {
-    $("dbGo").disabled = true; say("dbMsg", "Duke ngarkuar…");
-    const batch = fname + " (" + new Date().toLocaleDateString("sq") + ")";
+    const ok = files.filter(x => x.rows && x.rows.length);
+    if (!ok.length || zone === "all") return;
+    $("dbGo").disabled = true;
+    const day = new Date().toLocaleDateString("sq");
+    let done = 0, total = 0;
     try {
-      for (let i = 0; i < parsed.length; i += 500) {
-        const {error} = await sb.from("debtors").insert(parsed.slice(i, i + 500).map(x => Object.assign({batch}, x)));
-        if (error) throw error;
+      for (const f of ok) {
+        say("dbMsg", "Duke ngarkuar " + f.name + "…");
+        const batch = f.name + " (" + day + ")";
+        for (let i = 0; i < f.rows.length; i += 500) {
+          const {error} = await sb.from("debtors").insert(f.rows.slice(i, i + 500).map(x => Object.assign({batch, zone_kind: zone}, x)));
+          if (error) throw error;
+        }
+        done++; total += f.rows.length;
       }
-      say("dbMsg", "U ngarkuan " + parsed.length + " rreshta."); parsed = []; $("dbFile").value = ""; loadDebs();
-    } catch (err) { say("dbMsg", "S’u ngarkua: " + (err.message || err), true); $("dbGo").disabled = false; }
+      say("dbMsg", "U ngarkuan " + done + " lista (" + total + " rreshta) te " + ZN[zone] + ".");
+      resetFiles(); loadDebs();
+    } catch (err) {
+      say("dbMsg", "U ngarkuan " + done + " lista. Gabim te lista tjetër: " + (err.message || err), true);
+      $("dbGo").disabled = false; loadDebs();
+    }
   };
 })();
 
