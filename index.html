@@ -131,6 +131,7 @@ a{color:#0a7d82;font-weight:600}
 .dbanner{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:#fdecea;color:#7a1f1f;border:1px solid #f3b7ae;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:15px}
 .dbanner svg{width:18px;height:18px;color:#b3261e}
 .dbanner b{font-size:17px;color:#b3261e}
+body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!important}
 </style>
 </head>
 <body>
@@ -186,7 +187,9 @@ a{color:#0a7d82;font-weight:600}
     <div class="row"><div><label for="catMain">Kategoria</label><select id="catMain"></select></div><div><label for="catSub">Nënkategoria</label><select id="catSub"></select></div></div>
     <div id="multiNote" class="upbox hide" style="margin:10px 0 0;padding:10px 12px"><label class="chk"><input type="checkbox" id="ownData"> Kjo pikë ka edhe të dhënat e veta (kontratë, matës, vulë)</label><p class="meta" style="margin:4px 0 0">Për pallatet dhe kolektorët, kontrata, matësi dhe statusi shtohen te çdo abonent, brenda pikës.</p></div>
     <div id="ownFields">
-    <div class="chks" style="margin-top:10px"><label class="chk"><input type="checkbox" id="d"> Debitor</label><label class="chk"><input type="checkbox" id="cu"> Prerë</label></div>
+    <div class="row" style="margin-top:10px"><div><label for="cst">Statusi i kontratës</label><select id="cst"><option value="">– Zgjidh –</option><option value="aktiv">Aktiv</option><option value="pasiv">Pasiv</option><option value="prere">Prerë</option></select></div>
+    <div><label>Debitor (opsionale)</label><label class="chk" style="margin-top:8px"><input type="checkbox" id="d"> Po, është debitor</label></div></div>
+    <div id="dAmtBox" class="hide"><label for="dAmt">Shuma e debisë së vjetër (lekë, opsionale)</label><input id="dAmt" inputmode="decimal" maxlength="20" placeholder="p.sh. 25000"></div>
     <div class="row"><div><label for="k">Nr. i kontratës</label><input id="k" maxlength="40"></div><div><label for="p">Telefoni</label><input id="p" type="tel" maxlength="30"></div></div>
     <div class="row"><div><label for="meterNo">Nr. i matësit</label><input id="meterNo" maxlength="40"></div><div><label for="sealNo">Nr. i vulës</label><input id="sealNo" maxlength="40"></div></div>
     </div>
@@ -236,6 +239,11 @@ const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {ma
 satellite.addTo(map);
 const layer = L.layerGroup().addTo(map);
 const meIcon = L.divIcon({className: "", html: '<div class="me"><span></span></div>', iconSize: [22, 22]});
+const ST_LBL = {aktiv: "Aktiv", pasiv: "Pasiv", prere: "Prerë"};
+function stOf(x){ return x ? (x.contract_status || (x.is_cut ? "prere" : "")) : ""; }
+function lekF(v){ return String(Math.round(Number(v) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë"; }
+function debtTxt(x){ return x && x.debtor ? "Po" + (x.old_debt_amount ? " · debi e vjetër " + lekF(x.old_debt_amount) : "") : "–"; }
+function numIn(id){ const v = String($(id).value || "").replace(/[^\d.,]/g, "").replace(/\./g, "").replace(",", "."); const n = parseFloat(v); return isNaN(n) ? null : n; }
 function ptIcon(b, pulse){ return L.divIcon({className: "", iconSize: [24, 24], html: '<div class="pt' + (b.debtor ? " red" : "") + (b.is_cut ? " cut" : "") + (pulse ? " pulse" : "") + '"><span></span></div>'}); }
 
 function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
@@ -258,7 +266,7 @@ function badges(b){
   return shownCats(b).map(c => '<span class="badge">' + esc(c) + "</span>").join("") +
     (b.contract_no ? '<span class="badge">Kontratë: ' + esc(b.contract_no) + "</span>" : "") +
     (b.meter_no ? '<span class="badge">Matës: ' + esc(b.meter_no) + "</span>" : "") +
-    (b.debtor ? '<span class="badge red">Debitor</span>' : "") + (b.is_cut ? '<span class="badge dark">Prerë</span>' : "");
+    (b.debtor ? '<span class="badge red">Debitor</span>' : "") + (stOf(b) === "prere" ? '<span class="badge dark">Prerë</span>' : stOf(b) === "pasiv" ? '<span class="badge dark">Pasiv</span>' : "");
 }
 function setSheet(i){ stateIdx = i; $("app").style.setProperty("--sh", STATES[i]); setTimeout(() => map.invalidateSize(), 300); }
 
@@ -340,14 +348,14 @@ function openDetail(id){
   const b = allRows.find(x => String(x.id) === String(id));
   if (!b) return;
   const own = me && b.owner === me.id;
-  const hideOwn = isMultiPoint(b) && !(b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut);
+  const hideOwn = isMultiPoint(b) && !(b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut || b.contract_status);
   const tel = b.phone ? '<a href="tel:' + esc(b.phone.replace(/[^\d+]/g, "")) + '">' + esc(b.phone) + "</a>" : "–";
   $("detail").innerHTML =
     '<div class="dhead"><button id="dback" type="button">' + ic("arrow-left") + ' Mbrapa</button><b>Detajet e pikës</b></div><div class="dbody">' +
     (b.photoUrl ? '<a href="' + esc(b.photoUrl) + '" target="_blank" rel="noopener"><img class="big" alt="Foto" src="' + esc(b.photoUrl) + '"></a>' : '<div class="nophoto">Pa foto</div>') +
     '<div class="dpad"><h2>' + esc(b.name) + "</h2>" + badges(b) +
-    '<dl class="dl">' + (hideOwn ? "" : '<dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd><dt>Debitor</dt><dd>" + (b.debtor ? "Po" : "Jo") + "</dd>" +
-    "<dt>Nr. i matësit</dt><dd>" + (b.meter_no ? esc(b.meter_no) : "–") + "</dd><dt>Nr. i vulës</dt><dd>" + (b.seal_no ? esc(b.seal_no) : "–") + "</dd><dt>Prerë</dt><dd>" + (b.is_cut ? "Po" : "Jo") + "</dd><dt>Telefoni</dt><dd>" + tel + "</dd>") + "<dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
+    '<dl class="dl">' + (hideOwn ? "" : '<dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd><dt>Statusi i kontratës</dt><dd>" + (ST_LBL[stOf(b)] || "–") + "</dd><dt>Debitor</dt><dd>" + debtTxt(b) + "</dd>" +
+    "<dt>Nr. i matësit</dt><dd>" + (b.meter_no ? esc(b.meter_no) : "–") + "</dd><dt>Nr. i vulës</dt><dd>" + (b.seal_no ? esc(b.seal_no) : "–") + "</dd><dt>Telefoni</dt><dd>" + tel + "</dd>") + "<dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
     "<dt>Koordinatat</dt><dd>" + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) + "</dd></dl>" +
     (b.casUrl ? '<h3>Foto e kasetës së përbashkët</h3><a href="' + esc(b.casUrl) + '" target="_blank" rel="noopener"><img alt="Foto e kasetës" src="' + esc(b.casUrl) + '" style="width:100%;border-radius:12px;max-height:50vh;object-fit:cover;margin-bottom:8px"></a>' : "") +
     '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">' + ic("navigation") + ' Më ço atje</a>' +
@@ -386,10 +394,10 @@ function openForm(b){
   editingId = b ? b.id : null;
   $("ftitle").textContent = b ? "Ndrysho pikën" : "Shto pikë";
   $("n").value = b ? b.name : ""; $("k").value = b ? (b.contract_no || "") : ""; $("p").value = b ? (b.phone || "") : ""; $("t").value = b ? (b.note || "") : "";
-  $("d").checked = !!(b && b.debtor); $("cu").checked = !!(b && b.is_cut); $("meterNo").value = b ? (b.meter_no || "") : ""; $("sealNo").value = b ? (b.seal_no || "") : ""; $("f").value = "";
+  $("d").checked = !!(b && b.debtor); $("cst").value = stOf(b); $("dAmt").value = b && b.old_debt_amount ? b.old_debt_amount : ""; $("dAmtBox").classList.toggle("hide", !$("d").checked); $("meterNo").value = b ? (b.meter_no || "") : ""; $("sealNo").value = b ? (b.seal_no || "") : ""; $("f").value = "";
   $("fhint").textContent = b && b.photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
   buildCats(b ? cats(b) : []);
-  $("ownData").checked = !!(b && (b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut));
+  $("ownData").checked = !!(b && (b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut || b.contract_status));
   $("f2").value = ""; $("fhint2").textContent = b && b.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : ""; syncOwn();
   if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
   picked = b ? {lat: b.lat, lng: b.lng} : null;
@@ -499,11 +507,14 @@ $("add").onclick = async () => {
       cas_path = path2; newCas = true;
     }
     const fields = {name, categories: cs, category: cs[cs.length - 1], contract_no: $("k").value.trim(), debtor: $("d").checked, phone: $("p").value.trim(), note: $("t").value.trim(), lat: picked.lat, lng: picked.lng, photo_path};
-    if ($("cu").checked || (old && old.is_cut)) fields.is_cut = $("cu").checked;
+    const cst = $("cst").value;
+    if (cst || (old && (old.contract_status || old.is_cut))) { fields.contract_status = cst || null; fields.is_cut = cst === "prere"; }
+    if ($("d").checked || (old && old.old_debt_amount)) fields.old_debt_amount = $("d").checked ? numIn("dAmt") : null;
     if ($("meterNo").value.trim() || $("sealNo").value.trim() || (old && (old.meter_no || old.seal_no))) { fields.meter_no = $("meterNo").value.trim(); fields.seal_no = $("sealNo").value.trim(); }
     if (isMulti() && !$("ownData").checked) {
       fields.contract_no = ""; fields.phone = ""; fields.debtor = false;
-      if (old && old.is_cut) fields.is_cut = false; else delete fields.is_cut;
+      if (old && (old.is_cut || old.contract_status)) { fields.is_cut = false; fields.contract_status = null; } else { delete fields.is_cut; delete fields.contract_status; }
+      if (old && old.old_debt_amount) fields.old_debt_amount = null; else delete fields.old_debt_amount;
       if (old && (old.meter_no || old.seal_no)) { fields.meter_no = ""; fields.seal_no = ""; } else { delete fields.meter_no; delete fields.seal_no; }
     }
     if (newCas) fields.meter_photo_path = cas_path;
@@ -1005,7 +1016,7 @@ icons();
     box.innerHTML = "<h3>Abonentët (" + data.length + ")</h3>" +
       (data.length ? data.map(s => {
         const mine = isAdm || s.created_by === me.id;
-        return '<div class="sub"><b>' + esc(s.full_name) + "</b> " + (s.debtor ? '<span class="badge red">Debitor</span>' : "") + (s.is_cut ? '<span class="badge dark">Prerë</span>' : "") +
+        return '<div class="sub"><b>' + esc(s.full_name) + "</b> " + (s.debtor ? '<span class="badge red">Debitor' + (s.old_debt_amount ? " · " + lekF(s.old_debt_amount) : "") + '</span>' : "") + (stOf(s) ? '<span class="badge' + (stOf(s) === "aktiv" ? "" : " dark") + '">' + ST_LBL[stOf(s)] + "</span>" : "") +
           '<div class="meta">' + [s.apartment, s.contract_no ? "Kontratë: " + s.contract_no : "", s.meter_no ? "Matës: " + s.meter_no : "", s.seal_no ? "Vulë: " + s.seal_no : "", s.phone].filter(Boolean).map(esc).join(" · ") + "</div>" +
           (s.meterUrl ? '<a href="' + esc(s.meterUrl) + '" target="_blank" rel="noopener"><img alt="Foto e sahatit" src="' + esc(s.meterUrl) + '" style="width:130px;height:96px;object-fit:cover;border-radius:8px;margin-top:6px;display:block"></a>' : "") +
           (mine ? '<div class="acts"><button class="alt" type="button" data-sedit="' + s.id + '">Ndrysho</button><button class="red" type="button" data-sdel="' + s.id + '">Fshij</button></div>' : "") + "</div>";
@@ -1015,7 +1026,8 @@ icons();
       '<div class="row"><div><label for="sApt">Hyrja, kati, apartamenti</label><input id="sApt" maxlength="60" placeholder="p.sh. Hyrja 2, kati 3, ap. 12"></div>' +
       '<div><label for="sK">Nr. i kontratës</label><input id="sK" maxlength="40"></div></div>' +
       '<div class="row"><div><label for="sP">Telefoni</label><input id="sP" type="tel" maxlength="30"></div>' +
-      '<div><label class="chk" style="margin-top:22px"><input type="checkbox" id="sD"> Debitor</label><label class="chk" style="margin-top:6px"><input type="checkbox" id="sC"> Prerë</label></div></div>' +
+      '<div><label for="sSt">Statusi i kontratës</label><select id="sSt"><option value="">– Zgjidh –</option><option value="aktiv">Aktiv</option><option value="pasiv">Pasiv</option><option value="prere">Prerë</option></select></div></div>' +
+      '<div class="row"><div><label>Debitor (opsionale)</label><label class="chk" style="margin-top:8px"><input type="checkbox" id="sD"> Po, është debitor</label></div><div id="sDABox" class="hide"><label for="sDA">Debia e vjetër (lekë)</label><input id="sDA" inputmode="decimal" maxlength="20" placeholder="p.sh. 25000"></div></div>' +
       '<div class="row"><div><label for="sM">Nr. i matësit</label><input id="sM" maxlength="40"></div><div><label for="sS">Nr. i vulës</label><input id="sS" maxlength="40"></div></div>' +
       '<label for="sF">Foto e sahatit (opsionale)</label><input id="sF" type="file" accept="image/*"><p class="meta" id="sFh" style="margin:4px 0 0"></p>' +
       '<div class="bar"><button id="sGo" type="button">Shto</button><button id="sCancel" type="button" class="alt hide">Anulo</button></div><p class="msg" id="sMsg"></p></div>';
@@ -1023,7 +1035,7 @@ icons();
   function resetForm(){
     editing = null;
     ["sName", "sApt", "sK", "sP", "sF", "sM", "sS"].forEach(i => { $(i).value = ""; }); $("sFh").textContent = "";
-    $("sD").checked = false; $("sC").checked = false; $("sfT").textContent = "Shto abonent"; $("sGo").textContent = "Shto"; $("sCancel").classList.add("hide");
+    $("sD").checked = false; $("sSt").value = ""; $("sDA").value = ""; $("sDABox").classList.add("hide"); $("sfT").textContent = "Shto abonent"; $("sGo").textContent = "Shto"; $("sCancel").classList.add("hide");
   }
   document.addEventListener("click", async e => {
     const box = e.target.closest ? e.target.closest("#subBox") : null;
@@ -1033,7 +1045,7 @@ icons();
     if (ed) {
       const s = cache.find(x => String(x.id) === ed.getAttribute("data-sedit")); if (!s) return;
       editing = s.id;
-      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor; $("sC").checked = !!s.is_cut; $("sM").value = s.meter_no || ""; $("sS").value = s.seal_no || ""; $("sF").value = ""; $("sFh").textContent = s.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
+      $("sName").value = s.full_name || ""; $("sApt").value = s.apartment || ""; $("sK").value = s.contract_no || ""; $("sP").value = s.phone || ""; $("sD").checked = !!s.debtor; $("sSt").value = stOf(s); $("sDA").value = s.old_debt_amount || ""; $("sDABox").classList.toggle("hide", !s.debtor); $("sM").value = s.meter_no || ""; $("sS").value = s.seal_no || ""; $("sF").value = ""; $("sFh").textContent = s.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
       $("sfT").textContent = "Ndrysho abonentin"; $("sGo").textContent = "Ruaj ndryshimin"; $("sCancel").classList.remove("hide");
       $("sName").scrollIntoView({block: "center"});
     }
@@ -1050,7 +1062,9 @@ icons();
       if (!name) return say("sMsg", "Shkruaj emrin dhe mbiemrin.", true);
       const row = {full_name: name, apartment: $("sApt").value.trim(), contract_no: $("sK").value.trim(), phone: $("sP").value.trim(), debtor: $("sD").checked};
       const sf = $("sF").files[0], oldS = editing ? cache.find(x => x.id === editing) : null;
-      if ($("sC").checked || (oldS && oldS.is_cut)) row.is_cut = $("sC").checked;
+      const sst = $("sSt").value;
+      if (sst || (oldS && (oldS.contract_status || oldS.is_cut))) { row.contract_status = sst || null; row.is_cut = sst === "prere"; }
+      if ($("sD").checked || (oldS && oldS.old_debt_amount)) row.old_debt_amount = $("sD").checked ? numIn("sDA") : null;
       if ($("sM").value.trim() || $("sS").value.trim() || (oldS && (oldS.meter_no || oldS.seal_no))) { row.meter_no = $("sM").value.trim(); row.seal_no = $("sS").value.trim(); }
       $("sGo").disabled = true;
       if (sf) {
@@ -1256,6 +1270,7 @@ icons();
   function limited(){ return !!(prof && prof.role === "prerje") && !isAdm; }
   function applyLimits(){
     const lim = limited();
+    document.body.classList.toggle("lim", lim);
     ["addBtn", "planBtn2", "netBtn3"].forEach(id => { const e = $(id); if (e) e.classList.toggle("hide", lim); });
     if (lim) {
       const pn = $("netpanel3"); if (pn) pn.classList.add("hide");
@@ -1351,7 +1366,7 @@ icons();
         '<div><label for="ivName">Emri i stafit</label><input id="ivName" maxlength="80"></div></div>' +
         '<label for="ivNote">Shënime dhe dokumentacion</label><input id="ivNote" maxlength="300">' +
         '<label for="ivF">Foto e ndërhyrjes (opsionale)</label><input id="ivF" type="file" accept="image/*">' +
-        '<label class="chk" style="margin-top:8px"><input type="checkbox" id="ivSet" checked> Përditëso statusin “Prerë” sipas veprimit</label>' +
+        '<label class="chk" style="margin-top:8px"><input type="checkbox" id="ivSet" checked> Përditëso statusin e kontratës sipas veprimit (Prerje → Prerë, Rilidhje → Aktiv)</label>' +
         '<div class="bar"><button type="button" id="ivGo">Ruaj ndërhyrjen</button></div><p class="msg" id="ivMsg"></p></div>';
     }
     box.innerHTML = h; box.dataset.pid = pid;
@@ -1382,8 +1397,11 @@ icons();
       let warn = "";
       if ($("ivSet").checked && (act === "Prerje" || act === "Rilidhje")) {
         const v = act === "Prerje";
-        const r2 = s ? await sb.from("subscribers").update({is_cut: v}).eq("id", s.id).select() : await sb.from("businesses").update({is_cut: v}).eq("id", pid).select();
-        if (r2.error || !r2.data || !r2.data.length) warn = " Statusi “Prerë” nuk u përditësua (mungon leja).";
+        const upd = {is_cut: v, contract_status: v ? "prere" : "aktiv"};
+        const doUp = u => s ? sb.from("subscribers").update(u).eq("id", s.id).select() : sb.from("businesses").update(u).eq("id", pid).select();
+        let r2 = await doUp(upd);
+        if (r2.error && /contract_status/.test(r2.error.message || "")) r2 = await doUp({is_cut: v});
+        if (r2.error || !r2.data || !r2.data.length) warn = " Statusi i kontratës nuk u përditësua (mungon leja).";
       }
       say("ivMsg", "U ruajt." + warn, !!warn);
       if (!s && !warn && (act === "Prerje" || act === "Rilidhje") && $("ivSet").checked) { await load(); openDetail(pid); return; }
@@ -1398,6 +1416,12 @@ icons();
     drawIv(id); applyLimits();
   };
 })();
+</script>
+<script>
+document.addEventListener("change", e => {
+  if (e.target.id === "d") document.getElementById("dAmtBox").classList.toggle("hide", !e.target.checked);
+  if (e.target.id === "sD") document.getElementById("sDABox").classList.toggle("hide", !e.target.checked);
+});
 </script>
 </body>
 </html>
