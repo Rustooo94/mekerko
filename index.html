@@ -132,6 +132,12 @@ a{color:#0a7d82;font-weight:600}
 .dbanner svg{width:18px;height:18px;color:#b3261e}
 .dbanner b{font-size:17px;color:#b3261e}
 body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!important}
+.wnote{display:flex;gap:10px;align-items:flex-start;background:#fff7e6;border:1px solid #f5d48a;color:#5a3d00;border-radius:12px;padding:10px 12px;margin:10px 0 12px}
+.wnote svg{flex:none;width:20px;height:20px;color:#c88a00;margin-top:2px}
+.wnote p{margin:2px 0 0;font-size:15px;line-height:1.45}
+.ivcrew{background:#fff;border:1px solid var(--line,#d6e6e8);border-radius:10px;padding:10px;margin:8px 0}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+@media(max-width:420px){.row3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1243,12 +1249,12 @@ icons();
       '<div class="wbell"><i data-lucide="bell"></i></div>' +
       '<h2>Përshëndetje, ' + esc(nm) + '!</h2>' +
       '<div class="wrole">' + esc(prof.title || "") + '</div><div class="meta">' + esc(prof.sector || "") + '</div>' +
-      '<p class="wtext">Jeni identifikuar me sukses në sistemin PikaBlu. Kontrolloni detyrat dhe listën e debitorëve për sot.</p>' +
-      '<div class="wchips">' + (r.tasks.length ? chip("clipboard-list", "Keni " + r.tasks.length + " detyra për sot", "wTasks") : "") +
-      chip("banknote", nd != null ? nd + " debitorë në listë" : "Lista e debitorëve", "wDebts") + "</div>" +
-      (r.safety && r.safety.length ? '<div class="wsafe"><i data-lucide="hard-hat"></i><span>' + esc(r.safety[0]) + "</span></div>" : "") +
+      '<p class="wtext">Jeni identifikuar me sukses në sistemin PikaBlu.</p>' +
+      '<div class="wnote"><i data-lucide="info"></i><div><b>Njoftim</b><p>Keni një listë me debitorë' + (nd ? " (" + nd + ")" : "") + '. Para se të dilni në terren, lexoni detyrat dhe zbatoni sigurinë teknike në punë.</p></div></div>' +
+      '<div class="wchips">' + chip("banknote", "Lista e debitorëve", "wDebts") +
+      (r.tasks.length ? chip("hard-hat", "Detyrat dhe siguria teknike", "wTasks") : "") + "</div>" +
       '<div class="wbar"><button type="button" class="alt" id="wRep">Raporti i ditës</button>' +
-      (r.tasks.length ? '<button type="button" id="wTasks2">Shiko detyrat <i data-lucide="arrow-right"></i></button>' : '<button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button>') + "</div></div></div>";
+      (r.tasks.length ? '<button type="button" id="wTasks2">Lexo detyrat <i data-lucide="arrow-right"></i></button>' : '<button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button>') + "</div></div></div>";
     ov.classList.remove("hide"); lucide.createIcons();
   }
 
@@ -1362,8 +1368,9 @@ icons();
         (subsCache.length ? '<label for="ivSub">Abonenti</label><select id="ivSub"><option value="">E gjithë pika</option>' + subsCache.map(x => '<option value="' + x.id + '">' + esc(x.full_name + (x.apartment ? " (" + x.apartment + ")" : "")) + "</option>").join("") + "</select>" : "") +
         '<div class="row"><div><label for="ivDate">Data e kontrollit</label><input id="ivDate" type="date" value="' + today() + '"></div>' +
         '<div><label for="ivAct">Veprimi</label><select id="ivAct">' + ACTIONS.map(a => "<option>" + a + "</option>").join("") + "</select></div></div>" +
-        '<div class="row"><div><label for="ivKind">Stafi shoqërues</label><select id="ivKind"><option>Hidraulik</option><option>Specialist</option></select></div>' +
-        '<div><label for="ivName">Emri i stafit</label><input id="ivName" maxlength="80"></div></div>' +
+        '<div class="ivcrew"><b>Stafi shoqërues</b> <span class="meta">(plotësoni vetëm emrat e atyre që dolën)</span>' +
+        '<label style="margin-top:6px">Hidraulikë</label><div class="row3">' + [1, 2, 3].map(i => '<input id="ivH' + i + '" maxlength="60" placeholder="Hidrauliku ' + i + '">').join("") + "</div>" +
+        '<label style="margin-top:6px">Specialistë prerje debie</label><div class="row">' + [1, 2].map(i => '<input id="ivS' + i + '" maxlength="60" placeholder="Specialisti ' + i + '">').join("") + "</div></div>" +
         '<label for="ivNote">Shënime dhe dokumentacion</label><input id="ivNote" maxlength="300">' +
         '<label for="ivF">Foto e ndërhyrjes (opsionale)</label><input id="ivF" type="file" accept="image/*">' +
         '<label class="chk" style="margin-top:8px"><input type="checkbox" id="ivSet" checked> Përditëso statusin e kontratës sipas veprimit (Prerje → Prerë, Rilidhje → Aktiv)</label>' +
@@ -1386,8 +1393,10 @@ icons();
         if (up.error) throw up.error;
         photo_path = path;
       }
+      const hs = [1, 2, 3].map(i => $("ivH" + i).value.trim()).filter(Boolean), ss = [1, 2].map(i => $("ivS" + i).value.trim()).filter(Boolean);
+      const crew = {kind: hs.length || ss.length ? "Stafi shoqërues" : null, names: [hs.length ? "Hidraulikë: " + hs.join(", ") : "", ss.length ? "Specialistë: " + ss.join(", ") : ""].filter(Boolean).join(" · ") || null};
       const row = {point_id: pid, subscriber_id: s ? s.id : null, subscriber_name: s ? s.full_name : null, contract_no: s ? (s.contract_no || null) : (b ? b.contract_no || null : null),
-        check_date: $("ivDate").value, action: act, staff_kind: $("ivKind").value, staff_name: $("ivName").value.trim(), note: $("ivNote").value.trim(), photo_path,
+        check_date: $("ivDate").value, action: act, staff_kind: crew.kind, staff_name: crew.names, note: $("ivNote").value.trim(), photo_path,
         created_name: prof ? prof.full_name : ((me.user_metadata && me.user_metadata.username) || me.email)};
       const dd = window.pbDebtFor ? window.pbDebtFor(row.contract_no) : null;
       if (dd && dd.amount != null) row.debt_amount = dd.amount;
