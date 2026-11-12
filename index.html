@@ -122,6 +122,15 @@ a{color:#0a7d82;font-weight:600}
 .wbar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
 .wbar button:last-child{background:#0b5ed7}
 @media (max-width:560px){.wcard{flex-direction:column}.wside{flex:none;flex-direction:row;padding:12px 16px;justify-content:flex-start}.wside svg{width:34px;height:34px}.wslogan{display:none}.wbrand{font-size:22px}}
+#debts .dsum{display:grid;grid-template-columns:1fr 1.6fr;gap:8px;margin-bottom:12px}
+#debts .dsum>div{background:#fff;border:1px solid #f0c9c1;border-radius:12px;padding:10px 12px}
+#debts .dsum b{font-size:22px} #debts .dsum b.red,.damt{color:#b3261e}
+.dcard{background:#fff;border:1px solid var(--line,#d6e6e8);border-left:4px solid #b3261e;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.dtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.damt{font-size:19px;font-weight:800;white-space:nowrap}
+.dbanner{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:#fdecea;color:#7a1f1f;border:1px solid #f3b7ae;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:15px}
+.dbanner svg{width:18px;height:18px;color:#b3261e}
+.dbanner b{font-size:17px;color:#b3261e}
 </style>
 </head>
 <body>
@@ -533,22 +542,42 @@ icons();
     '<button type="button" class="zkb" data-dz="fshat"><i data-lucide="house"></i>Fshatrat</button></div>' +
     '<div class="bar" style="margin:-4px 0 12px"><button type="button" class="alt" id="dbAll">Shfaq të gjitha zonat</button></div>' +
     '<div class="upbox hide" id="upbox"><b id="dbUpT">Shto lista nga Excel</b>' +
-    '<p class="meta" style="margin:4px 0 8px">Mund të zgjedhësh disa skedarë njëkohësisht. Kolonat: Emri, Mbiemri, Nr. i kontratës, Shuma (opsionale), Shënim (opsionale). Rreshti i parë duhet të jenë titujt.</p>' +
+    '<p class="meta" style="margin:4px 0 8px">Ngarko Excel-in që shkarkon nga sistemi i faturimit (Kontrata, Abonenti, Uje, Kanalizime, …, Totali, Nr. Fatura). Mund të zgjedhësh disa skedarë njëkohësisht.</p>' +
     '<input id="dbFile" type="file" accept=".xlsx,.xls,.csv" multiple><div id="dbParsed" style="margin-top:6px"></div>' +
+    '<label class="chk" style="margin-top:8px"><input type="checkbox" id="dbRepl" checked> Zëvendëso listat e vjetra të kësaj zone</label>' +
     '<div class="bar"><button id="dbGo" type="button" disabled>Ngarko listat</button></div>' +
     '<p class="msg" id="dbMsg"></p></div>' +
+    '<div id="dbSum" class="dsum"></div>' +
     '<div id="dbBatches" style="margin-bottom:12px"></div>' +
-    '<input id="dbQ" type="search" placeholder="Kërko emër ose nr. kontrate" style="margin-bottom:8px"><p class="meta" id="dbCount"></p><div id="dbList"></div></div>';
+    '<input id="dbQ" type="search" placeholder="Kërko emër ose nr. kontrate" style="margin-bottom:8px">' +
+    '<div class="row" style="margin-bottom:8px"><div><label for="dbSort">Rendit sipas</label><select id="dbSort"><option value="amt">Shuma (më e madhja)</option><option value="name">Emri</option><option value="inv">Nr. i faturave</option></select></div>' +
+    '<div><label for="dbMin">Shuma minimale (lekë)</label><input id="dbMin" type="number" min="0" step="1000" placeholder="0"></div></div>' +
+    '<p class="meta" id="dbCount"></p><div id="dbList"></div></div>';
   document.body.appendChild(ov);
-  let debs = [], files = [], batches = [], zone = "qytet", staff = false;
+  let debs = [], files = [], batches = [], zone = "qytet", staff = false, open = {};
   const ZN = {qytet: "Qyteti", fshat: "Fshatrat", all: "Të gjitha zonat"};
   const btn = document.createElement("button");
   btn.type = "button"; btn.id = "debtBtn"; btn.setAttribute("aria-label", "Lista e debitorëve");
   btn.innerHTML = '<i data-lucide="banknote"></i>';
   $("infoBtn").before(btn); lucide.createIcons();
   const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
-  const pick = (keys, names) => keys.find(k => names.some(n => norm(k).includes(n)));
+  const lek = v => (v == null || isNaN(v)) ? "–" : String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
+  const ckey = c => String(c == null ? "" : c).replace(/\s+/g, "").replace(/^0+/, "");
   const inZone = d => zone === "all" || d.zone_kind === zone;
+  const PARTS = [["water", "Ujë"], ["sewer", "Kanalizime"], ["service_fee", "Tarifë shërbimi"], ["new_meter", "Matës i ri"], ["penalties", "Penalitete"], ["reconnection", "Rilidhje"], ["total_uk", "Total ujë + kanalizime"], ["tax", "Taksa"], ["old_debt", "Debi të vjetra"], ["other", "Të tjera"], ["interest", "Kamata"], ["balance", "Balancë"]];
+
+  const DMAP = {};
+  window.pbDebtFor = c => { const k = ckey(c); return k ? DMAP[k] || null : null; };
+  function rebuildMap(){
+    Object.keys(DMAP).forEach(k => delete DMAP[k]);
+    debs.forEach(d => { const k = ckey(d.contract_no); if (!k) return; if (!DMAP[k] || new Date(d.created_at) > new Date(DMAP[k].created_at)) DMAP[k] = d; });
+  }
+  function pointForContract(c){
+    const k = ckey(c); if (!k) return null;
+    const b = allRows.find(x => ckey(x.contract_no) === k); if (b) return {id: b.id, inside: ""};
+    for (const p of allRows) { const s = (p._subArr || []).find(x => ckey(x.contract_no) === k); if (s) return {id: p.id, inside: p.name}; }
+    return null;
+  }
 
   function draw(){
     document.querySelectorAll("#dbTabs .zkb").forEach(b => b.classList.toggle("on", b.getAttribute("data-dz") === zone));
@@ -559,86 +588,147 @@ icons();
     zd.forEach(d => { const k = (d.zone_kind || "") + "|" + (d.batch || ""); m[k] = m[k] || {zone: d.zone_kind || null, batch: d.batch || null, n: 0}; m[k].n++; });
     batches = Object.values(m);
     $("dbBatches").innerHTML = batches.length ? "<b>Listat e ngarkuara: " + ZN[zone] + " (" + batches.length + ")</b>" + batches.map((g, i) =>
-      '<div class="pfc"><i data-lucide="file-spreadsheet"></i><div class="pft"><b>' + esc(g.batch || "Pa emër") + '</b><div class="meta">' + g.n + " rreshta" +
+      '<div class="pfc"><i data-lucide="file-spreadsheet"></i><div class="pft"><b>' + esc(g.batch || "Pa emër") + '</b><div class="meta">' + g.n + " debitorë" +
       (zone === "all" ? " · " + (g.zone ? ZN[g.zone] : "Pa zonë") : "") + "</div></div>" +
       (staff ? '<button class="red" type="button" data-delb="' + i + '">Hiq</button>' : "") + "</div>").join("")
       : '<p class="meta">Asnjë listë e ngarkuar për ' + ZN[zone] + ".</p>";
-    const t = $("dbQ").value.trim().toLowerCase();
-    const l = zd.filter(d => !t || ((d.full_name || "") + " " + (d.contract_no || "")).toLowerCase().includes(t));
-    $("dbCount").textContent = l.length + " debitorë · " + ZN[zone];
-    $("dbList").innerHTML = (l.length ? l.slice(0, 100).map(d => {
-      const b = allRows.find(x => x.contract_no && d.contract_no && String(x.contract_no).trim() === String(d.contract_no).trim());
-      return '<div class="drow"><b>' + esc(d.full_name) + '</b><div class="meta">Kontratë: ' + esc(d.contract_no) + (d.amount != null ? " · Shuma: " + esc(d.amount) : "") +
-        (d.batch ? " · " + esc(d.batch) : "") + "</div>" +
-        (d.note ? "<div>" + esc(d.note) + "</div>" : "") + (b ? '<a href="#" data-dmap="' + b.id + '">Shfaq në hartë</a>' : "") + "</div>";
-    }).join("") : '<p class="meta">Lista është bosh.</p>') + (l.length > 100 ? '<p class="meta">Po shfaqen 100 të parët. Kërko për të gjetur të tjerët.</p>' : "");
+    const t = $("dbQ").value.trim().toLowerCase(), mn = parseFloat($("dbMin").value) || 0, so = $("dbSort").value;
+    let l = zd.filter(d => (!t || ((d.full_name || "") + " " + (d.contract_no || "")).toLowerCase().includes(t)) && (!mn || (d.amount || 0) >= mn));
+    l.sort(so === "name" ? (a, b) => String(a.full_name || "").localeCompare(String(b.full_name || ""), "sq") : so === "inv" ? (a, b) => (b.invoices || 0) - (a.invoices || 0) : (a, b) => (b.amount || 0) - (a.amount || 0));
+    const sum = l.reduce((s, d) => s + (d.amount || 0), 0);
+    $("dbSum").innerHTML = '<div><div class="meta">Debitorë</div><b>' + l.length + '</b></div><div><div class="meta">Totali i borxhit</div><b class="red">' + lek(sum) + "</b></div>";
+    $("dbCount").textContent = ZN[zone] + (mn ? " · mbi " + lek(mn) : "");
+    $("dbList").innerHTML = (l.length ? l.slice(0, 150).map(d => {
+      const pt = pointForContract(d.contract_no), day = d.list_date || (d.created_at || "").slice(0, 10);
+      const parts = PARTS.filter(p => d[p[0]]).map(p => "<dt>" + p[1] + "</dt><dd>" + lek(d[p[0]]) + "</dd>").join("");
+      return '<div class="dcard" data-dopen="' + d.id + '"><div class="dtop"><div style="min-width:0"><b>' + esc(d.full_name) + '</b><div class="meta">Kontratë: ' + esc(d.contract_no) + (d.category ? " · " + esc(d.category) : "") + "</div></div>" +
+        '<div style="text-align:right"><div class="damt">' + lek(d.amount) + "</div>" + (d.invoices ? '<div class="meta">' + d.invoices + " fatura</div>" : "") + "</div></div>" +
+        (open[d.id] ? (parts ? '<dl class="dl" style="margin:8px 0 0;font-size:14px">' + parts + "</dl>" : '<p class="meta">Pa detaje shumash.</p>') : "") +
+        '<div class="meta" style="margin-top:4px">Gjendja më ' + esc(day ? day.split("-").reverse().join(".") : "–") + (d.note ? " · " + esc(d.note) : "") + "</div>" +
+        (pt ? '<a href="#" data-dmap="' + pt.id + '">Shfaq në hartë' + (pt.inside ? " (brenda: " + esc(pt.inside) + ")" : "") + "</a>" : "") + "</div>";
+    }).join("") : '<p class="meta">Lista është bosh.</p>') + (l.length > 150 ? '<p class="meta">Po shfaqen 150 të parët. Kërko ose përdor filtrin për të tjerët.</p>' : "");
     lucide.createIcons();
   }
-  async function loadDebs(){
+  async function loadDebs(silent){
     let all = [], from = 0;
     for (;;) {
       const {data, error} = await sb.from("debtors").select("*").order("full_name").range(from, from + 999);
-      if (error) { $("dbList").innerHTML = '<p class="msg err">S’u lexua lista. Kontrollo që SQL-i u krye.</p>'; return; }
+      if (error) { if (!silent) $("dbList").innerHTML = '<p class="msg err">S’u lexua lista. Kontrollo që SQL-i u krye.</p>'; return; }
       all = all.concat(data);
       if (data.length < 1000) break;
       from += 1000;
     }
-    debs = all;
+    debs = all; rebuildMap();
     const r = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
     staff = !!(r.data && r.data.length);
-    draw();
+    if (!silent) draw();
   }
+  window.pbReloadDebts = () => loadDebs(true);
+  const ol = load;
+  load = async function(){ await ol(); try { if (me) await loadDebs(true); } catch (e) {} };
   function resetFiles(){ files = []; $("dbFile").value = ""; $("dbParsed").innerHTML = ""; $("dbGo").disabled = true; }
-  btn.onclick = () => { say("dbMsg", ""); resetFiles(); $("debts").classList.remove("hide"); loadDebs(); };
+  btn.onclick = () => { say("dbMsg", ""); resetFiles(); $("debts").classList.remove("hide"); loadDebs(false); };
   $("dbBack").onclick = () => $("debts").classList.add("hide");
-  $("dbQ").addEventListener("input", draw);
+  ["dbQ", "dbMin"].forEach(id => $(id).addEventListener("input", draw));
+  $("dbSort").addEventListener("change", draw);
   $("dbAll").onclick = () => { zone = "all"; resetFiles(); say("dbMsg", ""); draw(); };
   $("dbTabs").onclick = e => { const b = e.target.closest("[data-dz]"); if (!b) return; zone = b.getAttribute("data-dz"); resetFiles(); say("dbMsg", ""); draw(); };
-  $("dbList").onclick = e => { const a = e.target.closest("[data-dmap]"); if (!a) return; e.preventDefault(); $("debts").classList.add("hide"); openDetail(a.getAttribute("data-dmap")); };
+  $("dbList").onclick = e => {
+    const a = e.target.closest("[data-dmap]");
+    if (a) { e.preventDefault(); $("debts").classList.add("hide"); openDetail(a.getAttribute("data-dmap")); return; }
+    const c = e.target.closest("[data-dopen]"); if (!c) return;
+    const id = c.getAttribute("data-dopen"); open[id] = !open[id]; draw();
+  };
   $("dbBatches").onclick = async e => {
     const b = e.target.closest("[data-delb]"); if (!b) return;
     const g = batches[+b.getAttribute("data-delb")];
-    if (!confirm("Ta heq listën “" + (g.batch || "Pa emër") + "” (" + g.n + " rreshta)?")) return;
+    if (!confirm("Ta heq listën “" + (g.batch || "Pa emër") + "” (" + g.n + " debitorë)?")) return;
     let q = sb.from("debtors").delete();
     q = g.batch ? q.eq("batch", g.batch) : q.is("batch", null);
     q = g.zone ? q.eq("zone_kind", g.zone) : q.is("zone_kind", null);
     const {error} = await q;
     if (error) return say("dbMsg", "S’u hoq: " + error.message, true);
-    say("dbMsg", "Lista u hoq."); loadDebs();
+    say("dbMsg", "Lista u hoq."); loadDebs(false);
   };
+  function num(v){
+    if (v == null || v === "") return null;
+    if (typeof v === "number") return v;
+    let s = String(v).replace(/[^\d.,\-]/g, "");
+    if (!s) return null;
+    const hasD = s.indexOf(".") >= 0, hasC = s.indexOf(",") >= 0;
+    if (hasD && hasC) { if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", "."); else s = s.replace(/,/g, ""); }
+    else if (hasC) s = /^-?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, "") : s.replace(",", ".");
+    else if (hasD && /^-?\d{1,3}(\.\d{3}){2,}$/.test(s)) s = s.replace(/\./g, "");
+    const n = parseFloat(s); return isNaN(n) ? null : n;
+  }
+  function colMap(keys){
+    const K = keys.map(k => [k, norm(k)]), find = f => { const x = K.find(([k, n]) => f(n)); return x ? x[0] : null; };
+    const used = new Set(), take = f => { const x = K.find(([k, n]) => !used.has(k) && f(n)); if (x) used.add(x[0]); return x ? x[0] : null; };
+    const m = {};
+    m.contract = take(n => n.includes("kontrat") || n.includes("contract"));
+    m.total = take(n => n === "totali" || n === "total" || n.includes("perfundim")) || null;
+    m.total_uk = take(n => n === "totaluk" || (n.includes("total") && (n.includes("uk") || n.includes("kanaliz"))));
+    m.billing = take(n => n.includes("faturim") || n.includes("menyre"));
+    m.invoices = take(n => n.includes("fatur") || n.includes("nrfat"));
+    m.sur = take(n => n.includes("mbiem") || n.includes("surname"));
+    m.name = take(n => n.includes("abonent") || n.includes("emri") || n.includes("emer") || n === "name");
+    m.category = take(n => n.includes("kategori"));
+    m.water = take(n => n === "uje" || n === "shumauje" || n === "ujë");
+    m.sewer = take(n => n.includes("kanaliz"));
+    m.service_fee = take(n => n.includes("tarif") || n.includes("sherbim"));
+    m.new_meter = take(n => n.includes("mates"));
+    m.penalties = take(n => n.includes("penalit"));
+    m.reconnection = take(n => n.includes("rilidh"));
+    m.tax = take(n => n.includes("taks"));
+    m.old_debt = take(n => n.includes("debi") && n.includes("vjet"));
+    m.other = take(n => n.includes("tetjera") || n === "tjera");
+    m.interest = take(n => n.includes("kamat"));
+    m.balance = take(n => n.includes("balanc"));
+    if (!m.total) m.total = take(n => n.includes("shum") || n.includes("borxh") || n.includes("detyr"));
+    m.note = take(n => n.includes("shenim") || n.includes("koment"));
+    return m;
+  }
   async function parseFile(f){
     const wb = XLSX.read(await f.arrayBuffer(), {type: "array"});
-    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: "", raw: false});
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: "", raw: true});
     if (!data.length) throw new Error("skedari është bosh");
-    const keys = Object.keys(data[0]);
-    const sn = pick(keys, ["mbiem", "surname"]);
-    const nm = keys.find(k => k !== sn && ["emri", "emer", "name"].some(n => norm(k).includes(n)));
-    const ck = pick(keys, ["kontrat", "contract"]), ak = pick(keys, ["shum", "borxh", "amount", "detyr"]), nk = pick(keys, ["shenim", "note", "koment"]);
-    if (!ck || (!nm && !sn)) throw new Error("nuk gjeta kolonat. Titujt: " + keys.join(", "));
+    const m = colMap(Object.keys(data[0]));
+    if (!m.contract || (!m.name && !m.sur)) throw new Error("nuk gjeta kolonat Kontrata dhe Abonenti. Titujt: " + Object.keys(data[0]).join(", "));
+    const today = new Date().toISOString().slice(0, 10);
     return data.map(r => {
-      const a = ak ? parseFloat(String(r[ak]).replace(/\s/g, "").replace(",", ".")) : NaN;
-      return {full_name: [nm ? r[nm] : "", sn ? r[sn] : ""].join(" ").trim(), contract_no: String(r[ck]).trim(), amount: isNaN(a) ? null : a, note: nk ? String(r[nk]).trim() : null};
+      const o = {full_name: [m.name ? r[m.name] : "", m.sur ? r[m.sur] : ""].join(" ").replace(/\s+/g, " ").trim(),
+        contract_no: String(r[m.contract]).trim(), amount: m.total ? num(r[m.total]) : null, note: m.note ? String(r[m.note]).trim() || null : null, list_date: today};
+      ["water", "sewer", "service_fee", "new_meter", "penalties", "reconnection", "total_uk", "tax", "old_debt", "other", "interest", "balance"].forEach(k => { if (m[k]) o[k] = num(r[m[k]]); });
+      if (m.invoices) { const v = num(r[m.invoices]); o.invoices = v == null ? null : Math.round(v); }
+      if (m.category) o.category = String(r[m.category]).trim() || null;
+      if (m.billing) o.billing = String(r[m.billing]).trim() || null;
+      return o;
     }).filter(x => x.full_name || x.contract_no);
   }
   $("dbFile").onchange = async e => {
     files = []; $("dbGo").disabled = true; say("dbMsg", "");
-    const list = Array.from(e.target.files || []);
-    for (const f of list) {
+    for (const f of Array.from(e.target.files || [])) {
       try { files.push({name: f.name, rows: await parseFile(f)}); }
       catch (err) { files.push({name: f.name, err: err.message}); }
     }
     const ok = files.filter(x => x.rows && x.rows.length);
-    $("dbParsed").innerHTML = files.map(x => '<div class="meta">' + (x.err ? '<span style="color:#b3402a">✕ ' + esc(x.name) + ": " + esc(x.err) + "</span>" : "✓ " + esc(x.name) + ": " + x.rows.length + " rreshta") + "</div>").join("");
+    $("dbParsed").innerHTML = files.map(x => '<div class="meta">' + (x.err ? '<span style="color:#b3402a">✕ ' + esc(x.name) + ": " + esc(x.err) + "</span>" : "✓ " + esc(x.name) + ": " + x.rows.length + " debitorë · " + lek(x.rows.reduce((s, r) => s + (r.amount || 0), 0))) + "</div>").join("");
     $("dbGo").disabled = !ok.length;
     $("dbGo").textContent = ok.length > 1 ? "Ngarko " + ok.length + " listat" : "Ngarko listën";
   };
   $("dbGo").onclick = async () => {
     const ok = files.filter(x => x.rows && x.rows.length);
     if (!ok.length || zone === "all") return;
+    if ($("dbRepl").checked && debs.some(d => d.zone_kind === zone) && !confirm("Listat e vjetra të zonës " + ZN[zone] + " do të zëvendësohen me këto të rejat. Vazhdo?")) return;
     $("dbGo").disabled = true;
     const day = new Date().toLocaleDateString("sq");
     let done = 0, total = 0;
     try {
+      if ($("dbRepl").checked) {
+        say("dbMsg", "Duke hequr listat e vjetra…");
+        const {error} = await sb.from("debtors").delete().eq("zone_kind", zone);
+        if (error) throw error;
+      }
       for (const f of ok) {
         say("dbMsg", "Duke ngarkuar " + f.name + "…");
         const batch = f.name + " (" + day + ")";
@@ -648,13 +738,30 @@ icons();
         }
         done++; total += f.rows.length;
       }
-      say("dbMsg", "U ngarkuan " + done + " lista (" + total + " rreshta) te " + ZN[zone] + ".");
-      resetFiles(); loadDebs();
+      say("dbMsg", "U ngarkuan " + done + " lista (" + total + " debitorë) te " + ZN[zone] + ".");
+      resetFiles(); loadDebs(false);
     } catch (err) {
-      say("dbMsg", "U ngarkuan " + done + " lista. Gabim te lista tjetër: " + (err.message || err), true);
-      $("dbGo").disabled = false; loadDebs();
+      say("dbMsg", "Gabim: " + (err.message || err) + (done ? " (u ngarkuan " + done + " lista)" : ""), true);
+      $("dbGo").disabled = false; loadDebs(false);
     }
   };
+
+  function banner(d){ return '<div class="dbanner"><i data-lucide="triangle-alert"></i><span>Debi: <b>' + lek(d.amount) + "</b>" + (d.invoices ? " · " + d.invoices + " fatura" : "") + '</span><span class="meta" style="color:#7a1f1f">' + esc((d.list_date || "").split("-").reverse().join(".")) + "</span></div>"; }
+  function decorate(){
+    const det = $("detail"); if (!det || det.classList.contains("hide")) return;
+    const h2 = det.querySelector(".dpad h2"), dl = det.querySelector(".dpad .dl");
+    const pid = (det.querySelector("[data-dgo]") || {}).getAttribute ? det.querySelector("[data-dgo]").getAttribute("data-dgo") : null;
+    const b = pid ? allRows.find(x => String(x.id) === String(pid)) : null;
+    if (h2 && b && !det.querySelector(".dbanner.dbpt")) { const d = window.pbDebtFor(b.contract_no); if (d) { h2.insertAdjacentHTML("afterend", banner(d)); det.querySelector(".dbanner").classList.add("dbpt"); } }
+    det.querySelectorAll("#subBox .sub").forEach(card => {
+      if (card.dataset.dbx) return; card.dataset.dbx = "1";
+      const m = /Kontratë:\s*([^·<]+)/.exec(card.textContent || ""); if (!m) return;
+      const d = window.pbDebtFor(m[1].trim()); if (d) { const meta = card.querySelector(".meta"); if (meta) meta.insertAdjacentHTML("afterend", banner(d)); }
+    });
+    lucide.createIcons();
+  }
+  let dt = null;
+  new MutationObserver(() => { clearTimeout(dt); dt = setTimeout(decorate, 80); }).observe(document.body, {childList: true, subtree: true});
 })();
 
 </script>
@@ -1199,14 +1306,16 @@ icons();
     repRows = data;
     const cnt = {}; ACTIONS.forEach(a => cnt[a] = 0); data.forEach(r => { cnt[r.action] = (cnt[r.action] || 0) + 1; });
     const pt = id => { const b = allRows.find(x => x.id === id); return b ? b.name : "–"; };
-    $("rBody").innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">' + ACTIONS.map(a => '<div class="upbox" style="margin:0;text-align:center"><div style="font-size:24px;font-weight:700;color:#0a7d82">' + cnt[a] + '</div><div class="meta">' + a + "</div></div>").join("") + "</div>" +
-      (data.length ? data.map(r => '<div class="drow"><b>' + esc(r.action) + " · " + esc(r.subscriber_name || pt(r.point_id)) + '</b><div class="meta">' + esc(pt(r.point_id)) + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + " · " + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + "</div>" + (r.note ? "<div>" + esc(r.note) + "</div>" : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje e regjistruar për këtë ditë.</p>');
+    const lekR = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
+    const debtSum = data.reduce((t, r) => t + (Number(r.debt_amount) || 0), 0), cutSum = data.filter(r => r.action === "Prerje").reduce((t, r) => t + (Number(r.debt_amount) || 0), 0);
+    $("rBody").innerHTML = (debtSum ? '<div class="dbanner" style="justify-content:space-between"><span>Borxhi i abonentëve të kontrolluar: <b>' + lekR(debtSum) + "</b></span>" + (cutSum ? "<span>Nga të prerët: <b>" + lekR(cutSum) + "</b></span>" : "") + "</div>" : "") + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">' + ACTIONS.map(a => '<div class="upbox" style="margin:0;text-align:center"><div style="font-size:24px;font-weight:700;color:#0a7d82">' + cnt[a] + '</div><div class="meta">' + a + "</div></div>").join("") + "</div>" +
+      (data.length ? data.map(r => '<div class="drow"><b>' + esc(r.action) + " · " + esc(r.subscriber_name || pt(r.point_id)) + '</b><div class="meta">' + esc(pt(r.point_id)) + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + " · " + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + "</div>" + (r.debt_amount ? '<div style="color:#b3261e;font-weight:700">Debi: ' + lekR(Number(r.debt_amount)) + "</div>" : "") + (r.note ? "<div>" + esc(r.note) + "</div>" : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje e regjistruar për këtë ditë.</p>');
   }
   rp.addEventListener("click", e => {
     if (e.target.closest("#rBack")) rp.classList.add("hide");
     if (e.target.closest("#rXls")) {
       const pt = id => { const b = allRows.find(x => x.id === id); return b ? b.name : ""; };
-      const ws = XLSX.utils.json_to_sheet(repRows.map(r => ({"Data": r.check_date, "Veprimi": r.action, "Pika": pt(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Stafi": r.staff_kind || "", "Emri i stafit": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""})));
+      const ws = XLSX.utils.json_to_sheet(repRows.map(r => ({"Data": r.check_date, "Veprimi": r.action, "Pika": pt(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Debi (lekë)": r.debt_amount != null ? Number(r.debt_amount) : "", "Stafi": r.staff_kind || "", "Emri i stafit": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""})));
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Raporti"); XLSX.writeFile(wb, "raporti_" + $("rDay").value + ".xlsx");
     }
   });
@@ -1265,7 +1374,10 @@ icons();
       const row = {point_id: pid, subscriber_id: s ? s.id : null, subscriber_name: s ? s.full_name : null, contract_no: s ? (s.contract_no || null) : (b ? b.contract_no || null : null),
         check_date: $("ivDate").value, action: act, staff_kind: $("ivKind").value, staff_name: $("ivName").value.trim(), note: $("ivNote").value.trim(), photo_path,
         created_name: prof ? prof.full_name : ((me.user_metadata && me.user_metadata.username) || me.email)};
-      const {error} = await sb.from("interventions").insert(row);
+      const dd = window.pbDebtFor ? window.pbDebtFor(row.contract_no) : null;
+      if (dd && dd.amount != null) row.debt_amount = dd.amount;
+      let {error} = await sb.from("interventions").insert(row);
+      if (error && row.debt_amount != null && /debt_amount/.test(error.message || "")) { delete row.debt_amount; ({error} = await sb.from("interventions").insert(row)); }
       if (error) throw error;
       let warn = "";
       if ($("ivSet").checked && (act === "Prerje" || act === "Rilidhje")) {
