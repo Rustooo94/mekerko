@@ -138,6 +138,14 @@ body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!
 .ivcrew{background:#fff;border:1px solid var(--line,#d6e6e8);border-radius:10px;padding:10px;margin:8px 0}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
 @media(max-width:420px){.row3{grid-template-columns:1fr}}
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.wgrid.g4{grid-template-columns:repeat(4,1fr)}
+.wstat{background:#f5f9fd;border:1px solid #d6e6f8;border-radius:12px;padding:8px 10px;display:flex;flex-direction:column}
+.wstat b{font-size:20px;color:#0d2f5a;line-height:1.2}
+.wstat span{font-size:12px;color:#58797d}
+.wsub{font-weight:700;font-size:14px;margin-top:4px;color:#0d2f5a}
+.rdel{margin-top:6px;padding:6px 10px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.rdel svg{width:15px;height:15px}
 </style>
 </head>
 <body>
@@ -1236,6 +1244,30 @@ icons();
   btn.innerHTML = '<i data-lucide="clipboard-list"></i>';
   $("infoBtn").before(btn); lucide.createIcons();
 
+  async function adminBody(){
+    const lk = v => String(Math.round(v || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
+    let nDeb = 0, sum = 0, ivs = [];
+    try {
+      for (let f = 0; ; f += 1000) {
+        const {data, error} = await sb.from("debtors").select("amount").range(f, f + 999);
+        if (error || !data) break;
+        data.forEach(d => { nDeb++; sum += Number(d.amount) || 0; });
+        if (data.length < 1000) break;
+      }
+    } catch (e) {}
+    try { const {data} = await sb.from("interventions").select("action").eq("check_date", today()); ivs = data || []; } catch (e) {}
+    const c = a => ivs.filter(x => x.action === a).length;
+    const box = (n, t, red) => '<div class="wstat"><b' + (red ? ' style="color:#b3261e"' : "") + ">" + n + '</b><span>' + t + "</span></div>";
+    let nPts = 0, nSubs = 0;
+    try { nPts = allRows.length; nSubs = allRows.reduce((t, b) => t + ((b._subArr || []).length), 0); } catch (e) {}
+    return '<div class="wnote" style="background:#eef5fd;border-color:#cfe1f6;color:#0d2f5a"><i data-lucide="shield-check" style="color:#1a6fd1"></i><div><b>Administrator</b><p>Keni akses të plotë në sistem. Ja përmbledhja e ditës.</p></div></div>' +
+      '<div class="wgrid">' + box(nDeb, "debitorë në listë") + box(lk(sum), "borxhi total", true) + box(nPts, "pika në hartë") + box(nSubs, "abonentë brenda pikave") + "</div>" +
+      '<div class="wsub">Ndërhyrjet e sotme nga stafi (' + ivs.length + ")</div>" +
+      '<div class="wgrid g4">' + ACTIONS.map(a => box(c(a), a)).join("") + "</div>" +
+      '<div class="wchips">' + chip("banknote", "Lista e debitorëve", "wDebts") + "</div>" +
+      '<div class="wbar"><button type="button" class="alt" id="wRep">Raporti i ditës</button><button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button></div>';
+  }
+  const chip = (ic2, t, id) => '<button type="button" class="wchip" id="' + id + '"><i data-lucide="' + ic2 + '"></i><span>' + t + '</span><i data-lucide="chevron-right"></i></button>';
   async function showWelcome(){
     const r = ROLES[prof.role] || {tasks: []};
     const nm = (prof.salutation ? prof.salutation + " " : "") + prof.full_name;
@@ -1249,12 +1281,12 @@ icons();
       '<div class="wbell"><i data-lucide="bell"></i></div>' +
       '<h2>Përshëndetje, ' + esc(nm) + '!</h2>' +
       '<div class="wrole">' + esc(prof.title || "") + '</div><div class="meta">' + esc(prof.sector || "") + '</div>' +
-      '<p class="wtext">Jeni identifikuar me sukses në sistemin PikaBlu.</p>' +
+      '<p class="wtext">Jeni identifikuar me sukses në sistemin PikaBlu.</p>' + (isAdm ? await adminBody() :
       '<div class="wnote"><i data-lucide="info"></i><div><b>Njoftim</b><p>Keni një listë me debitorë' + (nd ? " (" + nd + ")" : "") + '. Para se të dilni në terren, lexoni detyrat dhe zbatoni sigurinë teknike në punë.</p></div></div>' +
       '<div class="wchips">' + chip("banknote", "Lista e debitorëve", "wDebts") +
       (r.tasks.length ? chip("hard-hat", "Detyrat dhe siguria teknike", "wTasks") : "") + "</div>" +
       '<div class="wbar"><button type="button" class="alt" id="wRep">Raporti i ditës</button>' +
-      (r.tasks.length ? '<button type="button" id="wTasks2">Lexo detyrat <i data-lucide="arrow-right"></i></button>' : '<button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button>') + "</div></div></div>";
+      (r.tasks.length ? '<button type="button" id="wTasks2">Lexo detyrat <i data-lucide="arrow-right"></i></button>' : '<button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button>') + "</div>") + "</div></div>";
     ov.classList.remove("hide"); lucide.createIcons();
   }
 
@@ -1330,10 +1362,22 @@ icons();
     const lekR = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
     const debtSum = data.reduce((t, r) => t + (Number(r.debt_amount) || 0), 0), cutSum = data.filter(r => r.action === "Prerje").reduce((t, r) => t + (Number(r.debt_amount) || 0), 0);
     $("rBody").innerHTML = (debtSum ? '<div class="dbanner" style="justify-content:space-between"><span>Borxhi i abonentëve të kontrolluar: <b>' + lekR(debtSum) + "</b></span>" + (cutSum ? "<span>Nga të prerët: <b>" + lekR(cutSum) + "</b></span>" : "") + "</div>" : "") + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">' + ACTIONS.map(a => '<div class="upbox" style="margin:0;text-align:center"><div style="font-size:24px;font-weight:700;color:#0a7d82">' + cnt[a] + '</div><div class="meta">' + a + "</div></div>").join("") + "</div>" +
-      (data.length ? data.map(r => '<div class="drow"><b>' + esc(r.action) + " · " + esc(r.subscriber_name || pt(r.point_id)) + '</b><div class="meta">' + esc(pt(r.point_id)) + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + " · " + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + "</div>" + (r.debt_amount ? '<div style="color:#b3261e;font-weight:700">Debi: ' + lekR(Number(r.debt_amount)) + "</div>" : "") + (r.note ? "<div>" + esc(r.note) + "</div>" : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje e regjistruar për këtë ditë.</p>');
+      (data.length ? data.map(r => '<div class="drow"><b>' + esc(r.action) + " · " + esc(r.subscriber_name || pt(r.point_id)) + '</b><div class="meta">' + esc(pt(r.point_id)) + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + " · " + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + "</div>" + (r.debt_amount ? '<div style="color:#b3261e;font-weight:700">Debi: ' + lekR(Number(r.debt_amount)) + "</div>" : "") + (r.note ? "<div>" + esc(r.note) + "</div>" : "") + ((isAdm || r.created_by === me.id) ? '<button type="button" class="red rdel" data-ivdel="' + r.id + '"><i data-lucide="trash-2"></i> Fshi këtë veprim</button>' : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje e regjistruar për këtë ditë.</p>');
+    lucide.createIcons();
   }
-  rp.addEventListener("click", e => {
+  rp.addEventListener("click", async e => {
     if (e.target.closest("#rBack")) rp.classList.add("hide");
+    const dv = e.target.closest("[data-ivdel]");
+    if (dv) {
+      const r = repRows.find(x => String(x.id) === dv.getAttribute("data-ivdel")); if (!r) return;
+      if (!confirm("Ta fshij këtë veprim (" + r.action + " · " + (r.subscriber_name || r.contract_no || "") + ")?\nKjo nuk kthehet mbrapsht.")) return;
+      dv.disabled = true;
+      const {data, error} = await sb.from("interventions").delete().eq("id", r.id).select();
+      if (error || !data || !data.length) { dv.disabled = false; toastMsg("Veprimi nuk u fshi" + (error ? ": " + error.message : ". Mungon leja – ekzekuto SQL-in e ri.")); return; }
+      if (r.photo_path) { try { await sb.storage.from("photos").remove([r.photo_path]); } catch (x) {} }
+      if (r.action === "Prerje" || r.action === "Rilidhje") toastMsg("Veprimi u fshi. Nëse ndryshoi statusin e kontratës, korrigjojeni te pika.");
+      drawReport();
+    }
     if (e.target.closest("#rXls")) {
       const pt = id => { const b = allRows.find(x => x.id === id); return b ? b.name : ""; };
       const ws = XLSX.utils.json_to_sheet(repRows.map(r => ({"Data": r.check_date, "Veprimi": r.action, "Pika": pt(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Debi (lekë)": r.debt_amount != null ? Number(r.debt_amount) : "", "Stafi": r.staff_kind || "", "Emri i stafit": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""})));
