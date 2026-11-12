@@ -146,6 +146,21 @@ body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!
 .wsub{font-weight:700;font-size:14px;margin-top:4px;color:#0d2f5a}
 .rdel{margin-top:6px;padding:6px 10px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
 .rdel svg{width:15px;height:15px}
+#defects{position:fixed;inset:0;z-index:2200;overflow-y:auto;background:#fff}
+#defects .dp{max-width:640px;margin:0 auto;padding:14px}
+#defects textarea{width:100%;padding:10px;border:1px solid var(--line,#c9e3e2);border-radius:8px;font:inherit}
+.dfk{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.dfm{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dfprev img,.dfprev video{width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:6px;background:#000}
+.dftabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.dftabs button{padding:6px 10px;font-size:13px}
+.dfcard{border:1px solid var(--line,#d6e6e8);border-left:4px solid #f29900;border-radius:12px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.dfcard.urg{border-left-color:#d93025}
+.dfmedia{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.dfmedia img,.dfmedia video{width:100%;height:150px;object-fit:cover;border-radius:8px;background:#000;display:block}
+.badge.st-e_re{background:#fff1d6;color:#7a4b00}.badge.st-ne_pune{background:#dbe9ff;color:#0d3b7a}.badge.st-rregulluar{background:#dff5e6;color:#1d6b38}
+.dftip{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:2300;background:#0d3b45;color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+@media(max-width:420px){.dfm,.dfk{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1292,7 +1307,7 @@ icons();
 
   async function loadProfile(user){
     const [p, u] = await Promise.all([sb.from("staff_profiles").select("*").eq("user_id", user.id).maybeSingle(), sb.from("uploaders").select("user_id").eq("user_id", user.id)]);
-    prof = p.error ? null : p.data; isAdm = !!(u.data && u.data.length);
+    prof = p.error ? null : p.data; isAdm = !!(u.data && u.data.length); window.pbProf = prof;
     console.log("PikaBlu profili:", p.error ? p.error.message : p.data, "admin:", isAdm);
     if (p.error) toastMsg("Profili i stafit nuk u lexua: " + p.error.message);
     else if (!p.data) toastMsg("Nuk u gjet profil stafi për " + (user.email || "këtë llogari") + ". Kontrollo SQL-in e profilit.");
@@ -1475,6 +1490,173 @@ document.addEventListener("change", e => {
   if (e.target.id === "d") document.getElementById("dAmtBox").classList.toggle("hide", !e.target.checked);
   if (e.target.id === "sD") document.getElementById("sDABox").classList.toggle("hide", !e.target.checked);
 });
+</script>
+<script>
+(function(){
+  const KINDS = ["Tubacion i dëmtuar", "Problem me matësin", "Saraçineskë e çarë", "Tjetër"];
+  const STAT = {e_re: "E re", ne_pune: "Në punë", rregulluar: "E rregulluar"};
+  const MAXV = 50 * 1024 * 1024;
+  const ov = document.createElement("div");
+  ov.id = "defects"; ov.className = "hide";
+  document.body.appendChild(ov);
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.id = "defBtn"; btn.setAttribute("aria-label", "Defektet dhe mirëmbajtja");
+  btn.innerHTML = '<i data-lucide="wrench"></i>';
+  $("infoBtn").before(btn); lucide.createIcons();
+  let adm = false, loc = null, linkPt = null, list = [], fst = "all", tmpMk = null;
+  const dfmt = t => { const d = new Date(t); return d.toLocaleDateString("sq") + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+  function locTxt(){
+    if (linkPt) return "Pika: " + linkPt.name + " (" + linkPt.lat.toFixed(5) + ", " + linkPt.lng.toFixed(5) + ")";
+    return loc ? "Vendndodhja: " + loc.lat.toFixed(5) + ", " + loc.lng.toFixed(5) : "Vendndodhja nuk është zgjedhur ende.";
+  }
+  function formHtml(){
+    return '<div class="upbox"><b>Raporto defekt</b>' +
+      '<p class="meta" style="margin:4px 0 8px">Raportimin mund ta bëjë çdo punonjës. Raportet i shikon administratori.</p>' +
+      '<label>Lloji i defektit</label><div class="dfk">' + KINDS.map((k, i) => '<label class="chk"><input type="radio" name="dfKind" value="' + esc(k) + '"' + (i ? "" : " checked") + "> " + esc(k) + "</label>").join("") + "</div>" +
+      '<label class="chk" style="margin-top:8px"><input type="checkbox" id="dfUrg"> Urgjent (rrjedhje e madhe, mungesë uji)</label>' +
+      '<label for="dfDesc" style="margin-top:8px">Përshkrimi</label><textarea id="dfDesc" rows="3" maxlength="600" placeholder="p.sh. Rrjedhje uji te kryqëzimi, tubi 63 mm i çarë"></textarea>' +
+      '<label style="margin-top:8px">Vendndodhja</label><p class="meta" id="dfLoc" style="margin:0 0 6px">' + esc(locTxt()) + "</p>" +
+      '<div class="bar"><button type="button" class="alt" id="dfGps"><i data-lucide="locate-fixed"></i> Vendndodhja ime</button><button type="button" class="alt" id="dfPick"><i data-lucide="map-pin"></i> Zgjidh në hartë</button></div>' +
+      '<label style="margin-top:10px">Foto ose video (deri në 2, sipas dëshirës)</label>' +
+      '<div class="dfm">' + [1, 2].map(i => '<div><input id="dfF' + i + '" type="file" accept="image/*,video/*"><div class="dfprev" id="dfP' + i + '"></div></div>').join("") + "</div>" +
+      '<p class="meta" style="margin:4px 0 0">Videoja deri në 50 MB (rreth 30–60 sekonda). Fotot zvogëlohen vetë.</p>' +
+      '<div class="bar"><button type="button" id="dfGo"><i data-lucide="send"></i> Dërgo raportin</button></div><p class="msg" id="dfMsg"></p></div>';
+  }
+  function listHtml(){
+    const cnt = k => list.filter(d => d.status === k).length;
+    const tabs = [["all", "Të gjitha (" + list.length + ")"], ["e_re", "Të reja (" + cnt("e_re") + ")"], ["ne_pune", "Në punë (" + cnt("ne_pune") + ")"], ["rregulluar", "Të rregulluara (" + cnt("rregulluar") + ")"]];
+    const l = list.filter(d => fst === "all" || d.status === fst);
+    return '<h3 style="margin:18px 0 8px">Raportet e defekteve</h3><div class="dftabs">' + tabs.map(t => '<button type="button" class="' + (fst === t[0] ? "" : "alt") + '" data-dft="' + t[0] + '">' + t[1] + "</button>").join("") + "</div>" +
+      (l.length ? l.map(d => '<div class="dfcard' + (d.urgent ? " urg" : "") + '"><div class="dtop"><div><b>' + esc(d.kind) + "</b>" + (d.urgent ? ' <span class="badge red">Urgjent</span>' : "") + ' <span class="badge st-' + d.status + '">' + (STAT[d.status] || d.status) + '</span><div class="meta">' + esc(dfmt(d.created_at)) + " · nga " + esc(d.created_name || "–") + "</div></div></div>" +
+        (d.description ? "<p style=\"margin:6px 0\">" + esc(d.description) + "</p>" : "") +
+        '<div class="meta">' + (d.point_name ? "Pika: " + esc(d.point_name) + " · " : "") + (d.lat != null ? d.lat.toFixed(5) + ", " + d.lng.toFixed(5) : "Pa vendndodhje") + "</div>" +
+        ((d._m || []).length ? '<div class="dfmedia">' + d._m.map(m => m.url ? (m.type === "video" ? '<video src="' + esc(m.url) + '" controls preload="metadata" playsinline></video>' : '<a href="' + esc(m.url) + '" target="_blank" rel="noopener"><img alt="Foto e defektit" src="' + esc(m.url) + '"></a>') : "").join("") + "</div>" : "") +
+        '<div class="bar" style="margin-top:8px">' + (d.lat != null ? '<a class="dbtn" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + d.lat + "," + d.lng + '"><i data-lucide="navigation"></i> Më ço atje</a><button type="button" class="alt" data-dfmap="' + d.id + '"><i data-lucide="map-pin"></i> Shfaq në hartë</button>' : "") +
+        '<select data-dfst="' + d.id + '" style="width:auto">' + Object.keys(STAT).map(k => '<option value="' + k + '"' + (d.status === k ? " selected" : "") + ">" + STAT[k] + "</option>").join("") + "</select>" +
+        '<button type="button" class="red" data-dfdel="' + d.id + '"><i data-lucide="trash-2"></i> Fshi</button></div></div>').join("")
+      : '<p class="meta">Asnjë raport në këtë grup.</p>');
+  }
+  function draw(){
+    ov.innerHTML = '<div class="dhead"><button id="dfBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Defektet dhe mirëmbajtja</b></div><div class="dp">' + formHtml() + (adm ? '<div id="dfList">' + listHtml() + "</div>" : "") + "</div>";
+    lucide.createIcons();
+  }
+  function drawList(){ const el = $("dfList"); if (el) { el.innerHTML = listHtml(); lucide.createIcons(); } }
+  async function loadList(){
+    const {data, error} = await sb.from("defects").select("*").order("created_at", {ascending: false}).limit(300);
+    if (error) { list = []; const el = $("dfList"); if (el) el.innerHTML = '<p class="msg err">S’u lexuan raportet. Kontrollo që SQL-i u krye.</p>'; return; }
+    const paths = []; data.forEach(d => (d.media || []).forEach(m => paths.push(m.path)));
+    const mm = {};
+    if (paths.length) { const {data: us} = await sb.storage.from("defektet").createSignedUrls(paths, 3600); (us || []).forEach(u => { if (u.signedUrl) mm[u.path] = u.signedUrl; }); }
+    data.forEach(d => { d._m = (d.media || []).map(m => Object.assign({url: mm[m.path]}, m)); });
+    list = data; drawList();
+  }
+  async function open(pt){
+    linkPt = pt || null; if (pt) loc = null;
+    ov.classList.remove("hide");
+    const r = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
+    adm = !!(r.data && r.data.length);
+    draw(); if (adm) loadList();
+  }
+  window.pbOpenDefects = open;
+  btn.onclick = () => open(null);
+  function preview(i){
+    const f = $("dfF" + i).files[0], p = $("dfP" + i); p.innerHTML = "";
+    if (!f) return;
+    if (f.type.startsWith("video/") && f.size > MAXV) { p.innerHTML = '<span class="msg err">Videoja është ' + Math.round(f.size / 1048576) + " MB. Lejohen deri në 50 MB: filmoni më shkurt.</span>"; $("dfF" + i).value = ""; return; }
+    const u = URL.createObjectURL(f);
+    p.innerHTML = f.type.startsWith("video/") ? '<video src="' + u + '" muted playsinline controls></video>' : '<img alt="" src="' + u + '">';
+  }
+  ov.addEventListener("change", async e => {
+    if (e.target.id === "dfF1") preview(1);
+    if (e.target.id === "dfF2") preview(2);
+    const st = e.target.getAttribute && e.target.getAttribute("data-dfst");
+    if (st) {
+      const {error} = await sb.from("defects").update({status: e.target.value}).eq("id", st);
+      if (error) return alert("Statusi nuk u ndryshua: " + error.message);
+      const d = list.find(x => String(x.id) === st); if (d) d.status = e.target.value; drawList();
+    }
+  });
+  ov.addEventListener("click", async e => {
+    if (e.target.closest("#dfBack")) { ov.classList.add("hide"); return; }
+    const t = e.target.closest("[data-dft]"); if (t) { fst = t.getAttribute("data-dft"); drawList(); return; }
+    if (e.target.closest("#dfGps")) {
+      if (!navigator.geolocation) return say("dfMsg", "Pajisja nuk mbështet vendndodhjen.", true);
+      say("dfMsg", "Duke marrë vendndodhjen…");
+      navigator.geolocation.getCurrentPosition(p => { loc = {lat: p.coords.latitude, lng: p.coords.longitude}; linkPt = null; $("dfLoc").textContent = locTxt(); say("dfMsg", "Vendndodhja u mor (saktësia ~" + Math.round(p.coords.accuracy) + " m)."); },
+        () => say("dfMsg", "Vendndodhja nuk u lejua. Përdor “Zgjidh në hartë”.", true), {enableHighAccuracy: true, timeout: 15000});
+      return;
+    }
+    if (e.target.closest("#dfPick")) {
+      const keep = {kind: (ov.querySelector('input[name="dfKind"]:checked') || {}).value, urg: $("dfUrg").checked, desc: $("dfDesc").value};
+      ov.classList.add("hide"); const det = $("detail"); if (det) det.classList.add("hide");
+      const tip = document.createElement("div"); tip.className = "dftip"; tip.textContent = "Prek hartën ku ndodhet defekti"; document.body.appendChild(tip);
+      setTimeout(() => map.once("click", ev => {
+        tip.remove(); loc = {lat: ev.latlng.lat, lng: ev.latlng.lng}; linkPt = null;
+        ov.classList.remove("hide"); draw(); if (adm) loadList();
+        const r = ov.querySelector('input[name="dfKind"][value="' + (keep.kind || "").replace(/"/g, "") + '"]'); if (r) r.checked = true;
+        $("dfUrg").checked = keep.urg; $("dfDesc").value = keep.desc;
+      }), 50);
+      return;
+    }
+    if (e.target.closest("#dfGo")) {
+      const where = linkPt ? {lat: linkPt.lat, lng: linkPt.lng} : loc;
+      const desc = $("dfDesc").value.trim(), kind = (ov.querySelector('input[name="dfKind"]:checked') || {}).value || KINDS[0];
+      const files = [1, 2].map(i => $("dfF" + i).files[0]).filter(Boolean);
+      if (!where) return say("dfMsg", "Zgjidh vendndodhjen: “Vendndodhja ime” ose “Zgjidh në hartë”.", true);
+      if (!desc && !files.length) return say("dfMsg", "Shkruaj një përshkrim ose shto një foto/video.", true);
+      const b = $("dfGo"); b.disabled = true;
+      try {
+        const media = [];
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i], vid = f.type.startsWith("video/");
+          say("dfMsg", "Duke ngarkuar " + (vid ? "videon" : "foton") + " " + (i + 1) + " nga " + files.length + "…");
+          const body = vid ? f : await shrink(f);
+          const ext = vid ? ((f.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "") || "mp4") : "jpg";
+          const path = me.id + "/" + Date.now() + "_" + i + "." + ext;
+          const {error} = await sb.storage.from("defektet").upload(path, body, {contentType: vid ? (f.type || "video/mp4") : "image/jpeg"});
+          if (error) throw new Error((vid ? "Videoja" : "Fotoja") + " nuk u ngarkua: " + error.message);
+          media.push({path, type: vid ? "video" : "image"});
+        }
+        say("dfMsg", "Duke ruajtur raportin…");
+        const row = {kind, urgent: $("dfUrg").checked, description: desc || null, lat: where.lat, lng: where.lng, point_id: linkPt ? linkPt.id : null, point_name: linkPt ? linkPt.name : null, media, status: "e_re",
+          created_name: (window.pbProf && window.pbProf.full_name) || (me.user_metadata && me.user_metadata.username) || me.email};
+        const {error} = await sb.from("defects").insert(row);
+        if (error) throw new Error(error.message);
+        loc = null; linkPt = null; draw(); say("dfMsg", "Faleminderit! Raporti u dërgua te administratori."); if (adm) loadList();
+      } catch (err) { say("dfMsg", "S’u dërgua: " + (err.message || err), true); b.disabled = false; }
+      return;
+    }
+    const mp = e.target.closest("[data-dfmap]");
+    if (mp) {
+      const d = list.find(x => String(x.id) === mp.getAttribute("data-dfmap")); if (!d) return;
+      ov.classList.add("hide"); const det = $("detail"); if (det) det.classList.add("hide");
+      if (tmpMk) map.removeLayer(tmpMk);
+      tmpMk = L.circleMarker([d.lat, d.lng], {radius: 11, color: "#fff", weight: 3, fillColor: d.urgent ? "#d93025" : "#f29900", fillOpacity: 1}).addTo(map)
+        .bindPopup("<b>" + esc(d.kind) + "</b><br>" + esc(STAT[d.status] || "") + (d.description ? "<br>" + esc(d.description) : "")).openPopup();
+      map.setView([d.lat, d.lng], 19);
+      return;
+    }
+    const dl = e.target.closest("[data-dfdel]");
+    if (dl) {
+      const d = list.find(x => String(x.id) === dl.getAttribute("data-dfdel")); if (!d) return;
+      if (!confirm("Ta fshij këtë raport defekti bashkë me fotot/videot?")) return;
+      const {error} = await sb.from("defects").delete().eq("id", d.id);
+      if (error) return alert("S’u fshi: " + error.message);
+      const ps = (d.media || []).map(m => m.path); if (ps.length) await sb.storage.from("defektet").remove(ps);
+      loadList();
+    }
+  });
+  const od = openDetail;
+  openDetail = function(id){
+    od(id);
+    const bar = document.querySelector("#detail .dbar"), b = allRows.find(x => String(x.id) === String(id));
+    if (bar && b && !bar.querySelector("[data-dfrep]")) {
+      const x = document.createElement("button"); x.type = "button"; x.className = "alt"; x.setAttribute("data-dfrep", b.id);
+      x.innerHTML = '<i data-lucide="wrench"></i> Raporto defekt'; x.onclick = () => open(b);
+      bar.appendChild(x); lucide.createIcons();
+    }
+  };
+})();
 </script>
 </body>
 </html>
