@@ -253,6 +253,28 @@ button{cursor:pointer}
   .load::after{animation:none}
   .sheet,.home{transition:none!important}
 }
+.btn-warn{background:#F2A900;color:#1d1300}
+.btn-warn:hover{background:#ffbc1f}
+.btn .bi{display:flex;align-items:center;gap:10px}
+.btn .bi svg{width:20px;height:20px}
+.kinds{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kinds label{margin:0;font-family:inherit;font-size:14px;letter-spacing:0;text-transform:none;cursor:pointer}
+.kinds input{position:absolute;opacity:0;pointer-events:none}
+.kinds span{display:flex;align-items:center;min-height:48px;padding:8px 12px;background:#fff;border:1px solid var(--line);font-weight:600;line-height:1.25}
+.kinds input:checked + span{border-color:var(--ink);box-shadow:inset 4px 0 0 var(--accent);background:var(--paper-2)}
+.kinds input:focus-visible + span{outline:2px solid var(--accent)}
+.control textarea{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:12px 14px;font:inherit;font-size:16px;resize:vertical}
+.gps{margin-top:8px;display:flex;align-items:center;gap:8px;border:1px dashed var(--line);background:#fff;padding:10px 12px;font-size:14px;font-weight:600;width:100%;text-align:left}
+.gps svg{width:18px;height:18px;flex:none;color:var(--accent)}
+.gps.ok{border-style:solid;border-color:#2e7d4f;color:#1d5c38}
+.files{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.file{position:relative;display:flex;align-items:center;justify-content:center;min-height:64px;background:#fff;border:1px dashed var(--line);padding:8px;text-align:center;font-family:inherit!important;font-size:13.5px!important;text-transform:none!important;letter-spacing:0!important;font-weight:600;cursor:pointer;margin:0!important;word-break:break-word}
+.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file.has{border-style:solid;border-color:var(--ink);background:var(--paper-2)}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.45}
+.done{text-align:center;padding-top:30px}
+.done svg{width:64px;height:64px;color:#2e7d4f;margin-bottom:12px}
+@media (min-width:960px){.sheet.report .sheet-body{justify-content:flex-start}.report .sheet-body > *{max-width:520px}}
 </style>
 </head>
 <body>
@@ -287,6 +309,10 @@ button{cursor:pointer}
         <span>Hyr në llogari</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
       </button>
+      <button type="button" class="btn btn-warn" data-open="report">
+        <span class="bi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.7C9 6.6 5.5 10.6 5.5 14.4a6.5 6.5 0 0 0 13 0c0-3.8-3.5-7.8-6.5-11.7z"/><path d="M12 9v4"/><path d="M12 16.5h.01"/></svg>Qytetarë: raportoni një defekt</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+      </button>
       <button type="button" class="btn btn-ghost" data-open="about">
         <span>Çfarë është PikaBlu?</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
@@ -294,7 +320,7 @@ button{cursor:pointer}
     </div>
     <div class="note">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11h14v10H5z"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-      Vetëm për stafin e autorizuar
+      Hyrja në llogari vetëm për stafin e autorizuar
     </div>
   </div>
 </main>
@@ -394,6 +420,7 @@ button{cursor:pointer}
         <li>Faqe e plotë për çdo pikë, me foto të madhe dhe të gjitha të dhënat.</li>
         <li>Udhëzim rruge deri te pika, përmes Google Maps.</li>
         <li>Ndryshimi i të dhënave të një pike pa e fshirë atë.</li>
+        <li class="k">Qytetarët mund të raportojnë defekte (rrjedhje, tuba të dëmtuar, matës, saraçineska) me foto ose video, pa llogari.</li>
       </ul>
     </section>
 
@@ -409,6 +436,69 @@ button{cursor:pointer}
       <span>Hyr në llogari</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
     </button>
+  </div>
+</section>
+
+<section class="sheet about report" id="report" role="dialog" aria-modal="true" aria-labelledby="report-title">
+  <div class="topbar">
+    <button type="button" class="back" data-close="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
+      Mbrapa
+    </button>
+    <span class="tag">Për qytetarët</span>
+  </div>
+  <div class="sheet-body">
+    <div id="rpForm">
+    <h2 id="report-title">Raportoni një defekt</h2>
+    <p class="lead">Keni parë rrjedhje uji, tub të dëmtuar, matës me problem ose saraçineskë të çarë? Na tregoni ku është dhe stafi i ujësjellësit do ta kontrollojë.</p>
+    <div class="alert" id="rpAlert" role="alert"></div>
+    <div class="field">
+      <label>Çfarë problemi keni parë?</label>
+      <div class="kinds" id="rpKinds">
+        <label><input type="radio" name="rpKind" value="Rrjedhje uji" checked><span>Rrjedhje uji</span></label>
+        <label><input type="radio" name="rpKind" value="Tubacion i dëmtuar"><span>Tubacion i dëmtuar</span></label>
+        <label><input type="radio" name="rpKind" value="Mungesë uji"><span>Mungesë uji</span></label>
+        <label><input type="radio" name="rpKind" value="Problem me matësin"><span>Problem me matësin</span></label>
+        <label><input type="radio" name="rpKind" value="Saraçineskë e çarë"><span>Saraçineskë e çarë</span></label>
+        <label><input type="radio" name="rpKind" value="Tjetër"><span>Tjetër</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="rpAddr">Adresa ose vendi</label>
+      <div class="control" id="c-rpAddr"><input id="rpAddr" maxlength="160" placeholder="p.sh. Rruga Kiço Ngjela, pranë shkollës"></div>
+      <div class="msg" id="m-rpAddr">Shkruani adresën ose vendin ku ndodhet problemi.</div>
+      <button type="button" class="gps" id="rpGps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></svg><span id="rpGpsT">Përdor vendndodhjen time (GPS)</span></button>
+    </div>
+    <div class="field">
+      <label for="rpDesc">Përshkrimi</label>
+      <div class="control"><textarea id="rpDesc" rows="3" maxlength="600" placeholder="Përshkruani shkurt çfarë shihni"></textarea></div>
+    </div>
+    <div class="field">
+      <label>Foto ose video (deri në 2, sipas dëshirës)</label>
+      <div class="files">
+        <label class="file"><input type="file" id="rpF1" accept="image/*,video/*"><span id="rpF1t">+ Shto foto/video</span></label>
+        <label class="file"><input type="file" id="rpF2" accept="image/*,video/*"><span id="rpF2t">+ Shto foto/video</span></label>
+      </div>
+      <div class="hint">Videoja deri në 30 MB (rreth 30 sekonda).</div>
+    </div>
+    <div class="field">
+      <label for="rpName">Emri juaj (opsionale)</label>
+      <div class="control"><input id="rpName" maxlength="80" autocomplete="name"></div>
+    </div>
+    <div class="field">
+      <label for="rpPhone">Telefoni</label>
+      <div class="control" id="c-rpPhone"><input id="rpPhone" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="06x xxx xxxx"></div>
+      <div class="msg" id="m-rpPhone">Shkruani një numër telefoni që stafi t’ju kontaktojë nëse duhet.</div>
+    </div>
+    <input type="text" id="rpWeb" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+    <button type="button" class="btn btn-ink submit" id="rpGo"><span id="rpGoT">Dërgo raportin</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg><span class="load"></span></button>
+    <p class="hint" style="margin-top:12px">Të dhënat tuaja përdoren vetëm nga ujësjellësi për këtë raport. Për rastet urgjente telefononi edhe ujësjellësin.</p>
+    </div>
+    <div id="rpDone" class="done" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+      <h2>Faleminderit!</h2>
+      <p class="lead">Raporti juaj u dërgua te ujësjellësi. Stafi do ta kontrollojë sa më shpejt.</p>
+      <button type="button" class="btn btn-ink" data-close="report"><span>Kthehu në fillim</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg></button>
+    </div>
   </div>
 </section>
 
@@ -492,6 +582,57 @@ button{cursor:pointer}
     if(window.parent&&window.parent!==window&&window.parent.pikaLogin){window.parent.pikaLogin(email.value.trim(),pass.value).then(fin,function(){fin({error:true,message:'S’u lidh me serverin.'})})}
     else{fin({error:true,message:'Hap faqen kryesore (index.html) për të hyrë.'})}
   });
+  /* Raportimi nga qytetarët */
+  (function(){
+    var $=function(i){return document.getElementById(i)}, gps=null;
+    var MAXV=30*1024*1024;
+    function al(t){var a=$('rpAlert');a.textContent=t||'';a.classList.toggle('show',!!t);if(t)a.scrollIntoView({block:'center',behavior:'smooth'})}
+    function err(id,on){$('c-'+id).classList.toggle('invalid',on);$('m-'+id).classList.toggle('show',on)}
+    ['rpAddr','rpPhone'].forEach(function(id){$(id).addEventListener('input',function(){err(id,false)})});
+    [1,2].forEach(function(i){
+      $('rpF'+i).addEventListener('change',function(){
+        var f=this.files[0],t=$('rpF'+i+'t'),box=this.parentNode;
+        if(f&&/^video\//.test(f.type)&&f.size>MAXV){al('Videoja është '+Math.round(f.size/1048576)+' MB. Lejohen deri në 30 MB: filmoni më shkurt.');this.value='';f=null}
+        else al('');
+        t.textContent=f?((/^video\//.test(f.type)?'Video: ':'Foto: ')+f.name.slice(0,28)):'+ Shto foto/video';
+        box.classList.toggle('has',!!f);
+      });
+    });
+    $('rpGps').addEventListener('click',function(){
+      var b=this,t=$('rpGpsT');
+      if(!navigator.geolocation){t.textContent='Pajisja nuk e mbështet GPS-in';return}
+      t.textContent='Duke marrë vendndodhjen…';
+      navigator.geolocation.getCurrentPosition(function(p){
+        gps={lat:p.coords.latitude,lng:p.coords.longitude};b.classList.add('ok');
+        t.textContent='Vendndodhja u mor ✓ ('+gps.lat.toFixed(5)+', '+gps.lng.toFixed(5)+')';
+      },function(){t.textContent='Vendndodhja nuk u lejua. Shkruani adresën.'},{enableHighAccuracy:true,timeout:15000});
+    });
+    $('rpGo').addEventListener('click',function(){
+      al('');
+      if($('rpWeb').value)return;
+      var addr=$('rpAddr').value.trim(),phone=$('rpPhone').value.trim(),okP=/^[+0-9 ()-]{8,20}$/.test(phone)&&phone.replace(/\D/g,'').length>=8;
+      err('rpAddr',!addr&&!gps);err('rpPhone',!okP);
+      if(!addr&&!gps){$('rpAddr').focus();return}
+      if(!okP){$('rpPhone').focus();return}
+      var last=0;try{last=+localStorage.getItem('pbRepT')||0}catch(e){}
+      if(Date.now()-last<120000){al('Sapo dërguat një raport. Prisni 2 minuta para se të dërgoni një tjetër.');return}
+      var P=window.parent;
+      if(!(P&&P!==window&&P.pikaReport)){al('Hapni faqen kryesore të PikaBlu për të dërguar raportin.');return}
+      var b=$('rpGo');b.disabled=true;$('rpGoT').textContent='Duke dërguar…';
+      var files=[1,2].map(function(i){return $('rpF'+i).files[0]}).filter(Boolean);
+      var row={kind:(document.querySelector('input[name="rpKind"]:checked')||{}).value||'Tjetër',address:addr||null,description:$('rpDesc').value.trim()||null,
+        lat:gps?gps.lat:null,lng:gps?gps.lng:null,created_name:$('rpName').value.trim()||null,reporter_phone:phone};
+      P.pikaReport(row,files,function(t){$('rpGoT').textContent=t}).then(function(r){
+        b.disabled=false;$('rpGoT').textContent='Dërgo raportin';
+        if(r&&r.error){al('Raporti nuk u dërgua: '+r.message);return}
+        try{localStorage.setItem('pbRepT',String(Date.now()))}catch(e){}
+        ['rpAddr','rpDesc','rpName','rpPhone','rpF1','rpF2'].forEach(function(id){$(id).value=''});[1,2].forEach(function(i){$('rpF'+i+'t').textContent='+ Shto foto/video';$('rpF'+i).parentNode.classList.remove('has')});gps=null;$('rpGps').classList.remove('ok');$('rpGpsT').textContent='Përdor vendndodhjen time (GPS)';$('rpForm').hidden=true;$('rpDone').hidden=false;$('report').scrollTop=0;
+      },function(){b.disabled=false;$('rpGoT').textContent='Dërgo raportin';al('S’u lidh me serverin. Provoni përsëri.')});
+    });
+    document.querySelectorAll('[data-open="report"]').forEach(function(x){x.addEventListener('click',function(){
+      $('rpForm').hidden=false;$('rpDone').hidden=true;
+    })});
+  })();
 })();
 </script>
 </body>
