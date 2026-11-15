@@ -176,6 +176,14 @@ body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!
 .cmres2{background:#eaf6ee;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:14px}
 .badge.cm-e_re{background:#fff1d6;color:#7a4b00}.badge.cm-caktuar{background:#ede4ff;color:#4a2a8a}.badge.cm-ne_pune{background:#dbe9ff;color:#0d3b7a}.badge.cm-zgjidhur{background:#dff5e6;color:#1d6b38}
 body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner,body.klient [data-dfrep],body.klient #wDebts{display:none!important}
+#cmForm .fhead{text-align:center;display:flex;flex-direction:column;gap:2px;margin-bottom:10px;font-size:13px}
+#cmForm .fhead .ft{font-size:16px;margin-top:6px;letter-spacing:.02em}
+.fsec{font-weight:800;margin:14px 0 6px;padding-top:10px;border-top:1px solid var(--line,#c9e3e2);color:#0d3b45}
+.fgrp{margin:8px 0}.fgrp>b{font-size:13.5px;color:#3b5b61}
+.fchk{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin-top:4px}.fchk .chk{font-size:14px;margin:2px 0}
+@media(max-width:420px){.fchk{grid-template-columns:1fr}}
+.cmscan{display:flex;align-items:center;gap:6px;font-size:13.5px;margin-top:6px;color:#8a5a00}.cmscan svg{width:16px;height:16px}.cmscan.ok{color:#1d6b38}
+.dbtn.upl{cursor:pointer}.dbtn.upl.busy{opacity:.5;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1287,6 +1295,7 @@ icons();
     } catch (e) {}
     try { const {data} = await sb.from("interventions").select("action").eq("check_date", today()); ivs = data || []; } catch (e) {}
     const c = a => ivs.filter(x => x.action === a).length;
+    let nCmp = 0; try { const r2 = await sb.from("complaints").select("id").neq("status", "zgjidhur"); nCmp = (r2.data || []).length; } catch (e) {}
     const box = (n, t, red) => '<div class="wstat"><b' + (red ? ' style="color:#b3261e"' : "") + ">" + n + '</b><span>' + t + "</span></div>";
     let nPts = 0, nSubs = 0;
     try { nPts = allRows.length; nSubs = allRows.reduce((t, b) => t + ((b._subArr || []).length), 0); } catch (e) {}
@@ -1294,17 +1303,17 @@ icons();
       '<div class="wgrid">' + box(nDeb, "debitorë në listë") + box(lk(sum), "borxhi total", true) + box(nPts, "pika në hartë") + box(nSubs, "abonentë brenda pikave") + "</div>" +
       '<div class="wsub">Ndërhyrjet e sotme nga stafi (' + ivs.length + ")</div>" +
       '<div class="wgrid g4">' + ACTIONS.map(a => box(c(a), a)).join("") + "</div>" +
-      '<div class="wchips">' + chip("banknote", "Lista e debitorëve", "wDebts") + "</div>" +
+      '<div class="wchips">' + chip("banknote", "Lista e debitorëve", "wDebts") + chip("message-square-warning", "Ankesat e klientëve" + (nCmp ? " (" + nCmp + " të hapura)" : ""), "wCmp") + "</div>" +
       '<div class="wbar"><button type="button" class="alt" id="wRep">Raporti i ditës</button><button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button></div>';
   }
   const chip = (ic2, t, id) => '<button type="button" class="wchip" id="' + id + '"><i data-lucide="' + ic2 + '"></i><span>' + t + '</span><i data-lucide="chevron-right"></i></button>';
   async function klientBody(){
-    let n = null, nu = 0;
-    try { const {data} = await sb.from("complaints").select("status,urgent").neq("status", "zgjidhur"); if (data) { n = data.length; nu = data.filter(x => x.urgent).length; } } catch (e) {}
-    return '<div class="wnote" style="background:#f3eefe;border-color:#d9ccf5;color:#3b2470"><i data-lucide="headset" style="color:#6b46c1"></i><div><b>Shërbimi i klientit</b><p>' +
-      (n ? "Keni " + n + " ankesa të hapura" + (nu ? ", nga të cilat " + nu + " urgjente" : "") + ". Caktoni stafin dhe ndiqni zgjidhjen e tyre." : "Nuk ka ankesa të hapura për momentin. Ankesat e reja i regjistroni te butoni i ankesave ose te çdo pikë.") + "</p></div></div>" +
-      '<div class="wchips">' + chip("message-square-warning", "Ankesat" + (n ? " e hapura (" + n + ")" : ""), "wCmp") + "</div>" +
-      '<div class="wbar"><button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button></div>';
+    let n = null, nu = 0, ns = 0;
+    try { const {data} = await sb.from("complaints").select("status,urgent,scan_path").neq("status", "zgjidhur"); if (data) { n = data.length; nu = data.filter(x => x.urgent).length; ns = data.filter(x => !x.scan_path).length; } } catch (e) {}
+    return '<div class="wnote" style="background:#f3eefe;border-color:#d9ccf5;color:#3b2470"><i data-lucide="headset" style="color:#6b46c1"></i><div><b>Njoftim</b><p>Para se të nisni punën, lexoni rregullat e punës dhe raportoni ankesat e qytetarëve.</p></div></div>' +
+      '<div class="wchips">' + chip("list-checks", "Rregullat e punës", "wRules") + chip("message-square-warning", "Ankesat" + (n ? " e hapura (" + n + (nu ? ", " + nu + " urgjente" : "") + ")" : ""), "wCmp") + "</div>" +
+      (ns ? '<p class="meta" style="margin:-4px 0 10px">' + ns + " formularë presin të ngarkohen të firmosur.</p>" : "") +
+      '<div class="wbar"><button type="button" id="wRules2">Lexo rregullat <i data-lucide="arrow-right"></i></button></div>';
   }
   async function showWelcome(){
     const r = ROLES[prof.role] || {tasks: []};
@@ -1429,6 +1438,7 @@ icons();
     if (e.target === ov || e.target.closest("#wGo") || e.target.closest("#wClose")) ov.classList.add("hide");
     if (e.target.closest("#wRep")) openReport();
     if (e.target.closest("#wTasks") || e.target.closest("#wTasks2")) openTasks();
+    if (e.target.closest("#wRules") || e.target.closest("#wRules2")) { ov.classList.add("hide"); if (window.pbOpenRules) window.pbOpenRules(); }
     if (e.target.closest("#wCmp")) { ov.classList.add("hide"); if (window.pbOpenComplaints) window.pbOpenComplaints(null); }
     if (e.target.closest("#wDebts")) { ov.classList.add("hide"); const d = $("debtBtn"); if (d) d.click(); }
   });
@@ -1710,12 +1720,24 @@ document.addEventListener("change", e => {
 </script>
 <script>
 (function(){
-  const KINDS = ["Mungesë uji", "Presion i ulët", "Cilësia e ujit (ngjyrë, erë, shije)", "Rrjedhje uji", "Problem me matësin", "Faturë e gabuar", "Kanalizime", "Tjetër"];
+  const GROUPS = [
+    ["Të përgjithshme", ["Ndërprerje e furnizimit", "Saktësim adrese", "Dublim kontrate", "Lëshim vërtetim debi", "Vendosje libreze", "Mbyllje kontrate (e përkohshme / e përhershme)", "Lëshim vërtetime të tjera", "Vendosje ujëmatësi", "Akt kolaudimi", "Bllokim KUN", "Mirëmbajtje plan vendosje", "Hapje kontrate e re", "Rilidhje uji", "Lidhje e re", "Verifikim ujëmatësi", "Ndryshim emri", "Kërkesë"]],
+    ["Për saktësinë e faturimit", ["Për mbifaturim", "Për mosfaturim", "Për faturim afrofe"]],
+    ["Për shpërndarjen e faturës", ["Nuk lihet në vendin e caktuar", "Vjen me vonesë", "Nuk vjen fare"]],
+    ["Deklaratë për gjendjen dhe kushtet teknike të matësit", ["Jashtë kushtit teknik", "I dëmtuar", "I vjedhur"]],
+    ["Deklaratë për ndryshime në gjendjen civile dhe kushtet e furnizimit me ujë", ["Ndryshim frymësh", "Nga me matës, me frymë", "Nga me frymë, me matës"]]
+  ];
+  const RULES = ["Pritni qytetarin me mirësjellje dhe dëgjojeni deri në fund.", "Kontrolloni dokumentin e identitetit dhe kodin e kontratës para se të plotësoni formularin.",
+    "Plotësoni formularin online për çdo kërkesë ose ankesë, me të gjitha të dhënat dhe me llojin e saktë të kërkesës.", "Shkarkoni dhe printoni formularin, firmoseni bashkë me qytetarin dhe jepini numrin e formularit.",
+    "Skanoni formularin e firmosur dhe ngarkojeni në PikaBlu po atë ditë: kështu i dërgohet administratorit.", "Caktoni stafin dhe afatin. Ankesat urgjente (mungesë uji, rrjedhje e madhe) njoftojini menjëherë administratorit.",
+    "Ndiqni ankesën derisa të zgjidhet, shkruani si u zgjidh dhe njoftoni qytetarin."];
+  const PRIV = ["Të dhënat personale (nr. ID, telefoni, adresa) përdoren vetëm për kërkesën përkatëse.", "Mos i fotografoni dokumentet e qytetarëve me telefonin personal dhe mos i ndani jashtë shërbimit.", "Formularët e printuar ruhen në dosje dhe nuk lihen në tavolinë."];
+  const OBJ = ["Shtëpi", "Pallat", "Biznes"];
   const STAT = {e_re: "E re", caktuar: "E caktuar", ne_pune: "Në punë", zgjidhur: "E zgjidhur"};
   const ov = document.createElement("div"); ov.id = "complaints"; ov.className = "hide"; document.body.appendChild(ov);
   const btn = document.createElement("button"); btn.type = "button"; btn.id = "cmpBtn"; btn.className = "hide"; btn.setAttribute("aria-label", "Ankesat e klientëve");
   btn.innerHTML = '<i data-lucide="message-square-warning"></i>'; $("infoBtn").before(btn); lucide.createIcons();
-  let can = false, adm = false, list = [], fst = "open", q = "", sel = null, editId = null;
+  let can = false, adm = false, list = [], fst = "open", q = "", sel = null, editId = null, urls = {};
   const dfmt = t => { const d = new Date(t); return d.toLocaleDateString("sq") + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
   const todayS = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   function setRole(r){
@@ -1731,29 +1753,78 @@ document.addEventListener("change", e => {
     return (sel.sub ? "Abonenti: <b>" + esc(sel.sub.full_name) + "</b>" + (sel.sub.contract_no ? " · Kontratë " + esc(sel.sub.contract_no) : "") + (sel.sub.apartment ? " · " + esc(sel.sub.apartment) : "") + "<br>Brenda pikës: " + esc(sel.b.name)
       : "Pika: <b>" + esc(sel.b.name) + "</b>" + (sel.b.contract_no ? " · Kontratë " + esc(sel.b.contract_no) : ""));
   }
+  function nextNo(){ return list.reduce((m, c) => Math.max(m, c.form_no || 0), 0) + 1; }
   function formHtml(c){
     c = c || {};
-    const crew = (c.staff || "").split(", ").filter(Boolean);
-    return '<div class="upbox" id="cmForm"><b>' + (editId ? "Ndrysho ankesën #" + editId : "Regjistro ankesë") + "</b>" +
-      '<label style="margin-top:8px">Lloji i ankesës</label><select id="cmKind">' + KINDS.map(k => "<option" + (c.kind === k ? " selected" : "") + ">" + esc(k) + "</option>").join("") + "</select>" +
-      '<label style="margin-top:10px" for="cmQ">Pika ose abonenti</label>' +
-      '<div class="cmsel" id="cmSel"' + (sel ? "" : ' hidden') + '><div id="cmSelT">' + selTxt() + '</div><button type="button" class="alt" id="cmSelX">Ndrysho</button></div>' +
-      '<div id="cmFind"' + (sel ? ' hidden' : "") + '><input id="cmQ" type="search" placeholder="Kërko emrin e pikës, abonentit ose nr. kontrate" autocomplete="off"><div id="cmRes" class="cmres"></div></div>' +
-      '<div class="row" style="margin-top:10px"><div><label for="cmName">Emri i ankuesit</label><input id="cmName" maxlength="80" value="' + esc(c.complainant_name || "") + '"></div>' +
-      '<div><label for="cmTel">Telefoni</label><input id="cmTel" type="tel" maxlength="20" value="' + esc(c.complainant_phone || "") + '"></div></div>' +
-      '<label for="cmDesc">Përshkrimi i ankesës</label><textarea id="cmDesc" rows="3" maxlength="800">' + esc(c.description || "") + "</textarea>" +
-      '<label class="chk" style="margin-top:8px"><input type="checkbox" id="cmUrg"' + (c.urgent ? " checked" : "") + "> Urgjent</label>" +
-      '<div class="ivcrew"><b>Stafi që do ta zgjidhë</b> <span class="meta">(emrat e punonjësve)</span><div class="row3" style="margin-top:6px">' +
+    const crew = (c.staff || "").split(", ").filter(Boolean), items = c.items || [];
+    const inp = (id, lbl, v, extra) => '<div><label for="' + id + '">' + lbl + '</label><input id="' + id + '" value="' + esc(v == null ? "" : v) + '"' + (extra || "") + "></div>";
+    return '<div class="upbox" id="cmForm"><div class="fhead"><b>SHOQËRIA RAJONALE UJËSJELLËS KANALIZIME GJIROKASTËR SH.A.</b><span>NJËSIA PËRMET</span><b class="ft">' + (editId ? "Ndrysho formularin" : "FORMULAR KËRKESË / ANKESË") + "</b></div>" +
+      '<div class="row">' + inp("cmNo", "Nr.", c.form_no || nextNo(), ' type="number" min="1"') + inp("cmDate", "Data", c.form_date || todayS(), ' type="date"') + "</div>" +
+      '<label style="margin-top:4px">Lidhe me pikën në hartë (opsionale)</label>' +
+      '<div class="cmsel" id="cmSel"' + (sel ? "" : " hidden") + '><div id="cmSelT">' + selTxt() + '</div><button type="button" class="alt" id="cmSelX">Ndrysho</button></div>' +
+      '<div id="cmFind"' + (sel ? " hidden" : "") + '><input id="cmQ" type="search" placeholder="Kërko pikën, abonentin ose kontratën" autocomplete="off"><div id="cmRes" class="cmres"></div></div>' +
+      '<div class="fsec">Të dhënat personale apo kompanisë</div>' +
+      '<div class="row">' + inp("cmCon", "Kodi i kontratës", c.contract_no, ' maxlength="20"') + inp("cmFn", "Emri", c.first_name, ' maxlength="60"') + "</div>" +
+      '<div class="row">' + inp("cmLn", "Mbiemri", c.last_name, ' maxlength="60"') + inp("cmPid", "Nr. Personal ID", c.personal_id, ' maxlength="12" style="text-transform:uppercase"') + "</div>" +
+      '<div class="row">' + inp("cmTel", "Nr. Telefoni", c.complainant_phone, ' type="tel" maxlength="20"') +
+      '<div><label for="cmObj">Objekti</label><select id="cmObj"><option value="">–</option>' + OBJ.map(o => "<option" + (c.object_type === o ? " selected" : "") + ">" + o + "</option>").join("") + "</select></div></div>" +
+      '<label for="cmAdr">Adresa</label><input id="cmAdr" maxlength="160" value="' + esc(c.address || "") + '">' +
+      '<div class="fsec">Informacioni i Kërkesës / Ankesës</div>' +
+      GROUPS.map((g, gi) => '<div class="fgrp"><b>' + esc(g[0]) + '</b><div class="fchk">' + g[1].map((it, ii) => '<label class="chk"><input type="checkbox" data-item="' + esc(it) + '"' + (items.includes(it) ? " checked" : "") + "> " + esc(it) + "</label>").join("") + "</div></div>").join("") +
+      '<label for="cmDesc">Shënime</label><textarea id="cmDesc" rows="3" maxlength="800">' + esc(c.description || "") + "</textarea>" +
+      '<div class="fsec">Për stafin (nuk printohet)</div>' +
+      '<label class="chk"><input type="checkbox" id="cmUrg"' + (c.urgent ? " checked" : "") + "> Urgjent</label>" +
+      '<div class="ivcrew"><b>Stafi që do ta zgjidhë</b><div class="row3" style="margin-top:6px">' +
       [0, 1, 2].map(i => '<input id="cmS' + i + '" maxlength="60" placeholder="Punonjësi ' + (i + 1) + '" value="' + esc(crew[i] || "") + '">').join("") + "</div>" +
       '<div class="row" style="margin-top:8px"><div><label for="cmDl">Afati</label><input id="cmDl" type="date" value="' + esc(c.deadline || "") + '"></div>' +
       (editId ? '<div><label for="cmSt">Statusi</label><select id="cmSt">' + Object.keys(STAT).map(k => '<option value="' + k + '"' + (c.status === k ? " selected" : "") + ">" + STAT[k] + "</option>").join("") + "</select></div>" : "<div></div>") + "</div></div>" +
       (editId ? '<label for="cmRes2">Si u zgjidh (shënim)</label><textarea id="cmRes2" rows="2" maxlength="600">' + esc(c.resolution || "") + "</textarea>" : "") +
-      '<div class="bar"><button type="button" id="cmGo"><i data-lucide="save"></i> ' + (editId ? "Ruaj ndryshimet" : "Regjistro ankesën") + "</button>" + (editId ? '<button type="button" class="alt" id="cmCancel">Anulo</button>' : "") + '</div><p class="msg" id="cmMsg"></p></div>';
+      '<div class="bar"><button type="button" id="cmGo"><i data-lucide="save"></i> ' + (editId ? "Ruaj ndryshimet" : "Ruaj formularin") + "</button>" + (editId ? '<button type="button" class="alt" id="cmCancel">Anulo</button>' : "") + '</div><p class="msg" id="cmMsg"></p></div>';
   }
+  function printHtml(c){
+    const items = c.items || [], box = v => '<div class="bx">' + esc(v || "") + "</div>";
+    const f = (lbl, v, w) => '<div class="fl" style="width:' + w + '"><div class="lb">' + lbl + "</div>" + box(v) + "</div>";
+    const d = (c.form_date || "").split("-").reverse().join(".");
+    return '<!doctype html><html lang="sq"><head><meta charset="utf-8"><title>Formular ' + esc(c.form_no || c.id) + '</title><style>' +
+      '@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:"Times New Roman",Times,serif;color:#000;margin:0;font-size:12.5pt}' +
+      '.hd{text-align:center;font-weight:bold;font-size:13pt;line-height:1.35}.tt{display:flex;justify-content:space-between;align-items:flex-end;margin:20px 0 4px}.tt b{font-size:13pt}.tt i{font-style:normal;font-size:11.5pt}' +
+      '.sub{font-weight:bold;font-size:11.5pt;margin-bottom:10px}.rw{display:flex;gap:14px;margin-bottom:8px}.lb{font-size:11pt;margin-bottom:2px}.bx{border:1px solid #000;min-height:26px;padding:4px 8px;font-size:12pt}' +
+      'h3{font-size:12pt;margin:14px 0 6px}.g{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px 14px;font-size:11.5pt}.g span{display:flex;gap:6px;align-items:flex-start}.cb{font-family:"DejaVu Sans",Arial,sans-serif}' +
+      '.nt{border:1px solid #000;min-height:80px;padding:6px 8px;white-space:pre-wrap}.sg{display:flex;justify-content:space-between;margin-top:34px}.sg div{width:44%;font-weight:bold;font-size:11.5pt}.sg i{display:block;border-bottom:1px solid #000;height:34px}' +
+      '.no{text-decoration:underline}@media screen{body{max-width:800px;margin:20px auto;padding:0 16px}.pbar{position:sticky;top:0;background:#0d3b45;padding:10px;text-align:center;margin:0 -16px 16px}.pbar button{font:600 15px system-ui;padding:10px 16px;border:0;border-radius:8px;background:#7fe3e0;color:#0d3b45}}@media print{.pbar{display:none}}' +
+      '</style></head><body><div class="pbar"><button onclick="window.print()">Shkarko PDF / Printo</button></div>' +
+      '<div class="hd">SHOQËRIA RAJONALE UJËSJELLËS KANALIZIME GJIROKASTËR SH.A.<br>NJËSIA PËRMET</div>' +
+      '<div class="tt"><b>FORMULAR KËRKESË / ANKESË</b><i>NR. <span class="no">' + esc(c.form_no || c.id) + '</span> &nbsp; DATË <span class="no">' + esc(d) + "</span></i></div>" +
+      '<div class="sub">Të dhënat personale apo kompanisë</div>' +
+      '<div class="rw">' + f("Kod i kontratës", c.contract_no, "30%") + f("Emri", c.first_name, "35%") + f("Mbiemri", c.last_name, "35%") + "</div>" +
+      '<div class="rw">' + f("Nr. Personal ID", (c.personal_id || "").toUpperCase(), "30%") + f("Nr. Telefoni", c.complainant_phone, "35%") + f("Objekti (shtëpi/pallat/biznes)", c.object_type, "35%") + "</div>" +
+      '<div class="rw">' + f("Adresa", c.address, "65%") + "</div>" +
+      '<div class="sub" style="margin-top:14px">Informacioni i Kërkesës / Ankesës</div>' +
+      GROUPS.map(g => "<h3>" + esc(g[0]) + '</h3><div class="g">' + g[1].map(it => '<span><b class="cb">' + (items.includes(it) ? "☑" : "☐") + "</b>" + esc(it) + "</span>").join("") + "</div>").join("") +
+      '<h3>Shënime</h3><div class="nt">' + esc(c.description || "") + "</div>" +
+      '<div class="sg"><div>Emër/mbiemër (kërkuesi/ankuesi)<i></i></div><div>Operator i Zyrës së Shërbimit të Klientit<i></i></div></div>' +
+      "<script>window.onload=function(){setTimeout(function(){window.print()},400)}<\/script></body></html>";
+  }
+  function openPrint(c){
+    const w = window.open("", "_blank");
+    if (!w) { alert("Shfletuesi e bllokoi dritaren. Lejoni dritaret (pop-up) për këtë faqe dhe provoni përsëri."); return; }
+    w.document.open(); w.document.write(printHtml(c)); w.document.close();
+  }
+  window.pbComplaintPrintHtml = printHtml;
+  function openRules(){
+    ov.classList.remove("hide");
+    ov.innerHTML = '<div class="dhead"><button id="cmBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Rregullat e punës</b></div><div class="dp">' +
+      '<h2 style="margin:6px 0 2px">Shërbimi i klientit</h2><p class="meta" style="margin:0 0 12px">Lexoni rregullat para se të nisni punën.</p>' +
+      '<div class="pfc" style="flex-direction:column;align-items:stretch"><b><i data-lucide="list-checks"></i> Rregullat e punës</b><ol style="margin:6px 0 0;padding-left:22px;line-height:1.6">' + RULES.map(r => "<li>" + esc(r) + "</li>").join("") + "</ol></div>" +
+      '<div class="pfc" style="flex-direction:column;align-items:stretch;background:#f3eefe;border-color:#d9ccf5"><b><i data-lucide="shield-check"></i> Mbrojtja e të dhënave personale</b><ul style="margin:6px 0 0;padding-left:22px;line-height:1.6">' + PRIV.map(r => "<li>" + esc(r) + "</li>").join("") + "</ul></div>" +
+      '<div class="bar"><button type="button" id="cmFromRules"><i data-lucide="file-plus"></i> Hap formularin e ankesave</button></div></div>';
+    lucide.createIcons();
+  }
+  window.pbOpenRules = openRules;
   function waText(c){
-    const b = allRows.find(x => String(x.id) === String(c.point_id));
-    return "PikaBlu · Ankesa #" + c.id + (c.urgent ? " (URGJENT)" : "") + "\n" + c.kind +
-      "\n" + (c.subscriber_name ? "Abonenti: " + c.subscriber_name + "\n" : "") + (c.point_name ? "Pika: " + c.point_name + "\n" : "") +
+    const b = c.point_id ? allRows.find(x => String(x.id) === String(c.point_id)) : null;
+    return "PikaBlu · Formulari nr. " + (c.form_no || c.id) + (c.urgent ? " (URGJENT)" : "") + "\n" + c.kind +
+      "\n" + ((c.first_name || c.last_name) ? "Kërkuesi: " + [c.first_name, c.last_name].filter(Boolean).join(" ") + "\n" : (c.subscriber_name ? "Abonenti: " + c.subscriber_name + "\n" : "")) + (c.address ? "Adresa: " + c.address + "\n" : "") + (c.point_name ? "Pika: " + c.point_name + "\n" : "") +
       (c.contract_no ? "Kontrata: " + c.contract_no + "\n" : "") + (c.complainant_phone ? "Tel. i ankuesit: " + c.complainant_phone + "\n" : "") +
       (c.description ? "Përshkrimi: " + c.description + "\n" : "") + (c.deadline ? "Afati: " + c.deadline.split("-").reverse().join(".") + "\n" : "") +
       (b ? "Vendndodhja: https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng : "");
@@ -1763,21 +1834,26 @@ document.addEventListener("change", e => {
     const tabs = [["open", "Të hapura (" + open.length + ")"], ["e_re", "Të reja (" + list.filter(c => c.status === "e_re").length + ")"], ["caktuar", "Të caktuara"], ["ne_pune", "Në punë"], ["zgjidhur", "Të zgjidhura"], ["all", "Të gjitha"]];
     const t = q.toLowerCase();
     const l = list.filter(c => (fst === "all" || (fst === "open" ? c.status !== "zgjidhur" : c.status === fst)) &&
-      (!t || [c.id, c.kind, c.point_name, c.subscriber_name, c.contract_no, c.complainant_name, c.complainant_phone, c.staff].join(" ").toLowerCase().includes(t)));
+      (!t || [c.id, c.form_no, c.kind, c.point_name, c.subscriber_name, c.contract_no, c.complainant_name, c.complainant_phone, c.staff, c.address].join(" ").toLowerCase().includes(t)));
     const td = todayS();
     return '<h3 style="margin:18px 0 8px">Ankesat</h3><div class="dftabs">' + tabs.map(x => '<button type="button" class="' + (fst === x[0] ? "" : "alt") + '" data-cmt="' + x[0] + '">' + x[1] + "</button>").join("") + "</div>" +
       '<input id="cmSearch" type="search" placeholder="Kërko në ankesa (emër, kontratë, punonjës, nr.)" value="' + esc(q) + '" style="margin-bottom:10px">' +
       (l.length ? l.map(c => {
         const late = c.deadline && c.status !== "zgjidhur" && c.deadline < td;
-        return '<div class="dfcard cmcard' + (c.urgent ? " urg" : "") + (c.status === "zgjidhur" ? " done" : "") + '"><div><b>#' + c.id + " · " + esc(c.kind) + "</b>" +
+        return '<div class="dfcard cmcard' + (c.urgent ? " urg" : "") + (c.status === "zgjidhur" ? " done" : "") + '"><div><b>Nr. ' + esc(c.form_no || c.id) + " · " + esc(c.kind) + "</b>" +
           (c.urgent ? ' <span class="badge red">Urgjent</span>' : "") + ' <span class="badge cm-' + c.status + '">' + (STAT[c.status] || c.status) + "</span>" +
           '<div class="meta">' + esc(dfmt(c.created_at)) + " · regjistroi " + esc(c.created_name || "–") + "</div></div>" +
           '<div style="margin-top:6px">' + (c.subscriber_name ? "<b>" + esc(c.subscriber_name) + "</b>" : "") + (c.point_name && c.point_name !== c.subscriber_name ? (c.subscriber_name ? " · brenda: " : "") + esc(c.point_name) : "") + (c.contract_no ? ' <span class="meta">· Kontratë ' + esc(c.contract_no) + "</span>" : "") + "</div>" +
           (c.complainant_name || c.complainant_phone ? '<div class="meta">Ankuesi: ' + esc(c.complainant_name || "") + (c.complainant_phone ? ' · <a href="tel:' + esc(c.complainant_phone.replace(/[^+0-9]/g, "")) + '">' + esc(c.complainant_phone) + "</a>" : "") + "</div>" : "") +
           (c.description ? '<p style="margin:6px 0">' + esc(c.description) + "</p>" : "") +
           '<div class="cmstaff"><i data-lucide="users"></i> ' + (c.staff ? esc(c.staff) : '<span class="meta">Pa staf të caktuar</span>') + (c.deadline ? ' · <span class="' + (late ? "late" : "") + '">Afati: ' + esc(c.deadline.split("-").reverse().join(".")) + (late ? " (ka kaluar)" : "") + "</span>" : "") + "</div>" +
+          (c.address ? '<div class="meta">Adresa: ' + esc(c.address) + "</div>" : "") +
+          (c.scan_path ? '<div class="cmscan ok"><i data-lucide="file-check"></i> Formulari i firmosur u dërgua te administratori' + (c.scan_sent_at ? " · " + esc(dfmt(c.scan_sent_at)) : "") + (urls[c.scan_path] ? ' · <a target="_blank" rel="noopener" href="' + esc(urls[c.scan_path]) + '">Shiko</a>' : "") + "</div>"
+            : '<div class="cmscan"><i data-lucide="file-warning"></i> Formulari i firmosur nuk është ngarkuar ende</div>') +
           (c.resolution ? '<div class="cmres2"><b>Zgjidhja:</b> ' + esc(c.resolution) + "</div>" : "") +
           '<div class="bar" style="margin-top:8px">' + (c.point_id ? '<button type="button" class="alt" data-cmmap="' + c.point_id + '"><i data-lucide="map-pin"></i> Pika</button>' : "") +
+          '<button type="button" class="alt" data-cmpdf="' + c.id + '"><i data-lucide="printer"></i> Shkarko PDF</button>' +
+          '<label class="dbtn upl"><i data-lucide="upload"></i> ' + (c.scan_path ? "Ringarko" : "Ngarko të firmosurin") + '<input type="file" accept="application/pdf,image/*" data-cmscan="' + c.id + '" hidden></label>' +
           '<a class="dbtn" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(c)) + '"><i data-lucide="send"></i> Dërgo stafit</a>' +
           '<select data-cmst="' + c.id + '" style="width:auto">' + Object.keys(STAT).map(k => '<option value="' + k + '"' + (c.status === k ? " selected" : "") + ">" + STAT[k] + "</option>").join("") + "</select>" +
           '<button type="button" class="alt" data-cmed="' + c.id + '"><i data-lucide="pencil"></i> Ndrysho</button>' +
@@ -1792,7 +1868,10 @@ document.addEventListener("change", e => {
   async function loadList(){
     const {data, error} = await sb.from("complaints").select("*").order("created_at", {ascending: false}).limit(500);
     if (error) { const el = $("cmList"); if (el) el.innerHTML = '<p class="msg err">S’u lexuan ankesat. Kontrollo që SQL-i u krye.</p>'; return; }
-    list = data; drawList();
+    list = data; urls = {};
+    const ps = data.filter(c => c.scan_path).map(c => c.scan_path);
+    if (ps.length) { const {data: us} = await sb.storage.from("ankesat").createSignedUrls(ps, 3600); (us || []).forEach(u => { if (u.signedUrl) urls[u.path] = u.signedUrl; }); }
+    drawList();
   }
   async function open(b){
     if (!can) return;
@@ -1823,6 +1902,27 @@ document.addEventListener("change", e => {
     if (e.target.id === "cmSearch") { q = e.target.value; const pos = e.target.selectionStart; drawList(); const s = $("cmSearch"); s.focus(); try { s.setSelectionRange(pos, pos); } catch (x) {} }
   });
   ov.addEventListener("change", async e => {
+    const sc = e.target.getAttribute && e.target.getAttribute("data-cmscan");
+    if (sc) {
+      const f = e.target.files[0]; if (!f) return;
+      if (f.size > 15 * 1024 * 1024) return alert("Skedari është më i madh se 15 MB. Skanojeni me cilësi më të ulët.");
+      const pdf = f.type === "application/pdf";
+      const lab = e.target.parentNode;
+      lab.classList.add("busy");
+      try {
+        const body = pdf ? f : await shrink(f);
+        const path = me.id + "/" + sc + "_" + Date.now() + (pdf ? ".pdf" : ".jpg");
+        const up = await sb.storage.from("ankesat").upload(path, body, {contentType: pdf ? "application/pdf" : "image/jpeg"});
+        if (up.error) throw up.error;
+        const c = list.find(x => String(x.id) === sc);
+        const {error} = await sb.from("complaints").update({scan_path: path, scan_sent_at: new Date().toISOString(), updated_at: new Date().toISOString()}).eq("id", sc);
+        if (error) throw error;
+        if (c && c.scan_path) { try { await sb.storage.from("ankesat").remove([c.scan_path]); } catch (x) {} }
+        await loadList();
+        const m = $("cmMsg"); if (m) { m.className = "msg"; m.textContent = "Formulari i firmosur u dërgua te administratori."; }
+      } catch (err) { alert("Nuk u ngarkua: " + (err.message || err)); lab.classList.remove("busy"); }
+      return;
+    }
     const st = e.target.getAttribute && e.target.getAttribute("data-cmst");
     if (!st) return;
     const upd = {status: e.target.value, updated_at: new Date().toISOString()};
@@ -1834,14 +1934,20 @@ document.addEventListener("change", e => {
   });
   ov.addEventListener("click", async e => {
     if (e.target.closest("#cmBack")) { ov.classList.add("hide"); return; }
+    if (e.target.closest("#cmFromRules")) { open(null); return; }
+    const pd = e.target.closest("[data-cmpdf]"); if (pd) { const c = list.find(x => String(x.id) === pd.getAttribute("data-cmpdf")); if (c) openPrint(c); return; }
     const tb = e.target.closest("[data-cmt]"); if (tb) { fst = tb.getAttribute("data-cmt"); drawList(); return; }
     const pk = e.target.closest("[data-cmpick]");
     if (pk) {
       sel = res[+pk.getAttribute("data-cmpick")];
       $("cmSelT").innerHTML = selTxt(); $("cmSel").hidden = false; $("cmFind").hidden = true;
-      if (sel.sub && !$("cmName").value) $("cmName").value = sel.sub.full_name || "";
-      if (!sel.sub && !$("cmName").value && !(sel.b.categories || []).some(c => /Pallat|Kolektor/.test(c))) $("cmName").value = sel.b.name || "";
+      const nm = (sel.sub ? sel.sub.full_name : ((sel.b.categories || []).some(c => /Pallat|Kolektor/.test(c)) ? "" : sel.b.name)) || "";
+      const parts = nm.replace(/\s+/g, " ").trim().split(" ");
+      if (nm && !$("cmFn").value && !$("cmLn").value) { $("cmFn").value = parts[0] || ""; $("cmLn").value = parts.slice(1).join(" "); }
+      const con = sel.sub ? sel.sub.contract_no : sel.b.contract_no; if (con && !$("cmCon").value) $("cmCon").value = con;
       const ph = sel.sub ? sel.sub.phone : sel.b.phone; if (ph && !$("cmTel").value) $("cmTel").value = ph;
+      const cats = (sel.b.categories || [sel.b.category]).join(" ");
+      if (!$("cmObj").value) $("cmObj").value = /Pallat/.test(cats) ? "Pallat" : /Biznes|Hotel|Dyqan|Lokal|Bar|Market|Zyr|Restorant|Farmaci/.test(cats) ? "Biznes" : /Banes|Shtëpi/.test(cats) ? "Shtëpi" : "";
       return;
     }
     if (e.target.closest("#cmSelX")) { sel = null; $("cmSel").hidden = true; $("cmFind").hidden = false; $("cmQ").value = ""; $("cmRes").innerHTML = ""; $("cmQ").focus(); return; }
@@ -1864,14 +1970,17 @@ document.addEventListener("change", e => {
       loadList(); return;
     }
     if (e.target.closest("#cmGo")) {
-      if (!sel) return say("cmMsg", "Zgjidh pikën ose abonentin për të cilin është ankesa.", true);
-      const desc = $("cmDesc").value.trim();
-      if (!desc) return say("cmMsg", "Shkruaj përshkrimin e ankesës.", true);
+      const items = Array.from(ov.querySelectorAll("[data-item]:checked")).map(x => x.getAttribute("data-item"));
+      const fn = $("cmFn").value.trim(), ln = $("cmLn").value.trim(), desc = $("cmDesc").value.trim();
+      if (!fn && !ln) return say("cmMsg", "Shkruani emrin dhe mbiemrin e kërkuesit.", true);
+      if (!items.length && !desc) return say("cmMsg", "Zgjidhni të paktën një lloj kërkese ose shkruani te Shënime.", true);
       const staff = [0, 1, 2].map(i => $("cmS" + i).value.trim()).filter(Boolean).join(", ");
-      const row = {kind: $("cmKind").value, urgent: $("cmUrg").checked, description: desc,
-        point_id: sel.b.id, point_name: sel.b.name, subscriber_id: sel.sub ? sel.sub.id : null, subscriber_name: sel.sub ? sel.sub.full_name : null,
-        contract_no: (sel.sub ? sel.sub.contract_no : sel.b.contract_no) || null,
-        complainant_name: $("cmName").value.trim() || null, complainant_phone: $("cmTel").value.trim() || null,
+      const row = {form_no: parseInt($("cmNo").value, 10) || null, form_date: $("cmDate").value || null,
+        contract_no: $("cmCon").value.trim() || null, first_name: fn || null, last_name: ln || null, personal_id: $("cmPid").value.trim().toUpperCase() || null,
+        complainant_name: [fn, ln].filter(Boolean).join(" ") || null, complainant_phone: $("cmTel").value.trim() || null,
+        object_type: $("cmObj").value || null, address: $("cmAdr").value.trim() || null, items,
+        kind: items.length ? items.join(", ") : "Kërkesë / Ankesë", urgent: $("cmUrg").checked, description: desc || null,
+        point_id: sel ? sel.b.id : null, point_name: sel ? sel.b.name : null, subscriber_id: sel && sel.sub ? sel.sub.id : null, subscriber_name: sel && sel.sub ? sel.sub.full_name : null,
         staff: staff || null, deadline: $("cmDl").value || null, updated_at: new Date().toISOString()};
       const b2 = $("cmGo"); b2.disabled = true;
       let r;
@@ -1889,8 +1998,8 @@ document.addEventListener("change", e => {
       const saved = r.data, wasEdit = !!editId;
       editId = null; sel = null; draw(); await loadList();
       const m = $("cmMsg");
-      m.className = "msg"; m.innerHTML = (wasEdit ? "Ankesa #" + saved.id + " u ndryshua." : "Ankesa #" + saved.id + " u regjistrua.") +
-        (saved.staff ? ' <a target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(saved)) + '">Dërgoja stafit në WhatsApp</a>' : "");
+      m.className = "msg"; m.innerHTML = (wasEdit ? "Formulari nr. " + (saved.form_no || saved.id) + " u ndryshua." : "Formulari nr. " + (saved.form_no || saved.id) + " u ruajt. Shkarkojeni, printojeni dhe pas firmës ngarkojeni te lista më poshtë.") +
+        ' <a href="#" data-cmpdf="' + saved.id + '">Shkarko PDF</a>' + (saved.staff ? ' · <a target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(saved)) + '">Dërgoja stafit në WhatsApp</a>' : "");
     }
   });
   const od = openDetail;
