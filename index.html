@@ -1740,11 +1740,11 @@ document.addEventListener("change", e => {
   const ov = document.createElement("div"); ov.id = "complaints"; ov.className = "hide"; document.body.appendChild(ov);
   const btn = document.createElement("button"); btn.type = "button"; btn.id = "cmpBtn"; btn.className = "hide"; btn.setAttribute("aria-label", "Ankesat e klientëve");
   btn.innerHTML = '<i data-lucide="message-square-warning"></i>'; $("infoBtn").before(btn); lucide.createIcons();
-  let can = false, adm = false, list = [], fst = "open", q = "", sel = null, editId = null, urls = {};
+  let can = false, adm = false, kl = false, list = [], fst = "open", q = "", sel = null, editId = null, urls = {};
   const dfmt = t => { const d = new Date(t); return d.toLocaleDateString("sq") + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
   const todayS = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   function setRole(r){
-    can = !!(r && (r.adm || r.role === "klient")); adm = !!(r && r.adm);
+    can = !!(r && (r.adm || r.role === "klient")); adm = !!(r && r.adm); kl = !!(r && r.role === "klient" && !r.adm);
     btn.classList.toggle("hide", !can);
     document.body.classList.toggle("klient", !!(r && r.role === "klient" && !r.adm));
   }
@@ -1854,17 +1854,20 @@ document.addEventListener("change", e => {
           (c.scan_path ? '<div class="cmscan ok"><i data-lucide="file-check"></i> Formulari i firmosur u dërgua te administratori' + (c.scan_sent_at ? " · " + esc(dfmt(c.scan_sent_at)) : "") + (urls[c.scan_path] ? ' · <a target="_blank" rel="noopener" href="' + esc(urls[c.scan_path]) + '">Shiko</a>' : "") + "</div>"
             : '<div class="cmscan"><i data-lucide="file-warning"></i> Formulari i firmosur nuk është ngarkuar ende</div>') +
           (c.resolution ? '<div class="cmres2"><b>Zgjidhja:</b> ' + esc(c.resolution) + "</div>" : "") +
-          '<div class="bar" style="margin-top:8px">' + (c.point_id ? '<button type="button" class="alt" data-cmmap="' + c.point_id + '"><i data-lucide="map-pin"></i> Pika</button>' : "") +
+          '<div class="bar" style="margin-top:8px">' + (!kl ? (c.point_id ? '<button type="button" class="alt" data-cmmap="' + c.point_id + '"><i data-lucide="map-pin"></i> Pika</button>' : "") +
+            '<button type="button" class="alt" data-cmpdf="' + c.id + '"><i data-lucide="file-text"></i> Formulari</button>' +
+            (c.status === "zgjidhur" ? '<button type="button" class="alt" data-cmsolve="0"' + ' data-id="' + c.id + '"><i data-lucide="rotate-ccw"></i> Nuk u zgjidh</button>' : '<button type="button" data-cmsolve="1" data-id="' + c.id + '"><i data-lucide="check"></i> U zgjidh</button>') : "") +
+          (kl ? (c.point_id ? '<button type="button" class="alt" data-cmmap="' + c.point_id + '"><i data-lucide="map-pin"></i> Pika</button>' : "") +
           '<button type="button" class="alt" data-cmpdf="' + c.id + '"><i data-lucide="printer"></i> Shkarko PDF</button>' +
           '<label class="dbtn upl"><i data-lucide="upload"></i> ' + (c.scan_path ? "Ringarko" : "Ngarko të firmosurin") + '<input type="file" accept="application/pdf,image/*" data-cmscan="' + c.id + '" hidden></label>' +
           '<a class="dbtn" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(c)) + '"><i data-lucide="send"></i> Dërgo stafit</a>' +
           '<select data-cmst="' + c.id + '" style="width:auto">' + Object.keys(STAT).map(k => '<option value="' + k + '"' + (c.status === k ? " selected" : "") + ">" + STAT[k] + "</option>").join("") + "</select>" +
           '<button type="button" class="alt" data-cmed="' + c.id + '"><i data-lucide="pencil"></i> Ndrysho</button>' +
-          (adm ? '<button type="button" class="red" data-cmdel="' + c.id + '"><i data-lucide="trash-2"></i></button>' : "") + "</div></div>";
+          "" : "") + "</div></div>";
       }).join("") : '<p class="meta">Asnjë ankesë këtu.</p>');
   }
   function draw(c){
-    ov.innerHTML = '<div class="dhead"><button id="cmBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Shërbimi i klientit · Ankesat</b></div><div class="dp">' + formHtml(c) + '<div id="cmList">' + listHtml() + "</div></div>";
+    ov.innerHTML = '<div class="dhead"><button id="cmBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>' + (kl ? "Shërbimi i klientit · Ankesat" : "Ankesat e klientëve") + '</b></div><div class="dp">' + (kl ? formHtml(c) : '<p class="meta" style="margin:4px 0 0">Ankesat e regjistruara nga shërbimi i klientit. Ju mund t’i shikoni dhe t’i shënoni si të zgjidhura ose jo.</p>') + '<div id="cmList">' + listHtml() + "</div></div>";
     lucide.createIcons();
   }
   function drawList(){ const el = $("cmList"); if (el) { el.innerHTML = listHtml(); lucide.createIcons(); const s = $("cmSearch"); if (s && document.activeElement !== s && q) {} } }
@@ -1938,6 +1941,16 @@ document.addEventListener("change", e => {
   ov.addEventListener("click", async e => {
     if (e.target.closest("#cmBack")) { ov.classList.add("hide"); return; }
     if (e.target.closest("#cmFromRules")) { open(null); return; }
+    const sv = e.target.closest("[data-cmsolve]");
+    if (sv) {
+      const c = list.find(x => String(x.id) === sv.getAttribute("data-id")); if (!c) return;
+      const yes = sv.getAttribute("data-cmsolve") === "1";
+      const st = yes ? "zgjidhur" : (c.staff ? "ne_pune" : "e_re");
+      sv.disabled = true;
+      const {error} = await sb.from("complaints").update({status: st, updated_at: new Date().toISOString()}).eq("id", c.id);
+      if (error) { sv.disabled = false; return alert("Statusi nuk u ndryshua: " + error.message); }
+      c.status = st; drawList(); return;
+    }
     const pd = e.target.closest("[data-cmpdf]"); if (pd) { const c = list.find(x => String(x.id) === pd.getAttribute("data-cmpdf")); if (c) openPrint(c); return; }
     const tb = e.target.closest("[data-cmt]"); if (tb) { fst = tb.getAttribute("data-cmt"); drawList(); return; }
     const pk = e.target.closest("[data-cmpick]");
@@ -2008,7 +2021,7 @@ document.addEventListener("change", e => {
   const od = openDetail;
   openDetail = function(id){
     od(id);
-    if (!can) return;
+    if (!kl) return;
     const bar = document.querySelector("#detail .dbar"), b = allRows.find(x => String(x.id) === String(id));
     if (bar && b && !bar.querySelector("[data-cmrep]")) {
       const x = document.createElement("button"); x.type = "button"; x.className = "alt"; x.setAttribute("data-cmrep", b.id);
