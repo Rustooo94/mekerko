@@ -275,6 +275,7 @@ button{cursor:pointer}
 .done{text-align:center;padding-top:30px}
 .done svg{width:64px;height:64px;color:#2e7d4f;margin-bottom:12px}
 @media (min-width:960px){.sheet.report .sheet-body{justify-content:flex-start}.report .sheet-body > *{max-width:520px}}
+.kg{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
 </style>
 </head>
 <body>
@@ -399,28 +400,29 @@ button{cursor:pointer}
 
     <section class="block">
       <h3>Çfarë është</h3>
-      <p>PikaBlu është një platformë digjitale për regjistrimin dhe menaxhimin e pikave në hartë, të lidhura me shërbimin e ujësjellësit.</p>
-      <div class="chips"><span>Dyqane</span><span>Lokale</span><span>Institucione</span><span>Guest house</span><span>Hotele</span><span>Pika të tjera</span></div>
+      <p>PikaBlu është platforma digjitale e ujësjellësit të Përmetit. Bashkon në një vend hartën e abonentëve dhe të rrjetit, punën e stafit në terren, ankesat dhe raportimin e defekteve.</p>
+      <div class="chips"><span>Ujë i pijshëm</span><span>Kanalizime</span><span>Shërbimi i klientit</span><span>Stafi në terren</span></div>
     </section>
 
     <section class="block">
-      <h3>Për çfarë shërben</h3>
-      <p>Çdo pikë ka vendndodhjen e saktë, të dhënat e kontratës dhe statusin e debitorit në një vend të vetëm. Stafi e gjen dhe e arrin shpejt pikën në terren.</p>
-    </section>
-
-    <section class="block">
-      <h3>Funksionet</h3>
+      <h3>Për qytetarët</h3>
       <ul class="feat">
-        <li>Hyrje me llogari personale. Të dhënat shihen vetëm nga përdoruesit e autorizuar.</li>
-        <li>Hartë satelitore dhe hartë normale, me kalim të shpejtë ndërmjet tyre.</li>
-        <li class="k">Vendndodhja jote në kohë reale, e shënuar me pikë blu që pulson.</li>
-        <li>Shtimi i pikave me emër, kategori (mund të zgjidhen disa), nr. kontrate, statusin debitor po ose jo, telefon, shënim dhe foto.</li>
-        <li>Kërkim sipas emrit, kategorisë ose nr. kontrate. Pikat që nuk përputhen fshihen përkohësisht dhe ato që gjenden pulsojnë në hartë.</li>
-        <li>Filtra të shpejtë sipas kategorisë dhe për debitorët.</li>
-        <li>Faqe e plotë për çdo pikë, me foto të madhe dhe të gjitha të dhënat.</li>
-        <li>Udhëzim rruge deri te pika, përmes Google Maps.</li>
-        <li>Ndryshimi i të dhënave të një pike pa e fshirë atë.</li>
-        <li class="k">Qytetarët mund të raportojnë defekte (rrjedhje, tuba të dëmtuar, matës, saraçineska) me foto ose video, pa llogari.</li>
+        <li class="k">Raportoni një defekt pa llogari, direkt nga telefoni: rrjedhje uji, tub i dëmtuar, mungesë uji, matës me problem ose saraçineskë e çarë.</li>
+        <li class="k">Raportoni probleme me kanalizimet: derdhje e ujërave të zeza, erë e keqe, bllokim ose pusetë pa kapak. Pusetat e hapura trajtohen si urgjente.</li>
+        <li>Shtoni deri në 2 foto ose video dhe vendndodhjen tuaj me GPS, që stafi ta gjejë problemin shpejt.</li>
+        <li>Lini numrin e telefonit: stafi ju kontakton nëse ka nevojë për më shumë informacion.</li>
+        <li>Kërkesat dhe ankesat në zyrë regjistrohen në sistem dhe ndiqen derisa të zgjidhen.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h3>Për stafin e ujësjellësit</h3>
+      <ul class="feat">
+        <li>Harta satelitore e abonentëve, pallateve, kolektorëve dhe rrjetit të tubave, me udhëzim rruge deri te çdo pikë.</li>
+        <li>Statusi i kontratës (aktiv, pasiv, prerë), matësi, vula dhe foto e sahatit për çdo abonent.</li>
+        <li>Ndërhyrjet në terren me foto dhe raport ditor.</li>
+        <li>Defektet dhe mirëmbajtja e rrjetit të ujit dhe të kanalizimeve.</li>
+        <li>Formulari online i kërkesave dhe ankesave, me shkarkim PDF dhe ruajtje të formularit të firmosur.</li>
       </ul>
     </section>
 
@@ -428,7 +430,7 @@ button{cursor:pointer}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
       <div>
         <h3>Siguria</h3>
-        <p>Llogaritë i krijon administratori. Pa hyrje në llogari nuk shfaqet asnjë pikë apo e dhënë.</p>
+        <p>Llogaritë e stafit i krijon administratori dhe secili sheh vetëm atë që i duhet për punën. Raporti i qytetarit dërgohet te ujësjellësi, por qytetari nuk sheh të dhëna të të tjerëve.</p>
       </div>
     </div>
 
@@ -449,16 +451,26 @@ button{cursor:pointer}
   <div class="sheet-body">
     <div id="rpForm">
     <h2 id="report-title">Raportoni një defekt</h2>
-    <p class="lead">Keni parë rrjedhje uji, tub të dëmtuar, matës me problem ose saraçineskë të çarë? Na tregoni ku është dhe stafi i ujësjellësit do ta kontrollojë.</p>
+    <p class="lead">Keni parë rrjedhje uji, tub të dëmtuar, derdhje të ujërave të zeza ose një pusetë pa kapak? Na tregoni ku është dhe stafi i ujësjellësit do ta kontrollojë.</p>
     <div class="alert" id="rpAlert" role="alert"></div>
     <div class="field">
       <label>Çfarë problemi keni parë?</label>
+      <div class="kg">Ujë i pijshëm</div>
       <div class="kinds" id="rpKinds">
         <label><input type="radio" name="rpKind" value="Rrjedhje uji" checked><span>Rrjedhje uji</span></label>
         <label><input type="radio" name="rpKind" value="Tubacion i dëmtuar"><span>Tubacion i dëmtuar</span></label>
         <label><input type="radio" name="rpKind" value="Mungesë uji"><span>Mungesë uji</span></label>
         <label><input type="radio" name="rpKind" value="Problem me matësin"><span>Problem me matësin</span></label>
         <label><input type="radio" name="rpKind" value="Saraçineskë e çarë"><span>Saraçineskë e çarë</span></label>
+      </div>
+      <div class="kg">Kanalizime</div>
+      <div class="kinds">
+        <label><input type="radio" name="rpKind" value="Derdhje e ujërave të zeza"><span>Derdhje e ujërave të zeza</span></label>
+        <label><input type="radio" name="rpKind" value="Erë e keqe"><span>Erë e keqe</span></label>
+        <label><input type="radio" name="rpKind" value="Bllokim kanalizimesh"><span>Bllokim kanalizimesh</span></label>
+        <label><input type="radio" name="rpKind" value="Pusetë pa kapak ose e thyer"><span>Pusetë pa kapak ose e thyer</span></label>
+      </div>
+      <div class="kinds" style="margin-top:8px">
         <label><input type="radio" name="rpKind" value="Tjetër"><span>Tjetër</span></label>
       </div>
     </div>

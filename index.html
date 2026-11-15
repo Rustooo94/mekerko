@@ -184,6 +184,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 @media(max-width:420px){.fchk{grid-template-columns:1fr}}
 .cmscan{display:flex;align-items:center;gap:6px;font-size:13.5px;margin-top:6px;color:#8a5a00}.cmscan svg{width:16px;height:16px}.cmscan.ok{color:#1d6b38}
 .dbtn.upl{cursor:pointer}.dbtn.upl.busy{opacity:.5;pointer-events:none}
+.dfkg{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13.5px;color:#3b5b61;margin:8px 0 4px}.dfkg svg{width:16px;height:16px;color:#13a3a8}
 </style>
 </head>
 <body>
@@ -1529,7 +1530,9 @@ document.addEventListener("change", e => {
 </script>
 <script>
 (function(){
-  const KINDS = ["Tubacion i dëmtuar", "Problem me matësin", "Saraçineskë e çarë", "Tjetër"];
+  const KGROUPS = [["Ujë", ["Tubacion i dëmtuar", "Problem me matësin", "Saraçineskë e çarë"]], ["Kanalizime", ["Derdhje e ujërave të zeza", "Erë e keqe", "Bllokim kanalizimesh", "Pusetë pa kapak ose e thyer"]], ["", ["Tjetër"]]];
+  const KINDS = KGROUPS.reduce((a, g) => a.concat(g[1]), []);
+  const AUTO_URG = "Pusetë pa kapak ose e thyer";
   const STAT = {e_re: "E re", ne_pune: "Në punë", rregulluar: "E rregulluar"};
   const MAXV = 50 * 1024 * 1024;
   const ov = document.createElement("div");
@@ -1548,7 +1551,7 @@ document.addEventListener("change", e => {
   function formHtml(){
     return '<div class="upbox"><b>Raporto defekt</b>' +
       '<p class="meta" style="margin:4px 0 8px">Raportimin mund ta bëjë çdo punonjës. Raportet i shikon administratori.</p>' +
-      '<label>Lloji i defektit</label><div class="dfk">' + KINDS.map((k, i) => '<label class="chk"><input type="radio" name="dfKind" value="' + esc(k) + '"' + (i ? "" : " checked") + "> " + esc(k) + "</label>").join("") + "</div>" +
+      '<label>Lloji i defektit</label>' + KGROUPS.map((g, gi) => (g[0] ? '<div class="dfkg">' + (gi ? '<i data-lucide="waves"></i> ' : '<i data-lucide="droplet"></i> ') + g[0] + "</div>" : '<div style="height:6px"></div>') + '<div class="dfk">' + g[1].map(k => '<label class="chk"><input type="radio" name="dfKind" value="' + esc(k) + '"' + (k === KINDS[0] ? " checked" : "") + "> " + esc(k) + (k === AUTO_URG ? ' <span class="badge red">urgjent</span>' : "") + "</label>").join("") + "</div>").join("") +
       '<label class="chk" style="margin-top:8px"><input type="checkbox" id="dfUrg"> Urgjent (rrjedhje e madhe, mungesë uji)</label>' +
       '<label for="dfDesc" style="margin-top:8px">Përshkrimi</label><textarea id="dfDesc" rows="3" maxlength="600" placeholder="p.sh. Rrjedhje uji te kryqëzimi, tubi 63 mm i çarë"></textarea>' +
       '<label style="margin-top:8px">Vendndodhja</label><p class="meta" id="dfLoc" style="margin:0 0 6px">' + esc(locTxt()) + "</p>" +
@@ -1609,7 +1612,7 @@ document.addEventListener("change", e => {
         media.push({path, type: vid ? "video" : "image"});
       }
       if (prog) prog("Duke ruajtur…");
-      const r = {kind: String(row.kind || "Tjetër").slice(0, 60), source: "qytetar", status: "e_re", urgent: false, media,
+      const r = {kind: String(row.kind || "Tjetër").slice(0, 60), source: "qytetar", status: "e_re", urgent: String(row.kind) === AUTO_URG, media,
         description: row.description ? String(row.description).slice(0, 600) : null, address: row.address ? String(row.address).slice(0, 160) : null,
         lat: typeof row.lat === "number" ? row.lat : null, lng: typeof row.lng === "number" ? row.lng : null,
         created_name: row.created_name ? String(row.created_name).slice(0, 80) : null, reporter_phone: String(row.reporter_phone || "").slice(0, 20)};
@@ -1678,7 +1681,7 @@ document.addEventListener("change", e => {
           media.push({path, type: vid ? "video" : "image"});
         }
         say("dfMsg", "Duke ruajtur raportin…");
-        const row = {kind, urgent: $("dfUrg").checked, description: desc || null, lat: where.lat, lng: where.lng, point_id: linkPt ? linkPt.id : null, point_name: linkPt ? linkPt.name : null, media, status: "e_re",
+        const row = {kind, urgent: $("dfUrg").checked || kind === AUTO_URG, description: desc || null, lat: where.lat, lng: where.lng, point_id: linkPt ? linkPt.id : null, point_name: linkPt ? linkPt.name : null, media, status: "e_re",
           created_name: (window.pbProf && window.pbProf.full_name) || (me.user_metadata && me.user_metadata.username) || me.email};
         const {error} = await sb.from("defects").insert(row);
         if (error) throw new Error(error.message);
