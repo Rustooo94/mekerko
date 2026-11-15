@@ -162,6 +162,20 @@ body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!
 .dftip{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:2300;background:#0d3b45;color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 @media(max-width:420px){.dfm,.dfk{grid-template-columns:1fr}}
 .badge.qyt{background:#ede4ff;color:#4a2a8a}
+#complaints{position:fixed;inset:0;z-index:2200;overflow-y:auto;background:#fff}
+#complaints .dp{max-width:680px;margin:0 auto;padding:14px}
+#complaints textarea{width:100%;padding:10px;border:1px solid var(--line,#c9e3e2);border-radius:8px;font:inherit}
+.cmres{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:260px;overflow-y:auto}
+.cmres button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:#fff;color:var(--ink,#0d3b45);border:1px solid var(--line,#c9e3e2);padding:8px 10px;font-weight:400}
+.cmres button b{font-weight:700}.cmres button span{font-size:13px;color:#58797d}
+.cmsel{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#eef8f8;border:1px solid #bfe2e3;border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.4}
+.cmsel[hidden],#cmFind[hidden]{display:none!important}
+.cmcard{border-left-color:#6b46c1}.cmcard.urg{border-left-color:#d93025}.cmcard.done{opacity:.75;border-left-color:#2e7d4f}
+.cmstaff{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;margin-top:6px}.cmstaff svg{width:16px;height:16px;color:#6b46c1}
+.cmstaff .late{color:#c0392b;font-weight:700}
+.cmres2{background:#eaf6ee;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:14px}
+.badge.cm-e_re{background:#fff1d6;color:#7a4b00}.badge.cm-caktuar{background:#ede4ff;color:#4a2a8a}.badge.cm-ne_pune{background:#dbe9ff;color:#0d3b7a}.badge.cm-zgjidhur{background:#dff5e6;color:#1d6b38}
+body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner,body.klient [data-dfrep],body.klient #wDebts{display:none!important}
 </style>
 </head>
 <body>
@@ -1245,7 +1259,7 @@ icons();
   const ACTIONS = ["Kontroll", "Paralajmërim", "Prerje", "Rilidhje"];
   let prof = null, isAdm = false, shown = false, subsCache = [];
   const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-  const canLog = () => !!(prof && ROLES[prof.role]) || isAdm;
+  const canLog = () => !!(prof && ROLES[prof.role] && prof.role !== "klient") || isAdm;
 
   const ov = document.createElement("div");
   ov.id = "welcome"; ov.className = "hide";
@@ -1284,6 +1298,14 @@ icons();
       '<div class="wbar"><button type="button" class="alt" id="wRep">Raporti i ditës</button><button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button></div>';
   }
   const chip = (ic2, t, id) => '<button type="button" class="wchip" id="' + id + '"><i data-lucide="' + ic2 + '"></i><span>' + t + '</span><i data-lucide="chevron-right"></i></button>';
+  async function klientBody(){
+    let n = null, nu = 0;
+    try { const {data} = await sb.from("complaints").select("status,urgent").neq("status", "zgjidhur"); if (data) { n = data.length; nu = data.filter(x => x.urgent).length; } } catch (e) {}
+    return '<div class="wnote" style="background:#f3eefe;border-color:#d9ccf5;color:#3b2470"><i data-lucide="headset" style="color:#6b46c1"></i><div><b>Shërbimi i klientit</b><p>' +
+      (n ? "Keni " + n + " ankesa të hapura" + (nu ? ", nga të cilat " + nu + " urgjente" : "") + ". Caktoni stafin dhe ndiqni zgjidhjen e tyre." : "Nuk ka ankesa të hapura për momentin. Ankesat e reja i regjistroni te butoni i ankesave ose te çdo pikë.") + "</p></div></div>" +
+      '<div class="wchips">' + chip("message-square-warning", "Ankesat" + (n ? " e hapura (" + n + ")" : ""), "wCmp") + "</div>" +
+      '<div class="wbar"><button type="button" id="wGo">Fillo punën <i data-lucide="arrow-right"></i></button></div>';
+  }
   async function showWelcome(){
     const r = ROLES[prof.role] || {tasks: []};
     const nm = (prof.salutation ? prof.salutation + " " : "") + prof.full_name;
@@ -1297,7 +1319,7 @@ icons();
       '<div class="wbell"><i data-lucide="bell"></i></div>' +
       '<h2>Përshëndetje, ' + esc(nm) + '!</h2>' +
       '<div class="wrole">' + esc(prof.title || "") + '</div><div class="meta">' + esc(prof.sector || "") + '</div>' +
-      '<p class="wtext">Jeni identifikuar me sukses në sistemin PikaBlu.</p>' + (isAdm ? await adminBody() :
+      '<p class="wtext">Jeni identifikuar me sukses në sistemin PikaBlu.</p>' + (isAdm ? await adminBody() : prof.role === "klient" ? await klientBody() :
       '<div class="wnote"><i data-lucide="info"></i><div><b>Njoftim</b><p>Keni një listë me debitorë' + (nd ? " (" + nd + ")" : "") + '. Para se të dilni në terren, lexoni detyrat dhe zbatoni sigurinë teknike në punë.</p></div></div>' +
       '<div class="wchips">' + chip("banknote", "Lista e debitorëve", "wDebts") +
       (r.tasks.length ? chip("hard-hat", "Detyrat dhe siguria teknike", "wTasks") : "") + "</div>" +
@@ -1313,6 +1335,8 @@ icons();
     if (p.error) toastMsg("Profili i stafit nuk u lexua: " + p.error.message);
     else if (!p.data) toastMsg("Nuk u gjet profil stafi për " + (user.email || "këtë llogari") + ". Kontrollo SQL-in e profilit.");
     btn.classList.toggle("hide", !canLog());
+    window.pbRole = {role: prof ? prof.role : null, adm: isAdm};
+    window.dispatchEvent(new CustomEvent("pbprofile", {detail: window.pbRole}));
     applyLimits();
     if (prof && !shown) { shown = true; showWelcome(); }
   }
@@ -1321,7 +1345,7 @@ icons();
     if (!el) { el = document.createElement("div"); el.id = "stToast"; el.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:3600;background:#a32d2d;color:#fff;padding:10px 16px;border-radius:12px;max-width:90vw;font-size:14px"; document.body.appendChild(el); }
     el.textContent = t; el.style.display = "block"; setTimeout(() => { el.style.display = "none"; }, 9000);
   }
-  function limited(){ return !!(prof && prof.role === "prerje") && !isAdm; }
+  function limited(){ return !!(prof && (prof.role === "prerje" || prof.role === "klient")) && !isAdm; }
   function applyLimits(){
     const lim = limited();
     document.body.classList.toggle("lim", lim);
@@ -1357,7 +1381,7 @@ icons();
     setTimeout(() => { loadProfile(user).catch(err => { console.log("PikaBlu profili gabim:", err); toastMsg("Profili i stafit nuk u lexua: " + (err.message || err)); }); }, 300);
   }
   sb.auth.getSession().then(({data}) => { if (data.session) startProfile(data.session.user); });
-  sb.auth.onAuthStateChange((_e, s) => { if (s) startProfile(s.user); if (!s) { profFor = null; shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); applyLimits(); } });
+  sb.auth.onAuthStateChange((_e, s) => { if (s) startProfile(s.user); if (!s) { profFor = null; shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); window.pbRole = null; window.dispatchEvent(new CustomEvent("pbprofile", {detail: null})); applyLimits(); } });
 
   async function openReport(){
     ov.classList.add("hide");
@@ -1405,6 +1429,7 @@ icons();
     if (e.target === ov || e.target.closest("#wGo") || e.target.closest("#wClose")) ov.classList.add("hide");
     if (e.target.closest("#wRep")) openReport();
     if (e.target.closest("#wTasks") || e.target.closest("#wTasks2")) openTasks();
+    if (e.target.closest("#wCmp")) { ov.classList.add("hide"); if (window.pbOpenComplaints) window.pbOpenComplaints(null); }
     if (e.target.closest("#wDebts")) { ov.classList.add("hide"); const d = $("debtBtn"); if (d) d.click(); }
   });
   btn.onclick = () => { if (prof && (ROLES[prof.role] || {tasks: []}).tasks.length) openTasks(); else if (prof) showWelcome(); else openReport(); };
@@ -1678,6 +1703,204 @@ document.addEventListener("change", e => {
     if (bar && b && !bar.querySelector("[data-dfrep]")) {
       const x = document.createElement("button"); x.type = "button"; x.className = "alt"; x.setAttribute("data-dfrep", b.id);
       x.innerHTML = '<i data-lucide="wrench"></i> Raporto defekt'; x.onclick = () => open(b);
+      bar.appendChild(x); lucide.createIcons();
+    }
+  };
+})();
+</script>
+<script>
+(function(){
+  const KINDS = ["Mungesë uji", "Presion i ulët", "Cilësia e ujit (ngjyrë, erë, shije)", "Rrjedhje uji", "Problem me matësin", "Faturë e gabuar", "Kanalizime", "Tjetër"];
+  const STAT = {e_re: "E re", caktuar: "E caktuar", ne_pune: "Në punë", zgjidhur: "E zgjidhur"};
+  const ov = document.createElement("div"); ov.id = "complaints"; ov.className = "hide"; document.body.appendChild(ov);
+  const btn = document.createElement("button"); btn.type = "button"; btn.id = "cmpBtn"; btn.className = "hide"; btn.setAttribute("aria-label", "Ankesat e klientëve");
+  btn.innerHTML = '<i data-lucide="message-square-warning"></i>'; $("infoBtn").before(btn); lucide.createIcons();
+  let can = false, adm = false, list = [], fst = "open", q = "", sel = null, editId = null;
+  const dfmt = t => { const d = new Date(t); return d.toLocaleDateString("sq") + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+  const todayS = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  function setRole(r){
+    can = !!(r && (r.adm || r.role === "klient")); adm = !!(r && r.adm);
+    btn.classList.toggle("hide", !can);
+    document.body.classList.toggle("klient", !!(r && r.role === "klient" && !r.adm));
+  }
+  window.addEventListener("pbprofile", e => setRole(e.detail));
+  if (window.pbRole) setRole(window.pbRole);
+
+  function selTxt(){
+    if (!sel) return "";
+    return (sel.sub ? "Abonenti: <b>" + esc(sel.sub.full_name) + "</b>" + (sel.sub.contract_no ? " · Kontratë " + esc(sel.sub.contract_no) : "") + (sel.sub.apartment ? " · " + esc(sel.sub.apartment) : "") + "<br>Brenda pikës: " + esc(sel.b.name)
+      : "Pika: <b>" + esc(sel.b.name) + "</b>" + (sel.b.contract_no ? " · Kontratë " + esc(sel.b.contract_no) : ""));
+  }
+  function formHtml(c){
+    c = c || {};
+    const crew = (c.staff || "").split(", ").filter(Boolean);
+    return '<div class="upbox" id="cmForm"><b>' + (editId ? "Ndrysho ankesën #" + editId : "Regjistro ankesë") + "</b>" +
+      '<label style="margin-top:8px">Lloji i ankesës</label><select id="cmKind">' + KINDS.map(k => "<option" + (c.kind === k ? " selected" : "") + ">" + esc(k) + "</option>").join("") + "</select>" +
+      '<label style="margin-top:10px" for="cmQ">Pika ose abonenti</label>' +
+      '<div class="cmsel" id="cmSel"' + (sel ? "" : ' hidden') + '><div id="cmSelT">' + selTxt() + '</div><button type="button" class="alt" id="cmSelX">Ndrysho</button></div>' +
+      '<div id="cmFind"' + (sel ? ' hidden' : "") + '><input id="cmQ" type="search" placeholder="Kërko emrin e pikës, abonentit ose nr. kontrate" autocomplete="off"><div id="cmRes" class="cmres"></div></div>' +
+      '<div class="row" style="margin-top:10px"><div><label for="cmName">Emri i ankuesit</label><input id="cmName" maxlength="80" value="' + esc(c.complainant_name || "") + '"></div>' +
+      '<div><label for="cmTel">Telefoni</label><input id="cmTel" type="tel" maxlength="20" value="' + esc(c.complainant_phone || "") + '"></div></div>' +
+      '<label for="cmDesc">Përshkrimi i ankesës</label><textarea id="cmDesc" rows="3" maxlength="800">' + esc(c.description || "") + "</textarea>" +
+      '<label class="chk" style="margin-top:8px"><input type="checkbox" id="cmUrg"' + (c.urgent ? " checked" : "") + "> Urgjent</label>" +
+      '<div class="ivcrew"><b>Stafi që do ta zgjidhë</b> <span class="meta">(emrat e punonjësve)</span><div class="row3" style="margin-top:6px">' +
+      [0, 1, 2].map(i => '<input id="cmS' + i + '" maxlength="60" placeholder="Punonjësi ' + (i + 1) + '" value="' + esc(crew[i] || "") + '">').join("") + "</div>" +
+      '<div class="row" style="margin-top:8px"><div><label for="cmDl">Afati</label><input id="cmDl" type="date" value="' + esc(c.deadline || "") + '"></div>' +
+      (editId ? '<div><label for="cmSt">Statusi</label><select id="cmSt">' + Object.keys(STAT).map(k => '<option value="' + k + '"' + (c.status === k ? " selected" : "") + ">" + STAT[k] + "</option>").join("") + "</select></div>" : "<div></div>") + "</div></div>" +
+      (editId ? '<label for="cmRes2">Si u zgjidh (shënim)</label><textarea id="cmRes2" rows="2" maxlength="600">' + esc(c.resolution || "") + "</textarea>" : "") +
+      '<div class="bar"><button type="button" id="cmGo"><i data-lucide="save"></i> ' + (editId ? "Ruaj ndryshimet" : "Regjistro ankesën") + "</button>" + (editId ? '<button type="button" class="alt" id="cmCancel">Anulo</button>' : "") + '</div><p class="msg" id="cmMsg"></p></div>';
+  }
+  function waText(c){
+    const b = allRows.find(x => String(x.id) === String(c.point_id));
+    return "PikaBlu · Ankesa #" + c.id + (c.urgent ? " (URGJENT)" : "") + "\n" + c.kind +
+      "\n" + (c.subscriber_name ? "Abonenti: " + c.subscriber_name + "\n" : "") + (c.point_name ? "Pika: " + c.point_name + "\n" : "") +
+      (c.contract_no ? "Kontrata: " + c.contract_no + "\n" : "") + (c.complainant_phone ? "Tel. i ankuesit: " + c.complainant_phone + "\n" : "") +
+      (c.description ? "Përshkrimi: " + c.description + "\n" : "") + (c.deadline ? "Afati: " + c.deadline.split("-").reverse().join(".") + "\n" : "") +
+      (b ? "Vendndodhja: https://www.google.com/maps/dir/?api=1&destination=" + b.lat + "," + b.lng : "");
+  }
+  function listHtml(){
+    const open = list.filter(c => c.status !== "zgjidhur");
+    const tabs = [["open", "Të hapura (" + open.length + ")"], ["e_re", "Të reja (" + list.filter(c => c.status === "e_re").length + ")"], ["caktuar", "Të caktuara"], ["ne_pune", "Në punë"], ["zgjidhur", "Të zgjidhura"], ["all", "Të gjitha"]];
+    const t = q.toLowerCase();
+    const l = list.filter(c => (fst === "all" || (fst === "open" ? c.status !== "zgjidhur" : c.status === fst)) &&
+      (!t || [c.id, c.kind, c.point_name, c.subscriber_name, c.contract_no, c.complainant_name, c.complainant_phone, c.staff].join(" ").toLowerCase().includes(t)));
+    const td = todayS();
+    return '<h3 style="margin:18px 0 8px">Ankesat</h3><div class="dftabs">' + tabs.map(x => '<button type="button" class="' + (fst === x[0] ? "" : "alt") + '" data-cmt="' + x[0] + '">' + x[1] + "</button>").join("") + "</div>" +
+      '<input id="cmSearch" type="search" placeholder="Kërko në ankesa (emër, kontratë, punonjës, nr.)" value="' + esc(q) + '" style="margin-bottom:10px">' +
+      (l.length ? l.map(c => {
+        const late = c.deadline && c.status !== "zgjidhur" && c.deadline < td;
+        return '<div class="dfcard cmcard' + (c.urgent ? " urg" : "") + (c.status === "zgjidhur" ? " done" : "") + '"><div><b>#' + c.id + " · " + esc(c.kind) + "</b>" +
+          (c.urgent ? ' <span class="badge red">Urgjent</span>' : "") + ' <span class="badge cm-' + c.status + '">' + (STAT[c.status] || c.status) + "</span>" +
+          '<div class="meta">' + esc(dfmt(c.created_at)) + " · regjistroi " + esc(c.created_name || "–") + "</div></div>" +
+          '<div style="margin-top:6px">' + (c.subscriber_name ? "<b>" + esc(c.subscriber_name) + "</b>" : "") + (c.point_name && c.point_name !== c.subscriber_name ? (c.subscriber_name ? " · brenda: " : "") + esc(c.point_name) : "") + (c.contract_no ? ' <span class="meta">· Kontratë ' + esc(c.contract_no) + "</span>" : "") + "</div>" +
+          (c.complainant_name || c.complainant_phone ? '<div class="meta">Ankuesi: ' + esc(c.complainant_name || "") + (c.complainant_phone ? ' · <a href="tel:' + esc(c.complainant_phone.replace(/[^+0-9]/g, "")) + '">' + esc(c.complainant_phone) + "</a>" : "") + "</div>" : "") +
+          (c.description ? '<p style="margin:6px 0">' + esc(c.description) + "</p>" : "") +
+          '<div class="cmstaff"><i data-lucide="users"></i> ' + (c.staff ? esc(c.staff) : '<span class="meta">Pa staf të caktuar</span>') + (c.deadline ? ' · <span class="' + (late ? "late" : "") + '">Afati: ' + esc(c.deadline.split("-").reverse().join(".")) + (late ? " (ka kaluar)" : "") + "</span>" : "") + "</div>" +
+          (c.resolution ? '<div class="cmres2"><b>Zgjidhja:</b> ' + esc(c.resolution) + "</div>" : "") +
+          '<div class="bar" style="margin-top:8px">' + (c.point_id ? '<button type="button" class="alt" data-cmmap="' + c.point_id + '"><i data-lucide="map-pin"></i> Pika</button>' : "") +
+          '<a class="dbtn" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(c)) + '"><i data-lucide="send"></i> Dërgo stafit</a>' +
+          '<select data-cmst="' + c.id + '" style="width:auto">' + Object.keys(STAT).map(k => '<option value="' + k + '"' + (c.status === k ? " selected" : "") + ">" + STAT[k] + "</option>").join("") + "</select>" +
+          '<button type="button" class="alt" data-cmed="' + c.id + '"><i data-lucide="pencil"></i> Ndrysho</button>' +
+          (adm ? '<button type="button" class="red" data-cmdel="' + c.id + '"><i data-lucide="trash-2"></i></button>' : "") + "</div></div>";
+      }).join("") : '<p class="meta">Asnjë ankesë këtu.</p>');
+  }
+  function draw(c){
+    ov.innerHTML = '<div class="dhead"><button id="cmBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Shërbimi i klientit · Ankesat</b></div><div class="dp">' + formHtml(c) + '<div id="cmList">' + listHtml() + "</div></div>";
+    lucide.createIcons();
+  }
+  function drawList(){ const el = $("cmList"); if (el) { el.innerHTML = listHtml(); lucide.createIcons(); const s = $("cmSearch"); if (s && document.activeElement !== s && q) {} } }
+  async function loadList(){
+    const {data, error} = await sb.from("complaints").select("*").order("created_at", {ascending: false}).limit(500);
+    if (error) { const el = $("cmList"); if (el) el.innerHTML = '<p class="msg err">S’u lexuan ankesat. Kontrollo që SQL-i u krye.</p>'; return; }
+    list = data; drawList();
+  }
+  async function open(b){
+    if (!can) return;
+    editId = null; sel = b ? {b, sub: null} : null;
+    ov.classList.remove("hide"); draw(); loadList();
+  }
+  window.pbOpenComplaints = open;
+  btn.onclick = () => open(null);
+
+  function results(t){
+    t = t.trim().toLowerCase(); if (t.length < 2) return [];
+    const out = [];
+    for (const b of allRows) {
+      if ((b.name || "").toLowerCase().includes(t) || String(b.contract_no || "").toLowerCase().includes(t)) out.push({b, sub: null});
+      (b._subArr || []).forEach(s => { if ((s.full_name || "").toLowerCase().includes(t) || String(s.contract_no || "").toLowerCase().includes(t)) out.push({b, sub: s}); });
+      if (out.length > 25) break;
+    }
+    return out.slice(0, 25);
+  }
+  let res = [];
+  ov.addEventListener("input", e => {
+    if (e.target.id === "cmQ") {
+      res = results(e.target.value);
+      $("cmRes").innerHTML = res.length ? res.map((r, i) => '<button type="button" data-cmpick="' + i + '"><b>' + esc(r.sub ? r.sub.full_name : r.b.name) + "</b><span>" +
+        (r.sub ? "Abonent brenda: " + esc(r.b.name) : "Pikë · " + esc((r.b.categories || [r.b.category]).filter(Boolean).join(", "))) + ((r.sub ? r.sub.contract_no : r.b.contract_no) ? " · Kontratë " + esc(r.sub ? r.sub.contract_no : r.b.contract_no) : "") + "</span></button>").join("")
+        : (e.target.value.trim().length >= 2 ? '<p class="meta" style="margin:6px 0">Nuk u gjet asnjë pikë ose abonent.</p>' : "");
+    }
+    if (e.target.id === "cmSearch") { q = e.target.value; const pos = e.target.selectionStart; drawList(); const s = $("cmSearch"); s.focus(); try { s.setSelectionRange(pos, pos); } catch (x) {} }
+  });
+  ov.addEventListener("change", async e => {
+    const st = e.target.getAttribute && e.target.getAttribute("data-cmst");
+    if (!st) return;
+    const upd = {status: e.target.value, updated_at: new Date().toISOString()};
+    const {error} = await sb.from("complaints").update(upd).eq("id", st);
+    if (error) return alert("Statusi nuk u ndryshua: " + error.message);
+    const c = list.find(x => String(x.id) === st); if (c) c.status = upd.status;
+    drawList();
+    if (upd.status === "zgjidhur" && c && !c.resolution) { editId = c.id; sel = null; const b = allRows.find(x => String(x.id) === String(c.point_id)); if (b) sel = {b, sub: (b._subArr || []).find(s => String(s.id) === String(c.subscriber_id)) || null}; draw(c); ov.scrollTop = 0; setTimeout(() => { const r = $("cmRes2"); if (r) r.focus(); }, 50); say("cmMsg", "Shkruani si u zgjidh ankesa dhe shtypni “Ruaj ndryshimet”."); }
+  });
+  ov.addEventListener("click", async e => {
+    if (e.target.closest("#cmBack")) { ov.classList.add("hide"); return; }
+    const tb = e.target.closest("[data-cmt]"); if (tb) { fst = tb.getAttribute("data-cmt"); drawList(); return; }
+    const pk = e.target.closest("[data-cmpick]");
+    if (pk) {
+      sel = res[+pk.getAttribute("data-cmpick")];
+      $("cmSelT").innerHTML = selTxt(); $("cmSel").hidden = false; $("cmFind").hidden = true;
+      if (sel.sub && !$("cmName").value) $("cmName").value = sel.sub.full_name || "";
+      if (!sel.sub && !$("cmName").value && !(sel.b.categories || []).some(c => /Pallat|Kolektor/.test(c))) $("cmName").value = sel.b.name || "";
+      const ph = sel.sub ? sel.sub.phone : sel.b.phone; if (ph && !$("cmTel").value) $("cmTel").value = ph;
+      return;
+    }
+    if (e.target.closest("#cmSelX")) { sel = null; $("cmSel").hidden = true; $("cmFind").hidden = false; $("cmQ").value = ""; $("cmRes").innerHTML = ""; $("cmQ").focus(); return; }
+    if (e.target.closest("#cmCancel")) { editId = null; sel = null; draw(); return; }
+    const ed = e.target.closest("[data-cmed]");
+    if (ed) {
+      const c = list.find(x => String(x.id) === ed.getAttribute("data-cmed")); if (!c) return;
+      editId = c.id; sel = null;
+      const b = allRows.find(x => String(x.id) === String(c.point_id));
+      if (b) sel = {b, sub: (b._subArr || []).find(s => String(s.id) === String(c.subscriber_id)) || null};
+      draw(c); ov.scrollTop = 0; return;
+    }
+    const mp = e.target.closest("[data-cmmap]");
+    if (mp) { ov.classList.add("hide"); openDetail(mp.getAttribute("data-cmmap")); return; }
+    const dl = e.target.closest("[data-cmdel]");
+    if (dl) {
+      if (!confirm("Ta fshij ankesën #" + dl.getAttribute("data-cmdel") + "?")) return;
+      const {error} = await sb.from("complaints").delete().eq("id", dl.getAttribute("data-cmdel"));
+      if (error) return alert("S’u fshi: " + error.message);
+      loadList(); return;
+    }
+    if (e.target.closest("#cmGo")) {
+      if (!sel) return say("cmMsg", "Zgjidh pikën ose abonentin për të cilin është ankesa.", true);
+      const desc = $("cmDesc").value.trim();
+      if (!desc) return say("cmMsg", "Shkruaj përshkrimin e ankesës.", true);
+      const staff = [0, 1, 2].map(i => $("cmS" + i).value.trim()).filter(Boolean).join(", ");
+      const row = {kind: $("cmKind").value, urgent: $("cmUrg").checked, description: desc,
+        point_id: sel.b.id, point_name: sel.b.name, subscriber_id: sel.sub ? sel.sub.id : null, subscriber_name: sel.sub ? sel.sub.full_name : null,
+        contract_no: (sel.sub ? sel.sub.contract_no : sel.b.contract_no) || null,
+        complainant_name: $("cmName").value.trim() || null, complainant_phone: $("cmTel").value.trim() || null,
+        staff: staff || null, deadline: $("cmDl").value || null, updated_at: new Date().toISOString()};
+      const b2 = $("cmGo"); b2.disabled = true;
+      let r;
+      if (editId) {
+        row.status = $("cmSt").value; row.resolution = ($("cmRes2").value || "").trim() || null;
+        if (row.status === "e_re" && staff) row.status = "caktuar";
+        r = await sb.from("complaints").update(row).eq("id", editId).select().single();
+      } else {
+        row.status = staff ? "caktuar" : "e_re";
+        row.created_name = (window.pbProf && window.pbProf.full_name) || (me.user_metadata && me.user_metadata.username) || me.email;
+        r = await sb.from("complaints").insert(row).select().single();
+      }
+      b2.disabled = false;
+      if (r.error) return say("cmMsg", "S’u ruajt: " + r.error.message, true);
+      const saved = r.data, wasEdit = !!editId;
+      editId = null; sel = null; draw(); await loadList();
+      const m = $("cmMsg");
+      m.className = "msg"; m.innerHTML = (wasEdit ? "Ankesa #" + saved.id + " u ndryshua." : "Ankesa #" + saved.id + " u regjistrua.") +
+        (saved.staff ? ' <a target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(saved)) + '">Dërgoja stafit në WhatsApp</a>' : "");
+    }
+  });
+  const od = openDetail;
+  openDetail = function(id){
+    od(id);
+    if (!can) return;
+    const bar = document.querySelector("#detail .dbar"), b = allRows.find(x => String(x.id) === String(id));
+    if (bar && b && !bar.querySelector("[data-cmrep]")) {
+      const x = document.createElement("button"); x.type = "button"; x.className = "alt"; x.setAttribute("data-cmrep", b.id);
+      x.innerHTML = '<i data-lucide="message-square-warning"></i> Regjistro ankesë'; x.onclick = () => open(b);
       bar.appendChild(x); lucide.createIcons();
     }
   };
