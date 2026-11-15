@@ -276,6 +276,18 @@ button{cursor:pointer}
 .done svg{width:64px;height:64px;color:#2e7d4f;margin-bottom:12px}
 @media (min-width:960px){.sheet.report .sheet-body{justify-content:flex-start}.report .sheet-body > *{max-width:520px}}
 .kg{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
+.slides{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;background:var(--ink);margin:4px 0 22px;touch-action:pan-y}
+.slides[hidden]{display:none}
+.slides-track img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.06);transition:opacity 1.1s ease,transform 6s ease}
+.slides-track img.on{opacity:1;transform:scale(1)}
+.slides:after{content:"";position:absolute;inset:auto 0 0 0;height:45%;background:linear-gradient(transparent,rgba(0,0,0,.55));pointer-events:none}
+.sl-cap{position:absolute;left:14px;bottom:30px;color:#fff;font-weight:700;font-size:15px;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.sl-dots{position:absolute;left:14px;bottom:12px;display:flex;gap:6px;z-index:2}
+.sl-dots button{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.5);cursor:pointer}
+.sl-dots button.on{background:#fff;width:20px;border-radius:4px}
+.sl-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.sl-nav svg{width:18px;height:18px}.sl-nav.prev{left:10px}.sl-nav.next{right:10px}
+@media (prefers-reduced-motion:reduce){.slides-track img{transition:opacity .3s;transform:none}}
 </style>
 </head>
 <body>
@@ -396,6 +408,14 @@ button{cursor:pointer}
         <h2 id="about-title">PikaBlu</h2>
         <p>Platforma Digjitale e Ujësjellësit</p>
       </div>
+    </div>
+
+    <div class="slides" id="slides" hidden aria-roledescription="carousel" aria-label="Stafi i ujësjellësit në punë">
+      <div class="slides-track" id="slidesTrack"></div>
+      <button type="button" class="sl-nav prev" id="slPrev" aria-label="Foto e mëparshme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button type="button" class="sl-nav next" id="slNext" aria-label="Foto tjetër"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 5l7 7-7 7"/></svg></button>
+      <div class="sl-cap">Stafi i ujësjellësit në punë</div>
+      <div class="sl-dots" id="slDots"></div>
     </div>
 
     <section class="block">
@@ -644,6 +664,39 @@ button{cursor:pointer}
     document.querySelectorAll('[data-open="report"]').forEach(function(x){x.addEventListener('click',function(){
       $('rpForm').hidden=false;$('rpDone').hidden=true;
     })});
+  })();
+  /* Slideshow i fotove të stafit: vendosni fotot te dosja "foto" me emrat punonjes1.jpg ... punonjes10.jpg */
+  (function(){
+    var MAX=10, box=document.getElementById('slides'), tr=document.getElementById('slidesTrack'), dots=document.getElementById('slDots');
+    if(!box)return;
+    var imgs=[], cur=0, timer=null, loaded=0, tried=0;
+    function show(i){
+      if(!imgs.length)return;
+      cur=(i+imgs.length)%imgs.length;
+      imgs.forEach(function(im,k){im.classList.toggle('on',k===cur)});
+      Array.prototype.forEach.call(dots.children,function(d,k){d.classList.toggle('on',k===cur)});
+    }
+    function start(){stop();if(imgs.length>1)timer=setInterval(function(){show(cur+1)},4500)}
+    function stop(){if(timer){clearInterval(timer);timer=null}}
+    function build(){
+      imgs.sort(function(a,b){return a._n-b._n});
+      tr.innerHTML='';dots.innerHTML='';
+      imgs.forEach(function(im,k){tr.appendChild(im);var d=document.createElement('button');d.type='button';d.setAttribute('aria-label','Foto '+(k+1));d.onclick=function(){show(k);start()};dots.appendChild(d)});
+      var multi=imgs.length>1;document.getElementById('slPrev').hidden=!multi;document.getElementById('slNext').hidden=!multi;dots.hidden=!multi;
+      box.hidden=false;show(0);start();
+    }
+    for(var n=1;n<=MAX;n++)(function(n){
+      var im=new Image();im._n=n;im.alt='Stafi i ujësjellësit në punë, foto '+n;im.decoding='async';
+      im.onload=function(){imgs.push(im);loaded++;if(++tried===MAX&&loaded)build()};
+      im.onerror=function(){if(++tried===MAX&&loaded)build()};
+      im.src='foto/punonjes'+n+'.jpg';
+    })(n);
+    document.getElementById('slPrev').onclick=function(){show(cur-1);start()};
+    document.getElementById('slNext').onclick=function(){show(cur+1);start()};
+    var x0=null;
+    box.addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});
+    box.addEventListener('touchend',function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>40){show(cur+(dx<0?1:-1));start()}x0=null});
+    document.addEventListener('visibilitychange',function(){if(document.hidden)stop();else start()});
   })();
 })();
 </script>
