@@ -665,11 +665,11 @@ button{cursor:pointer}
       $('rpForm').hidden=false;$('rpDone').hidden=true;
     })});
   })();
-  /* Slideshow i fotove të stafit: vendosni fotot te dosja "foto" me emrat punonjes1.jpg ... punonjes10.jpg */
+  /* Slideshow i fotove të stafit: çdo foto te dosja "fotot" në GitHub (deri në 10) */
   (function(){
     var MAX=10, box=document.getElementById('slides'), tr=document.getElementById('slidesTrack'), dots=document.getElementById('slDots');
     if(!box)return;
-    var imgs=[], cur=0, timer=null, loaded=0, tried=0;
+    var imgs=[], cur=0, timer=null;
     function show(i){
       if(!imgs.length)return;
       cur=(i+imgs.length)%imgs.length;
@@ -685,12 +685,32 @@ button{cursor:pointer}
       var multi=imgs.length>1;document.getElementById('slPrev').hidden=!multi;document.getElementById('slNext').hidden=!multi;dots.hidden=!multi;
       box.hidden=false;show(0);start();
     }
-    for(var n=1;n<=MAX;n++)(function(n){
-      var im=new Image();im._n=n;im.alt='Stafi i ujësjellësit në punë, foto '+n;im.decoding='async';
-      im.onload=function(){imgs.push(im);loaded++;if(++tried===MAX&&loaded)build()};
-      im.onerror=function(){if(++tried===MAX&&loaded)build()};
-      im.src='foto/punonjes'+n+'.jpg';
-    })(n);
+    function add(src,n,done){var im=new Image();im._n=n;im.alt='Stafi i ujësjellësit në punë, foto '+(n+1);im.decoding='async';im.onload=function(){imgs.push(im);done(true)};im.onerror=function(){done(false)};im.src=src}
+    function loadList(list){
+      list=list.slice(0,MAX);var left=list.length;if(!left)return fallback();
+      list.forEach(function(src,i){add(src,i,function(){if(--left===0){if(imgs.length)build();}})});
+    }
+    /* 1) Lexon listën e fotove direkt nga dosja "fotot" në GitHub (çdo emër skedari) */
+    function fromGithub(){
+      var h=location.hostname,m=h.match(/^([^.]+)\.github\.io$/),repo=location.pathname.split('/').filter(Boolean)[0];
+      if(!m||!repo)return fallback();
+      var done=false,to=setTimeout(function(){if(!done){done=true;fallback()}},5000);
+      fetch('https://api.github.com/repos/'+m[1]+'/'+repo+'/contents/fotot').then(function(r){return r.ok?r.json():null}).then(function(j){
+        if(done)return;done=true;clearTimeout(to);
+        var list=(Array.isArray(j)?j:[]).filter(function(f){return f.type==='file'&&/\.(jpe?g|png|webp)$/i.test(f.name)})
+          .sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true})}).map(function(f){return 'fotot/'+encodeURIComponent(f.name)});
+        list.length?loadList(list):fallback();
+      }).catch(function(){if(!done){done=true;clearTimeout(to);fallback()}});
+    }
+    /* 2) Rezervë: provon emrat punonjes1 … punonjes10 te dosjet "fotot" dhe "foto" */
+    function fallback(){
+      var exts=['jpg','jpeg','png','JPG','JPEG','PNG'],dirs=['fotot','foto'],left=MAX;
+      for(var n=1;n<=MAX;n++)(function(n){
+        var c=[];dirs.forEach(function(d){exts.forEach(function(e){c.push(d+'/punonjes'+n+'.'+e)})});
+        (function next(k){if(k>=c.length){if(--left===0&&imgs.length)build();return}add(c[k],n-1,function(ok){if(ok){if(--left===0)build()}else next(k+1)})})(0);
+      })(n);
+    }
+    fromGithub();
     document.getElementById('slPrev').onclick=function(){show(cur-1);start()};
     document.getElementById('slNext').onclick=function(){show(cur+1);start()};
     var x0=null;
