@@ -525,7 +525,13 @@ function applyUser(u){
     if ($("gate2").dataset.in) { $("gate2").dataset.in = ""; $("gate2").src = "login.html"; }
   }
 }
-$("out").onclick = () => { if (confirm("Do dalësh?")) sb.auth.signOut(); };
+$("out").onclick = async () => {
+  if (!confirm("Do dalësh?")) return;
+  $("out").disabled = true;
+  try { await Promise.race([sb.auth.signOut({scope: "local"}), new Promise(r => setTimeout(r, 3000))]); } catch (e) {}
+  try { Object.keys(localStorage).filter(k => k.indexOf("sb-") === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  location.reload();
+};
 $("addBtn").onclick = () => openForm(null);
 $("cancel").onclick = closeForm;
 $("pickmap").onclick = () => { pickMode = true; $("modal").classList.add("hide"); closeDetail(); $("pickbar").classList.remove("hide"); if (stateIdx === 2) setSheet(1); };
@@ -590,8 +596,14 @@ $("add").onclick = async () => {
   } catch (e) { say("msg", "S’u ruajt: " + e.message, true); }
   $("add").disabled = false;
 };
-sb.auth.onAuthStateChange((_ev, session) => applyUser(session ? session.user : null));
-sb.auth.getSession().then(({data}) => applyUser(data.session ? data.session.user : null));
+let lastUid;
+function onAuth(u){
+  if (u && lastUid === u.id) { me = u; return; }
+  lastUid = u ? u.id : null;
+  applyUser(u);
+}
+sb.auth.onAuthStateChange((_ev, session) => { const u = session ? session.user : null; setTimeout(() => onAuth(u), 0); });
+sb.auth.getSession().then(({data}) => onAuth(data.session ? data.session.user : null));
 icons();
 
 </script>
@@ -825,7 +837,7 @@ icons();
     lucide.createIcons();
   }
   let dt = null;
-  new MutationObserver(() => { clearTimeout(dt); dt = setTimeout(decorate, 80); }).observe(document.body, {childList: true, subtree: true});
+  new MutationObserver(() => { clearTimeout(dt); dt = setTimeout(decorate, 80); }).observe($("detail") || document.body, {childList: true, subtree: true});
 })();
 
 </script>
@@ -867,7 +879,7 @@ icons();
   btn.onclick = () => pan.classList.toggle("hide");
   $("nT3").onchange = apply;
   sb.auth.getSession().then(({data}) => { if (data.session) loadNet(); });
-  sb.auth.onAuthStateChange((_e, s) => { if (s) loadNet(); else clearNet(); });
+  sb.auth.onAuthStateChange((_e, s) => { setTimeout(() => { if (s) loadNet(); else clearNet(); }, 0); });
 })();
 
 </script>
@@ -1391,7 +1403,7 @@ icons();
     setTimeout(() => { loadProfile(user).catch(err => { console.log("PikaBlu profili gabim:", err); toastMsg("Profili i stafit nuk u lexua: " + (err.message || err)); }); }, 300);
   }
   sb.auth.getSession().then(({data}) => { if (data.session) startProfile(data.session.user); });
-  sb.auth.onAuthStateChange((_e, s) => { if (s) startProfile(s.user); if (!s) { profFor = null; shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); window.pbRole = null; window.dispatchEvent(new CustomEvent("pbprofile", {detail: null})); applyLimits(); } });
+  sb.auth.onAuthStateChange((_e, s) => { setTimeout(() => { if (s) startProfile(s.user); if (!s) { profFor = null; shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); window.pbRole = null; window.dispatchEvent(new CustomEvent("pbprofile", {detail: null})); applyLimits(); } }, 0); });
 
   async function openReport(){
     ov.classList.add("hide");
