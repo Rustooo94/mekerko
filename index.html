@@ -133,7 +133,7 @@ body:not(.in) .appbar,body:not(.in) .nav,body:not(.in) .nav-scrim{display:none}
 #pickbar button{background:#fff;color:var(--ink)}
 
 /* Pages (modules) */
-#detail,#about,#abonentet,#debts,#plan2,#zones2,#defects,#complaints,#report,#tasksPage{position:fixed!important;top:var(--top)!important;left:var(--navw)!important;right:0!important;bottom:0!important;z-index:2100;background:var(--foam)!important;overflow-y:auto}
+#detail,#about,#pwPage,#abonentet,#debts,#plan2,#zones2,#defects,#complaints,#report,#tasksPage{position:fixed!important;top:var(--top)!important;left:var(--navw)!important;right:0!important;bottom:0!important;z-index:2100;background:var(--foam)!important;overflow-y:auto}
 #about{z-index:2300}
 #defects,#complaints{z-index:2200}
 #report{z-index:2550}#tasksPage{z-index:2560}
@@ -152,7 +152,7 @@ body:not(.in) .appbar,body:not(.in) .nav,body:not(.in) .nav-scrim{display:none}
 .dbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;background:var(--blue);color:#fff;border:1px solid var(--blue);padding:0 14px;font-size:14px;font-weight:600;text-decoration:none}
 .dbtn:hover{background:var(--blue-d);color:#fff}
 .dbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-#abonentet .dp,#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{max-width:880px;margin:0 auto;padding:16px}
+#pwPage .dp,#abonentet .dp,#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{max-width:880px;margin:0 auto;padding:16px}
 #report > .dpad,#tasksPage > .dpad{max-width:880px!important;margin:0 auto!important;background:#fff;min-height:calc(100% - 56px)}
 
 /* Point form (modal) */
@@ -355,6 +355,16 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
   .tbl [data-l]::before{content:attr(data-l) ": ";color:var(--mut)}
   .tbl .ta{grid-column:1 / -1;justify-content:flex-start}
 }
+/* Ndrysho fjalëkalimin */
+.pwbox{max-width:520px}
+.pwf{display:flex}
+.pwf input{flex:1;min-width:0}
+.pwt{min-height:42px;border-left:0;font-size:13px}
+.pwrules{list-style:none;margin:14px 0 0;padding:0;font-size:13px;color:var(--mut)}
+.pwrules li{display:flex;align-items:center;gap:8px;padding:2px 0}
+.pwrules li::before{content:"";width:10px;height:10px;border:1.5px solid #9AA7B6;flex:none}
+.pwrules li.ok{color:var(--ok)}
+.pwrules li.ok::before{background:var(--ok);border-color:var(--ok)}
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -396,7 +406,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
   #detail{left:auto!important;width:520px;border-left:1px solid var(--line);box-shadow:-4px 0 16px rgba(11,27,46,.12);background:#fff!important}
   #detail .dbody{min-height:100%}
   .dpad{padding:20px 24px}
-  #abonentet .dp,#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{padding:24px}
+  #pwPage .dp,#abonentet .dp,#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{padding:24px}
   #report > .dpad,#tasksPage > .dpad{padding:24px!important;margin:24px auto!important;border:1px solid var(--line);min-height:0}
   .dbody{margin:24px auto;border:1px solid var(--line);min-height:0}
   #detail .dbody{margin:0;border:0}
@@ -472,6 +482,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
   </div>
   <div class="ng nav-foot">
     <button type="button" class="ni" data-nav="about" data-src="infoBtn"><i data-lucide="info"></i><span>Rreth sistemit</span></button>
+    <button type="button" class="ni" data-nav="pw" data-src="pwBtn"><i data-lucide="key-round"></i><span>Ndrysho fjalëkalimin</span></button>
     <button type="button" class="ni" data-nav="out" data-src="out"><i data-lucide="log-out"></i><span>Dil nga llogaria</span></button>
   </div>
 </nav>
@@ -2151,11 +2162,73 @@ document.addEventListener("change", e => {
 })();
 </script>
 <script>
+/* Ndrysho fjalëkalimin: përdoruesi e ndryshon vetë, pasi konfirmon fjalëkalimin aktual */
+(function(){
+  const MIN = 10;
+  const ov = document.createElement("div"); ov.id = "pwPage"; ov.className = "hide"; document.body.appendChild(ov);
+  const btn = document.createElement("button"); btn.type = "button"; btn.id = "pwBtn"; btn.setAttribute("aria-label", "Ndrysho fjalëkalimin");
+  $("infoBtn").before(btn);
+  const field = (id, lbl, ac, hint) => '<label for="' + id + '">' + lbl + '</label><div class="pwf"><input id="' + id + '" type="password" autocomplete="' + ac + '" required>' +
+    '<button type="button" class="alt pwt" data-pwt="' + id + '" aria-controls="' + id + '" aria-pressed="false">Shfaq</button></div>' + (hint ? '<p class="meta" style="margin:4px 0 0">' + hint + "</p>" : "");
+  function draw(){
+    ov.innerHTML = '<div class="dhead"><button id="pwBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Ndrysho fjalëkalimin</b></div>' +
+      '<div class="dp"><div class="upbox pwbox"><b>Fjalëkalimi i llogarisë</b>' +
+      '<p class="meta" style="margin:4px 0 4px">Llogaria: <b id="pwWho"></b></p>' +
+      '<form id="pwForm" novalidate>' +
+      field("pwCur", "Fjalëkalimi aktual", "current-password") +
+      field("pwNew", "Fjalëkalimi i ri", "new-password", "Të paktën " + MIN + " karaktere. Përdorni shkronja, numra dhe një simbol. Mos përdorni emrin ose datëlindjen.") +
+      field("pwNew2", "Përsëritni fjalëkalimin e ri", "new-password") +
+      '<ul class="pwrules" id="pwRules"></ul>' +
+      '<div class="bar"><button type="submit" id="pwGo">Ruaj fjalëkalimin e ri</button></div><p class="msg" id="pwMsg" role="status"></p></form></div>' +
+      '<p class="meta">Pas ndryshimit, në pajisjet e tjera ku jeni të identifikuar mund t’ju kërkohet të hyni përsëri me fjalëkalimin e ri.</p></div>';
+    $("pwWho").textContent = (me && me.email) || "";
+    lucide.createIcons(); rules();
+  }
+  function checks(){
+    const n = $("pwNew").value, n2 = $("pwNew2").value, c = $("pwCur").value;
+    return [
+      [n.length >= MIN, "Të paktën " + MIN + " karaktere"],
+      [/[a-zA-ZëçËÇ]/.test(n) && /\d/.test(n), "Shkronja dhe numra"],
+      [!!n && n !== c, "I ndryshëm nga fjalëkalimi aktual"],
+      [!!n && n === n2, "Të dy fushat e reja përputhen"]
+    ];
+  }
+  function rules(){ const el = $("pwRules"); if (el) el.innerHTML = checks().map(x => '<li class="' + (x[0] ? "ok" : "") + '">' + x[1] + "</li>").join(""); }
+  btn.onclick = () => { draw(); ov.classList.remove("hide"); setTimeout(() => { const c = $("pwCur"); if (c) c.focus(); }, 50); };
+  ov.addEventListener("click", e => {
+    if (e.target.closest("#pwBack")) { ov.classList.add("hide"); return; }
+    const t = e.target.closest("[data-pwt]");
+    if (t) { const i = $(t.getAttribute("data-pwt")), s = i.type === "password"; i.type = s ? "text" : "password"; t.textContent = s ? "Fshih" : "Shfaq"; t.setAttribute("aria-pressed", s); }
+  });
+  ov.addEventListener("input", () => { rules(); say("pwMsg", ""); });
+  ov.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!$("pwCur").value) { $("pwCur").focus(); return say("pwMsg", "Shkruani fjalëkalimin aktual.", true); }
+    const bad = checks().find(x => !x[0]);
+    if (bad) return say("pwMsg", "Kontrolloni: " + bad[1].toLowerCase() + ".", true);
+    const go = $("pwGo"); go.disabled = true; say("pwMsg", "Duke verifikuar fjalëkalimin aktual…");
+    try {
+      const v = await sb.auth.signInWithPassword({email: me.email, password: $("pwCur").value});
+      if (v.error) { go.disabled = false; $("pwCur").focus(); return say("pwMsg", "Fjalëkalimi aktual nuk është i saktë.", true); }
+      say("pwMsg", "Duke ruajtur…");
+      const {error} = await sb.auth.updateUser({password: $("pwNew").value});
+      if (error) throw error;
+      ["pwCur", "pwNew", "pwNew2"].forEach(i => { $(i).value = ""; }); rules();
+      say("pwMsg", "Fjalëkalimi u ndryshua. Herën tjetër hyni me fjalëkalimin e ri.");
+    } catch (err) {
+      const m = String(err.message || err);
+      say("pwMsg", "Fjalëkalimi nuk u ndryshua: " + (/weak|short|characters/i.test(m) ? "fjalëkalimi është shumë i dobët ose i shkurtër." : /same|different/i.test(m) ? "fjalëkalimi i ri duhet të jetë i ndryshëm nga i vjetri." : m), true);
+    }
+    go.disabled = false;
+  });
+})();
+</script>
+<script>
 /* Menyja kryesore: lidh butonat e moduleve me navigimin anësor */
 window.addEventListener("DOMContentLoaded", function(){
   const nav = $("nav"), scrim = $("navScrim"), openB = $("navOpen");
-  const PAGES = ["detail", "about", "abonentet", "debts", "plan2", "zones2", "defects", "complaints", "report", "tasksPage", "welcome"];
-  const OWN = {zones: ["zones2"], abon: ["abonentet"], debts: ["debts"], staff: ["tasksPage", "report", "welcome"], defects: ["defects"], complaints: ["complaints"], plan: ["plan2"], about: ["about"]};
+  const PAGES = ["detail", "about", "pwPage", "abonentet", "debts", "plan2", "zones2", "defects", "complaints", "report", "tasksPage", "welcome"];
+  const OWN = {zones: ["zones2"], pw: ["pwPage"], abon: ["abonentet"], debts: ["debts"], staff: ["tasksPage", "report", "welcome"], defects: ["defects"], complaints: ["complaints"], plan: ["plan2"], about: ["about"]};
   const items = Array.from(document.querySelectorAll("[data-nav]"));
   function drawer(on){
     nav.classList.toggle("open", on); scrim.classList.toggle("open", on);
@@ -2200,7 +2273,7 @@ window.addEventListener("DOMContentLoaded", function(){
   scrim.addEventListener("click", () => drawer(false));
   document.addEventListener("keydown", e => { if (e.key === "Escape" && nav.classList.contains("open")) { drawer(false); openB.focus(); } });
   const mo = new MutationObserver(sync);
-  PAGES.concat(["netpanel3", "abonBtn", "zoneBtn", "netBtn3", "debtBtn", "staffBtn", "defBtn", "cmpBtn", "planBtn2", "infoBtn"]).forEach(id => { const e = $(id); if (e) mo.observe(e, {attributes: true, attributeFilter: ["class"]}); });
+  PAGES.concat(["netpanel3", "pwBtn", "abonBtn", "zoneBtn", "netBtn3", "debtBtn", "staffBtn", "defBtn", "cmpBtn", "planBtn2", "infoBtn"]).forEach(id => { const e = $(id); if (e) mo.observe(e, {attributes: true, attributeFilter: ["class"]}); });
   mo.observe(document.body, {attributes: true, attributeFilter: ["class"]});
   function who(){
     const p = window.pbProf, r = window.pbRole;
