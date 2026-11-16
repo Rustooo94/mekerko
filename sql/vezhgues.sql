@@ -37,7 +37,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['businesses','subscribers','debtors','zones','interventions','defects','complaints','plan_folders','planimetri']
+  foreach t in array array['businesses','subscribers','debtors','zones','interventions','defects','complaints','plan_folders','planimetri','abonentet']
   loop
     if to_regclass('public.' || t) is not null then
       execute format('drop policy if exists "vezhgues lexon" on public.%I', t);

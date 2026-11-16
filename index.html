@@ -133,7 +133,7 @@ body:not(.in) .appbar,body:not(.in) .nav,body:not(.in) .nav-scrim{display:none}
 #pickbar button{background:#fff;color:var(--ink)}
 
 /* Pages (modules) */
-#detail,#about,#debts,#plan2,#zones2,#defects,#complaints,#report,#tasksPage{position:fixed!important;top:var(--top)!important;left:var(--navw)!important;right:0!important;bottom:0!important;z-index:2100;background:var(--foam)!important;overflow-y:auto}
+#detail,#about,#abonentet,#debts,#plan2,#zones2,#defects,#complaints,#report,#tasksPage{position:fixed!important;top:var(--top)!important;left:var(--navw)!important;right:0!important;bottom:0!important;z-index:2100;background:var(--foam)!important;overflow-y:auto}
 #about{z-index:2300}
 #defects,#complaints{z-index:2200}
 #report{z-index:2550}#tasksPage{z-index:2560}
@@ -152,7 +152,7 @@ body:not(.in) .appbar,body:not(.in) .nav,body:not(.in) .nav-scrim{display:none}
 .dbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;background:var(--blue);color:#fff;border:1px solid var(--blue);padding:0 14px;font-size:14px;font-weight:600;text-decoration:none}
 .dbtn:hover{background:var(--blue-d);color:#fff}
 .dbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{max-width:880px;margin:0 auto;padding:16px}
+#abonentet .dp,#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{max-width:880px;margin:0 auto;padding:16px}
 #report > .dpad,#tasksPage > .dpad{max-width:880px!important;margin:0 auto!important;background:#fff;min-height:calc(100% - 56px)}
 
 /* Point form (modal) */
@@ -250,7 +250,7 @@ body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!
 body.obs #addBtn,body.obs [data-edit],body.obs [data-ddel],body.obs #subBox .upbox,body.obs [data-sedit],body.obs [data-sdel],
 body.obs #upbox,body.obs [data-delb],body.obs #pfUp,body.obs [data-pfdelf],body.obs [data-pfdelp],body.obs #zUp,body.obs [data-zdel],
 body.obs #ivBox .upbox,body.obs [data-ivdel],body.obs #defects .dp > .upbox,body.obs [data-dfst],body.obs [data-dfdel],body.obs [data-dfrep],
-body.obs [data-cmsolve],body.obs [data-cmst],body.obs [data-cmed],body.obs .dbtn.upl,body.obs #cmForm,body.obs [data-cmrep]{display:none!important}
+body.obs #abUp,body.obs [data-abdel],body.obs [data-cmsolve],body.obs [data-cmst],body.obs [data-cmed],body.obs .dbtn.upl,body.obs #cmForm,body.obs [data-cmrep]{display:none!important}
 .obsbar{display:none}
 body.obs .obsbar{display:flex;align-items:center;gap:8px;padding:0 10px;min-height:28px;background:var(--amber-t);border:1px solid var(--amber-l);color:#4A3500;font-size:12px;font-weight:600;white-space:nowrap}
 @media (max-width:560px){body.obs .obsbar{display:none}}
@@ -328,6 +328,33 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
   #app.dragging .sheet,#app.dragging .fabs{transition:none}
 }
 
+/* Abonentët: tabela dhe plotësimi automatik */
+.abh{margin:24px 0 8px;font-size:16px}
+.abf{align-items:end}
+.tbl{border:1px solid var(--line);background:#fff}
+.tbl .tr{display:grid;grid-template-columns:minmax(0,1.6fr) .7fr .9fr .7fr 210px;gap:12px;align-items:center;padding:10px 12px;border-top:1px solid var(--line-2);font-size:14px}
+.tbl .tr:first-child{border-top:0}
+.tbl .th{background:var(--foam);font-size:12px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em}
+.tbl.abt .tr{grid-template-columns:minmax(0,1.6fr) .9fr .9fr 160px}
+#abParsed .tbl .tr{grid-template-columns:1.2fr .7fr 1.2fr 1fr}
+.tbl .ta{display:flex;gap:6px;justify-content:flex-end}
+.fz{display:flex;flex-direction:column;gap:6px}
+.pbar{display:block;height:6px;background:var(--line-2)}
+.pbar i{display:block;height:100%;background:var(--blue)}
+.sbtn.red{color:var(--warn);border-color:#E7B4AE}
+.sbtn.red:hover{background:var(--err-t);border-color:var(--warn);color:var(--warn)}
+.abdd{position:fixed;z-index:3200;max-height:320px;overflow-y:auto;background:#fff;border:1px solid var(--ink-2);box-shadow:0 6px 18px rgba(11,27,46,.2)}
+.abdh{padding:6px 10px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);background:var(--foam);border-bottom:1px solid var(--line-2)}
+.abo{display:flex;flex-direction:column;align-items:flex-start;width:100%;min-height:0;padding:8px 10px;background:#fff;color:var(--ink);border:0;border-bottom:1px solid var(--line-2);text-align:left;font-weight:400}
+.abo:hover,.abo.on{background:var(--blue-t)}
+.abo b{font-weight:600;font-size:14px}.abo span{font-size:12px;color:var(--mut)}
+@media (max-width:700px){
+  .tbl .th{display:none}
+  .tbl .tr,.tbl.abt .tr,#abParsed .tbl .tr{grid-template-columns:1fr 1fr;gap:4px 12px}
+  .tbl .tr > span:first-child{grid-column:1 / -1}
+  .tbl [data-l]::before{content:attr(data-l) ": ";color:var(--mut)}
+  .tbl .ta{grid-column:1 / -1;justify-content:flex-start}
+}
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -369,7 +396,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
   #detail{left:auto!important;width:520px;border-left:1px solid var(--line);box-shadow:-4px 0 16px rgba(11,27,46,.12);background:#fff!important}
   #detail .dbody{min-height:100%}
   .dpad{padding:20px 24px}
-  #debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{padding:24px}
+  #abonentet .dp,#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{padding:24px}
   #report > .dpad,#tasksPage > .dpad{padding:24px!important;margin:24px auto!important;border:1px solid var(--line);min-height:0}
   .dbody{margin:24px auto;border:1px solid var(--line);min-height:0}
   #detail .dbody{margin:0;border:0}
@@ -430,6 +457,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
     <button type="button" class="ni" data-nav="net" data-src="netBtn3"><i data-lucide="route"></i><span>Rrjeti i tubave</span></button>
   </div>
   <div class="ng"><div class="ngt">Abonentët</div>
+    <button type="button" class="ni" data-nav="abon" data-src="abonBtn"><i data-lucide="users"></i><span>Regjistri i abonentëve</span></button>
     <button type="button" class="ni" data-nav="debts" data-src="debtBtn"><i data-lucide="banknote"></i><span>Debitorët</span></button>
   </div>
   <div class="ng"><div class="ngt">Puna në terren</div>
@@ -1901,11 +1929,233 @@ document.addEventListener("change", e => {
 });
 </script>
 <script>
+/* Regjistri i abonentëve: lista nga Excel sipas fshatit, kërkim dhe plotësim automatik */
+(function(){
+  const ov = document.createElement("div"); ov.id = "abonentet"; ov.className = "hide"; document.body.appendChild(ov);
+  const btn = document.createElement("button"); btn.type = "button"; btn.id = "abonBtn"; btn.className = "hide"; btn.setAttribute("aria-label", "Regjistri i abonentëve");
+  $("infoBtn").before(btn);
+  let list = [], zones = [], files = [], q = "", zf = "", miss = false, lim = 100, loaded = false;
+  window.pbAbon = list;
+  const norm = s => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+  const key = s => norm(s).replace(/[^a-z0-9]/g, "");
+  const ckey = c => String(c == null ? "" : c).replace(/\s+/g, "").replace(/^0+/, "");
+  const zoneOf = id => zones.find(z => String(z.id) === String(id));
+  const zLabel = a => { const z = zoneOf(a.zone_id); return z ? z.name : (a.zone_name || "Pa zonë"); };
+
+  ov.innerHTML =
+    '<div class="dhead"><button id="abBack" type="button"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Regjistri i abonentëve</b></div>' +
+    '<div class="dp">' +
+    '<p class="meta" style="margin:0 0 16px">Lista e abonentëve sipas fshatit. Kur shtoni një pikë, një abonent brenda pallatit ose një ankesë, shkruani emrin ose kontratën dhe të dhënat plotësohen vetë.</p>' +
+    '<div class="upbox hide" id="abUp"><b>Ngarko listë nga Excel</b>' +
+      '<p class="meta" style="margin:4px 0 8px">Kolonat: <b>Kontrata</b>, <b>Emri Mbiemri</b> (ose Emri dhe Mbiemri veç), <b>Fshati</b>. Një skedar mund të ketë një ose disa fshatra.</p>' +
+      '<input id="abFile" type="file" accept=".xlsx,.xls,.csv" multiple>' +
+      '<div id="abZoneBox" class="hide"><label for="abZoneSel">Fshati për këtë listë (Excel-i nuk ka kolonë Fshati)</label><select id="abZoneSel"></select></div>' +
+      '<div id="abParsed" style="margin-top:8px"></div>' +
+      '<label class="chk" style="margin-top:10px"><input type="checkbox" id="abRepl" checked> Zëvendëso listën ekzistuese të fshatrave që janë në skedar</label>' +
+      '<div class="bar"><button id="abGo" type="button" disabled>Ngarko listën</button></div><p class="msg" id="abMsg"></p></div>' +
+    '<h3 class="abh">Fshatrat</h3><div id="abSum"></div>' +
+    '<h3 class="abh">Abonentët</h3>' +
+    '<div class="row abf"><div><label for="abQ">Kërko</label><input id="abQ" type="search" placeholder="Emër, mbiemër ose nr. kontrate"></div>' +
+    '<div><label for="abZ">Fshati</label><select id="abZ"></select></div></div>' +
+    '<label class="chk" style="margin:10px 0 4px"><input type="checkbox" id="abMiss"> Vetëm abonentët pa pikë në hartë</label>' +
+    '<p class="meta" id="abCount"></p><div id="abList"></div><div id="abMore"></div></div>';
+  lucide.createIcons();
+
+  function mapped(){
+    const m = new Map();
+    allRows.forEach(b => {
+      const k = ckey(b.contract_no); if (k && !m.has(k)) m.set(k, b.id);
+      (b._subArr || []).forEach(x => { const k2 = ckey(x.contract_no); if (k2 && !m.has(k2)) m.set(k2, b.id); });
+    });
+    return m;
+  }
+  async function loadAll(){
+    let all = [], from = 0;
+    for (;;) {
+      const {data, error} = await sb.from("abonentet").select("*").order("full_name").range(from, from + 999);
+      if (error) return {error};
+      all = all.concat(data || []);
+      if (!data || data.length < 1000) break;
+      from += 1000;
+    }
+    list = all; window.pbAbon = list; loaded = true;
+    const z = await sb.from("zones").select("*").order("name"); zones = z.error ? [] : z.data;
+    return {};
+  }
+  function draw(){
+    const ms = mapped(), byZ = {};
+    list.forEach(a => { const k = a.zone_id || 0; byZ[k] = byZ[k] || {n: 0, m: 0, name: zLabel(a)}; byZ[k].n++; if (ms.has(ckey(a.contract_no))) byZ[k].m++; });
+    const ks = Object.keys(byZ).sort((a, b) => byZ[a].name.localeCompare(byZ[b].name, "sq"));
+    $("abSum").innerHTML = ks.length ? '<div class="tbl"><div class="tr th"><span>Fshati</span><span>Abonentë</span><span>Në hartë</span><span>Pa pikë</span><span></span></div>' + ks.map(k => {
+      const g = byZ[k], pc = g.n ? Math.round(g.m * 100 / g.n) : 0;
+      return '<div class="tr"><span class="fz"><b>' + esc(g.name) + '</b><span class="pbar" aria-hidden="true"><i style="width:' + pc + '%"></i></span></span>' +
+        '<span data-l="Abonentë">' + g.n + '</span><span data-l="Në hartë">' + g.m + " (" + pc + "%)</span><span data-l=\"Pa pikë\">" + (g.n - g.m) + "</span>" +
+        '<span class="ta"><button type="button" class="sbtn" data-abz="' + k + '">Shfaq listën</button><button type="button" class="sbtn red" data-abdel="' + k + '">Fshi listën</button></span></div>';
+    }).join("") + "</div>" : '<p class="meta">Asnjë listë e ngarkuar ende.</p>';
+    const opts = '<option value="">Të gjitha fshatrat</option>' + ks.map(k => '<option value="' + k + '"' + (String(zf) === String(k) ? " selected" : "") + ">" + esc(byZ[k].name) + "</option>").join("");
+    $("abZ").innerHTML = opts;
+    const t = norm(q), tc = q.replace(/\s+/g, "");
+    const l = list.filter(a => (!zf || String(a.zone_id || 0) === String(zf)) && (!t || norm(a.full_name).includes(t) || (tc && ckey(a.contract_no).includes(tc))) && (!miss || !ms.has(ckey(a.contract_no))));
+    $("abCount").textContent = l.length + " abonentë" + (l.length > lim ? " · po shfaqen " + lim : "");
+    $("abList").innerHTML = l.length ? '<div class="tbl abt"><div class="tr th"><span>Emri Mbiemri</span><span>Kontrata</span><span>Fshati</span><span>Në hartë</span></div>' + l.slice(0, lim).map(a => {
+      const pid = ms.get(ckey(a.contract_no));
+      return '<div class="tr"><span><b>' + esc(a.full_name) + '</b></span><span data-l="Kontrata">' + esc(a.contract_no || "–") + '</span><span data-l="Fshati">' + esc(zLabel(a)) + "</span>" +
+        "<span>" + (pid ? '<button type="button" class="sbtn" data-abmap="' + pid + '">' + SVG_PIN + "Shfaq në hartë</button>" : '<span class="badge">Pa pikë</span>') + "</span></div>";
+    }).join("") + "</div>" : '<p class="meta">Asnjë abonent për këtë kërkim.</p>';
+    $("abMore").innerHTML = l.length > lim ? '<button type="button" class="alt" id="abMoreB" style="width:100%;margin-top:10px">Shfaq edhe 100</button>' : "";
+  }
+  async function open(){
+    ov.classList.remove("hide"); say("abMsg", "");
+    $("abList").innerHTML = '<p class="meta">Duke ngarkuar…</p>';
+    const r = await pbAccess(me.id); $("abUp").classList.toggle("hide", !(r.data && r.data.length));
+    const res = await loadAll();
+    if (res.error) { $("abSum").innerHTML = ""; $("abList").innerHTML = '<p class="msg err">Lista nuk u lexua. Ekzekutoni te Supabase skedarin sql/abonentet.sql.</p>'; return; }
+    fillZoneSel(); draw();
+  }
+  function fillZoneSel(){
+    $("abZoneSel").innerHTML = '<option value="">Zgjidh fshatin</option>' + zones.map(z => '<option value="' + z.id + '">' + esc(z.name) + "</option>").join("");
+  }
+  btn.onclick = open;
+  $("abBack").onclick = () => ov.classList.add("hide");
+  $("abQ").addEventListener("input", e => { q = e.target.value; lim = 100; draw(); });
+  $("abZ").addEventListener("change", e => { zf = e.target.value; lim = 100; draw(); });
+  $("abMiss").addEventListener("change", e => { miss = e.target.checked; lim = 100; draw(); });
+  ov.addEventListener("click", async e => {
+    if (e.target.closest("#abMoreB")) { lim += 100; draw(); return; }
+    const mp = e.target.closest("[data-abmap]"); if (mp) { ov.classList.add("hide"); openDetail(mp.getAttribute("data-abmap")); return; }
+    const zs = e.target.closest("[data-abz]"); if (zs) { zf = zs.getAttribute("data-abz"); lim = 100; draw(); $("abQ").scrollIntoView({block: "start", behavior: "smooth"}); return; }
+    const dl = e.target.closest("[data-abdel]");
+    if (dl) {
+      const k = dl.getAttribute("data-abdel"), rows = list.filter(a => String(a.zone_id || 0) === k), nm = rows.length ? zLabel(rows[0]) : "";
+      if (!confirm("Ta fshij listën e abonentëve të fshatit " + nm + " (" + rows.length + " abonentë)?\nPikat në hartë dhe abonentët brenda tyre nuk preken.")) return;
+      dl.disabled = true;
+      let qd = sb.from("abonentet").delete();
+      qd = k === "0" ? qd.is("zone_id", null) : qd.eq("zone_id", +k);
+      const {error} = await qd;
+      if (error) { dl.disabled = false; return say("abMsg", "Lista nuk u fshi: " + error.message, true); }
+      await loadAll(); draw(); say("abMsg", "Lista e fshatit " + nm + " u fshi.");
+    }
+  });
+
+  /* Leximi i Excel-it */
+  async function parse(f){
+    const wb = XLSX.read(await f.arrayBuffer(), {type: "array"});
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: "", raw: true});
+    if (!data.length) throw new Error("skedari është bosh");
+    const keys = Object.keys(data[0]), used = new Set();
+    const take = f2 => { const k = keys.find(x => !used.has(x) && f2(key(x))); if (k) used.add(k); return k || null; };
+    const cK = take(n => n.includes("kontrat") || n.includes("contract"));
+    const nK = take(n => n.includes("emri") || n.includes("emer") || n.includes("abonent") || n === "name");
+    const sK = take(n => n.includes("mbiem") || n.includes("surname"));
+    const zK = take(n => n.includes("fshat") || n.includes("zona") || n.includes("qytet") || n.includes("lokalitet"));
+    if (!nK) throw new Error("nuk gjeta kolonën Emri Mbiemri. Titujt: " + keys.join(", "));
+    return data.map(r => {
+      const full = [r[nK], sK ? r[sK] : ""].join(" ").replace(/\s+/g, " ").trim(), p = full.split(" ");
+      return {full_name: full, first_name: p[0] || null, last_name: p.length > 1 ? p[p.length - 1] : null,
+        contract_no: cK && String(r[cK]).trim() ? String(r[cK]).trim() : null, zone_name: zK ? String(r[zK]).replace(/\s+/g, " ").trim() : ""};
+    }).filter(x => x.full_name);
+  }
+  function groups(){
+    const g = {};
+    files.filter(f => f.rows).forEach(f => f.rows.forEach(r => { const n = r.zone_name || ""; (g[n] = g[n] || {name: n, rows: [], file: f.name}).rows.push(r); }));
+    return Object.values(g);
+  }
+  function preview(){
+    const gs = groups(), noZone = gs.some(g => !g.name);
+    $("abZoneBox").classList.toggle("hide", !noZone);
+    $("abParsed").innerHTML = files.filter(f => f.err).map(f => '<p class="msg err">Gabim te ' + esc(f.name) + ": " + esc(f.err) + "</p>").join("") +
+      (gs.length ? '<div class="tbl"><div class="tr th"><span>Fshati</span><span>Abonentë</span><span>Kontrata të përsëritura</span><span>Zona</span></div>' + gs.map(g => {
+        const c = {}; g.rows.forEach(r => { const k = ckey(r.contract_no); if (k) c[k] = (c[k] || 0) + 1; });
+        const dup = Object.keys(c).filter(k => c[k] > 1);
+        const z = g.name ? zones.find(x => norm(x.name) === norm(g.name)) : null;
+        return '<div class="tr"><span><b>' + esc(g.name || "Pa kolonë Fshati") + "</b></span><span data-l=\"Abonentë\">" + g.rows.length + '</span><span data-l="Të përsëritura">' + (dup.length ? esc(dup.join(", ")) : "Asnjë") + '</span><span data-l="Zona">' + (g.name ? (z ? "Ekziston" : "Do të krijohet") : "Zgjidhni fshatin sipër") + "</span></div>";
+      }).join("") + "</div>" : "");
+    $("abGo").disabled = !gs.length;
+    $("abGo").textContent = gs.length > 1 ? "Ngarko listat (" + gs.length + " fshatra)" : "Ngarko listën";
+  }
+  $("abFile").onchange = async e => {
+    files = []; say("abMsg", "");
+    for (const f of Array.from(e.target.files || [])) { try { files.push({name: f.name, rows: await parse(f)}); } catch (err) { files.push({name: f.name, err: err.message}); } }
+    preview();
+  };
+  $("abGo").onclick = async () => {
+    const gs = groups(); if (!gs.length) return;
+    if (gs.some(g => !g.name) && !$("abZoneSel").value) return say("abMsg", "Zgjidhni fshatin për rreshtat pa kolonë Fshati.", true);
+    $("abGo").disabled = true;
+    const day = new Date().toLocaleDateString("sq");
+    let total = 0;
+    try {
+      for (const g of gs) {
+        let z = g.name ? zones.find(x => norm(x.name) === norm(g.name)) : zoneOf($("abZoneSel").value);
+        if (!z) {
+          say("abMsg", "Duke krijuar zonën " + g.name + "…");
+          const r = await sb.from("zones").insert({name: g.name, kind: /qytet/i.test(g.name) || norm(g.name) === "permet" ? "qytet" : "fshat"}).select().single();
+          if (r.error) throw r.error;
+          z = r.data; zones.push(z);
+        }
+        if ($("abRepl").checked) {
+          say("abMsg", "Duke hequr listën e vjetër të " + z.name + "…");
+          const d = await sb.from("abonentet").delete().eq("zone_id", z.id);
+          if (d.error) throw d.error;
+        }
+        say("abMsg", "Duke ngarkuar " + z.name + "…");
+        const rows = g.rows.map(r => ({full_name: r.full_name, first_name: r.first_name, last_name: r.last_name, contract_no: r.contract_no, zone_id: z.id, zone_name: z.name, batch: g.file + " (" + day + ")"}));
+        for (let i = 0; i < rows.length; i += 500) {
+          const {error} = await sb.from("abonentet").insert(rows.slice(i, i + 500));
+          if (error) throw error;
+        }
+        total += rows.length;
+      }
+      files = []; $("abFile").value = ""; preview();
+      await loadAll(); fillZoneSel(); draw();
+      say("abMsg", "U ngarkuan " + total + " abonentë.");
+      try { await load(); } catch (x) {}
+    } catch (err) { say("abMsg", "Ngarkimi nuk u krye: " + (err.message || err), true); $("abGo").disabled = false; }
+  };
+
+  /* Plotësimi automatik te "Shto pikë", "Shto abonent" dhe formulari i ankesave */
+  const dd = document.createElement("div"); dd.id = "abDD"; dd.className = "abdd hide"; dd.setAttribute("role", "listbox"); document.body.appendChild(dd);
+  let inp = null, hits = [], cur = -1;
+  const FILL = {
+    n: a => { $("n").value = a.full_name; if ($("k")) $("k").value = a.contract_no || ""; if ($("zSel") && a.zone_id && $("zSel").querySelector('option[value="' + a.zone_id + '"]')) $("zSel").value = String(a.zone_id); },
+    sName: a => { $("sName").value = a.full_name; if ($("sK")) $("sK").value = a.contract_no || ""; },
+    cmFn: a => { const p = a.full_name.split(" "); $("cmFn").value = p[0] || ""; if ($("cmLn")) $("cmLn").value = p.slice(1).join(" "); if ($("cmCon") && a.contract_no) $("cmCon").value = a.contract_no; }
+  };
+  function hide(){ dd.classList.add("hide"); hits = []; cur = -1; if (inp) inp.removeAttribute("aria-activedescendant"); }
+  function place(){ if (!inp) return; const r = inp.getBoundingClientRect(); dd.style.left = r.left + "px"; dd.style.top = (r.bottom + 2) + "px"; dd.style.width = Math.max(r.width, 260) + "px"; }
+  function show(){
+    dd.innerHTML = '<div class="abdh">Nga regjistri i abonentëve</div>' + hits.map((a, i) => '<button type="button" role="option" id="abo' + i + '" class="abo' + (i === cur ? " on" : "") + '" data-i="' + i + '"><b>' + esc(a.full_name) + "</b><span>" + (a.contract_no ? "Kontrata " + esc(a.contract_no) + " · " : "") + esc(zLabel(a)) + "</span></button>").join("");
+    place(); dd.classList.remove("hide");
+  }
+  function search(v){
+    const t = norm(v), tc = String(v || "").replace(/\s+/g, "");
+    if (t.length < 2 || !list.length) return hide();
+    hits = list.filter(a => norm(a.full_name).includes(t) || (tc.length >= 2 && ckey(a.contract_no).startsWith(tc.replace(/^0+/, "")))).slice(0, 8);
+    cur = -1; hits.length ? show() : hide();
+  }
+  function pick(i){ const a = hits[i], id = inp && inp.id; hide(); if (a && FILL[id]) FILL[id](a); if (inp) inp.focus(); }
+  document.addEventListener("input", e => { if (!FILL[e.target.id]) return; inp = e.target; inp.setAttribute("autocomplete", "off"); search(inp.value); });
+  document.addEventListener("keydown", e => {
+    if (!inp || e.target !== inp || dd.classList.contains("hide")) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); cur = (cur + (e.key === "ArrowDown" ? 1 : -1) + hits.length) % hits.length; show(); inp.setAttribute("aria-activedescendant", "abo" + cur); }
+    else if (e.key === "Enter" && cur >= 0) { e.preventDefault(); pick(cur); }
+    else if (e.key === "Escape") hide();
+  });
+  dd.addEventListener("mousedown", e => { const b = e.target.closest("[data-i]"); if (!b) return; e.preventDefault(); pick(+b.getAttribute("data-i")); });
+  document.addEventListener("focusout", e => { if (e.target === inp) setTimeout(hide, 120); });
+  window.addEventListener("resize", hide);
+  document.addEventListener("scroll", e => { if (!dd.contains(e.target)) hide(); }, true);
+
+  const ol = load;
+  load = async function(){ await ol(); try { if (me) { btn.classList.remove("hide"); await loadAll(); } } catch (e) {} };
+})();
+</script>
+<script>
 /* Menyja kryesore: lidh butonat e moduleve me navigimin anësor */
 window.addEventListener("DOMContentLoaded", function(){
   const nav = $("nav"), scrim = $("navScrim"), openB = $("navOpen");
-  const PAGES = ["detail", "about", "debts", "plan2", "zones2", "defects", "complaints", "report", "tasksPage", "welcome"];
-  const OWN = {zones: ["zones2"], debts: ["debts"], staff: ["tasksPage", "report", "welcome"], defects: ["defects"], complaints: ["complaints"], plan: ["plan2"], about: ["about"]};
+  const PAGES = ["detail", "about", "abonentet", "debts", "plan2", "zones2", "defects", "complaints", "report", "tasksPage", "welcome"];
+  const OWN = {zones: ["zones2"], abon: ["abonentet"], debts: ["debts"], staff: ["tasksPage", "report", "welcome"], defects: ["defects"], complaints: ["complaints"], plan: ["plan2"], about: ["about"]};
   const items = Array.from(document.querySelectorAll("[data-nav]"));
   function drawer(on){
     nav.classList.toggle("open", on); scrim.classList.toggle("open", on);
@@ -1950,7 +2200,7 @@ window.addEventListener("DOMContentLoaded", function(){
   scrim.addEventListener("click", () => drawer(false));
   document.addEventListener("keydown", e => { if (e.key === "Escape" && nav.classList.contains("open")) { drawer(false); openB.focus(); } });
   const mo = new MutationObserver(sync);
-  PAGES.concat(["netpanel3", "zoneBtn", "netBtn3", "debtBtn", "staffBtn", "defBtn", "cmpBtn", "planBtn2", "infoBtn"]).forEach(id => { const e = $(id); if (e) mo.observe(e, {attributes: true, attributeFilter: ["class"]}); });
+  PAGES.concat(["netpanel3", "abonBtn", "zoneBtn", "netBtn3", "debtBtn", "staffBtn", "defBtn", "cmpBtn", "planBtn2", "infoBtn"]).forEach(id => { const e = $(id); if (e) mo.observe(e, {attributes: true, attributeFilter: ["class"]}); });
   mo.observe(document.body, {attributes: true, attributeFilter: ["class"]});
   function who(){
     const p = window.pbProf, r = window.pbRole;
