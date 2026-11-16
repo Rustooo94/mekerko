@@ -3,6 +3,21 @@
 -- ndryshojë ose fshijë asgjë. Ekzekutojeni një herë te Supabase > SQL Editor.
 -- Mund të ekzekutohet përsëri pa problem.
 
+-- 0. Lejo vlerën 'vezhgues' te kolona role e staff_profiles.
+--    Ruhen të gjitha rolet ekzistuese; shtohet vetëm 'vezhgues'.
+do $$
+declare def text;
+begin
+  select pg_get_constraintdef(oid) into def
+  from pg_constraint
+  where conname = 'staff_profiles_role_check' and conrelid = 'public.staff_profiles'::regclass;
+  if def is not null and def not like '%vezhgues%' then
+    execute 'alter table public.staff_profiles drop constraint staff_profiles_role_check';
+    execute 'alter table public.staff_profiles add constraint staff_profiles_role_check '
+      || replace(def, 'ARRAY[', 'ARRAY[''vezhgues''::text, ');
+  end if;
+end $$;
+
 -- 1. Funksioni që tregon nëse përdoruesi aktual është vëzhgues
 create or replace function public.is_vezhgues()
 returns boolean
