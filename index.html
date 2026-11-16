@@ -246,6 +246,14 @@ body:not(.in) .appbar,body:not(.in) .nav,body:not(.in) .nav-scrim{display:none}
 .rdel{margin-top:8px;min-height:32px;padding:0 10px;font-size:13px}
 .rdel svg{width:15px;height:15px}
 body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!important}
+/* Vëzhguesi: vetëm shikim, pa butona veprimesh */
+body.obs #addBtn,body.obs [data-edit],body.obs [data-ddel],body.obs #subBox .upbox,body.obs [data-sedit],body.obs [data-sdel],
+body.obs #upbox,body.obs [data-delb],body.obs #pfUp,body.obs [data-pfdelf],body.obs [data-pfdelp],body.obs #zUp,body.obs [data-zdel],
+body.obs #ivBox .upbox,body.obs [data-ivdel],body.obs #defects .dp > .upbox,body.obs [data-dfst],body.obs [data-dfdel],body.obs [data-dfrep],
+body.obs [data-cmsolve],body.obs [data-cmst],body.obs [data-cmed],body.obs .dbtn.upl,body.obs #cmForm,body.obs [data-cmrep]{display:none!important}
+.obsbar{display:none}
+body.obs .obsbar{display:flex;align-items:center;gap:8px;padding:0 10px;min-height:28px;background:var(--amber-t);border:1px solid var(--amber-l);color:#4A3500;font-size:12px;font-weight:600;white-space:nowrap}
+@media (max-width:560px){body.obs .obsbar{display:none}}
 
 /* Defects */
 #defects textarea,#complaints textarea{width:100%}
@@ -352,6 +360,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
     <span class="logo" aria-hidden="true"></span>
     <span><b>PikaBlu</b><small>Sistemi i menaxhimit të ujësjellësit</small></span>
   </a>
+  <span class="obsbar" style="margin-left:auto">Vëzhgues: vetëm shikim</span>
   <div class="ab-user"><b id="abName"></b><small id="abRole"></small></div>
 </header>
 <nav class="nav" id="nav" aria-label="Menyja kryesore">
@@ -464,6 +473,22 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 if (typeof SUPABASE_URL === "undefined") { document.body.innerHTML = '<p style="padding:20px;font:16px system-ui">Mungon skedari <b>config.js</b> në GitHub.</p>'; throw new Error("config.js missing"); }
 const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* Akseset: administratori (tabela uploaders) dhe vëzhguesi (staff_profiles.role = "vezhgues").
+   Vëzhguesi sheh gjithçka si administratori, por butonat e veprimeve fshihen dhe
+   shkrimi bllokohet në Supabase (shih sql/vezhgues.sql). */
+const pbAcc = {};
+function pbAccess(uid){
+  if (!pbAcc[uid]) pbAcc[uid] = Promise.all([
+    sb.from("uploaders").select("user_id").eq("user_id", uid),
+    sb.from("staff_profiles").select("role").eq("user_id", uid).maybeSingle()
+  ]).then(([u, p]) => {
+    const obs = !!(p && p.data && p.data.role === "vezhgues");
+    window.pbObserver = obs;
+    document.body.classList.toggle("obs", obs);
+    return obs ? {data: [{user_id: uid}], error: null} : u;
+  }, () => { delete pbAcc[uid]; return {data: [], error: null}; });
+  return pbAcc[uid];
+}
 const TREE = [
   {key: "Banesa", label: "Banesa", subs: ["Shtëpi private", "Pallat", "Pallat me kasetë të përbashkët"]},
   {key: "Institucion", label: "Institucione", subs: ["Bashki", "Shkollë", "Qendër shëndetësore", "Institucione të tjera"]},
@@ -721,6 +746,7 @@ window.pikaLogin = async function (email, password) {
 function applyUser(u){
   me = u;
   document.body.classList.toggle("in", !!u);
+  if (!u) { Object.keys(pbAcc).forEach(k => delete pbAcc[k]); window.pbObserver = false; document.body.classList.remove("obs"); }
   $("gate2").classList.toggle("hide", !!u);
   if (u) { $("gate2").dataset.in = "1"; $("app").classList.remove("hide"); setTimeout(() => map.invalidateSize(), 50); load(); startGps(true); }
   else {
@@ -898,7 +924,7 @@ icons();
       from += 1000;
     }
     debs = all; rebuildMap();
-    const r = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
+    const r = await pbAccess(me.id);
     staff = !!(r.data && r.data.length);
     if (!silent) draw();
   }
@@ -1114,7 +1140,7 @@ icons();
     const [f, p, u] = await Promise.all([
       sb.from("plan_folders").select("*").order("name"),
       sb.from("planimetri").select("*").order("created_at", {ascending: false}),
-      sb.from("uploaders").select("user_id").eq("user_id", me.id)]);
+      pbAccess(me.id)]);
     if (f.error || p.error) { $("pfList").innerHTML = '<p class="msg err">S’u lexuan të dhënat. Kontrollo që SQL-i u krye.</p>'; return; }
     folders = f.data; files = p.data; can = !!(u.data && u.data.length); draw();
   }
@@ -1208,7 +1234,7 @@ icons();
     b._subs = list.map(x => [x.full_name, x.contract_no, x.apartment, x.phone, x.meter_no, x.seal_no].join(" ")).join(" ");
   }
   async function loadSubs(){
-    const {data: u} = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
+    const {data: u} = await pbAccess(me.id);
     isAdm = !!(u && u.length);
     let all = [], from = 0;
     for (;;) {
@@ -1395,7 +1421,7 @@ icons();
     $("zSel").innerHTML = '<option value="">Pa zonë</option><optgroup label="Qyteti">' + o("qytet") + '</optgroup><optgroup label="Fshatrat">' + o("fshat") + "</optgroup>";
   }
   async function loadZones(){
-    const [z, u] = await Promise.all([sb.from("zones").select("*").order("name"), sb.from("uploaders").select("user_id").eq("user_id", me.id)]);
+    const [z, u] = await Promise.all([sb.from("zones").select("*").order("name"), pbAccess(me.id)]);
     zones = z.error ? [] : z.data; staff = !!(u.data && u.data.length); fillSel();
   }
   function updateBar(){
@@ -1515,7 +1541,7 @@ icons();
     const box = (n, t, red) => '<div class="wstat"><b' + (red ? ' style="color:#B42318"' : "") + ">" + n + '</b><span>' + t + "</span></div>";
     let nPts = 0, nSubs = 0;
     try { nPts = allRows.length; nSubs = allRows.reduce((t, b) => t + ((b._subArr || []).length), 0); } catch (e) {}
-    return '<div class="wnote" style="background:#E8EFFE;border-color:#C9DAFD;color:#0B1B2E"><i data-lucide="shield-check" style="color:#0558FC"></i><div><b>Administrator</b><p>Keni akses të plotë në sistem. Ja përmbledhja e ditës.</p></div></div>' +
+    return '<div class="wnote" style="background:#E8EFFE;border-color:#C9DAFD;color:#0B1B2E"><i data-lucide="shield-check" style="color:#0558FC"></i><div><b>' + (window.pbObserver ? 'Vëzhgues' : 'Administrator') + '</b><p>' + (window.pbObserver ? 'Shihni të gjitha të dhënat si administratori. Nuk mund të shtoni, ndryshoni ose fshini asgjë.' : 'Keni akses të plotë në sistem. Ja përmbledhja e ditës.') + '</p></div></div>' +
       '<div class="wgrid">' + box(nDeb, "debitorë në listë") + box(lk(sum), "borxhi total", true) + box(nPts, "pika në hartë") + box(nSubs, "abonentë brenda pikave") + "</div>" +
       '<div class="wsub">Ndërhyrjet e sotme nga stafi (' + ivs.length + ")</div>" +
       '<div class="wgrid g4">' + ACTIONS.map(a => box(c(a), a)).join("") + "</div>" +
@@ -1554,7 +1580,7 @@ icons();
   }
 
   async function loadProfile(user){
-    const [p, u] = await Promise.all([sb.from("staff_profiles").select("*").eq("user_id", user.id).maybeSingle(), sb.from("uploaders").select("user_id").eq("user_id", user.id)]);
+    const [p, u] = await Promise.all([sb.from("staff_profiles").select("*").eq("user_id", user.id).maybeSingle(), pbAccess(user.id)]);
     prof = p.error ? null : p.data; isAdm = !!(u.data && u.data.length); window.pbProf = prof;
     console.log("PikaBlu profili:", p.error ? p.error.message : p.data, "admin:", isAdm);
     if (p.error) toastMsg("Profili i stafit nuk u lexua: " + p.error.message);
@@ -1798,7 +1824,7 @@ window.addEventListener("DOMContentLoaded", function(){
   function who(){
     const p = window.pbProf, r = window.pbRole;
     $("abName").textContent = p && p.full_name ? (p.salutation ? p.salutation + " " : "") + p.full_name : (me && me.email) || "";
-    $("abRole").textContent = p && p.title ? p.title : (r && r.adm ? "Administrator" : "");
+    $("abRole").textContent = p && p.title ? p.title : (window.pbObserver ? "Vëzhgues" : r && r.adm ? "Administrator" : "");
   }
   window.addEventListener("pbprofile", who);
   new MutationObserver(who).observe(document.body, {attributes: true, attributeFilter: ["class"]});
@@ -1869,7 +1895,7 @@ window.addEventListener("DOMContentLoaded", function(){
   async function open(pt){
     linkPt = pt || null; if (pt) loc = null;
     ov.classList.remove("hide");
-    const r = await sb.from("uploaders").select("user_id").eq("user_id", me.id);
+    const r = await pbAccess(me.id);
     adm = !!(r.data && r.data.length);
     draw(); if (adm) loadList();
   }
