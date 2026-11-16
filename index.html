@@ -298,6 +298,36 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 .cmscan{display:flex;align-items:center;gap:6px;font-size:13px;margin-top:6px;color:var(--amber)}.cmscan svg{width:16px;height:16px}.cmscan.ok{color:var(--ok)}
 .dbtn.upl{cursor:pointer}.dbtn.upl.busy{opacity:.5;pointer-events:none}
 
+/* Small action buttons (list items, cards) */
+.sbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 10px;background:#fff;color:var(--ink);border:1px solid #9AA7B6;font-size:13px;font-weight:600;text-decoration:none;line-height:1.2;cursor:pointer}
+.sbtn:hover{background:var(--foam);border-color:var(--ink-2);color:var(--ink)}
+.sbtn.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+.sbtn.pri:hover{background:var(--blue-d);border-color:var(--blue-d);color:#fff}
+.sbtn svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.acts{gap:6px;margin-top:8px}
+.dmapb{margin-top:8px}
+
+/* Collapse controls */
+.nav-tools,.pane-tgl{display:none}
+.sheet-tgl{display:none}
+.sheethead #title{margin-left:auto}
+.sheethead{justify-content:flex-start;align-items:center}
+
+/* Mobile: draggable sheet with an open/close arrow */
+@media (max-width:1023px){
+  .sheet-tgl{display:inline-flex;width:36px;height:36px;min-height:0;padding:0;margin-left:10px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .sheet-tgl:hover{background:var(--foam)}
+  .sheet-tgl .i-up{display:none}
+  body.sheet-closed .sheet-tgl .i-up{display:block}
+  body.sheet-closed .sheet-tgl .i-down{display:none}
+  body.sheet-closed .sheet-tgl{background:var(--blue);color:#fff;border-color:var(--blue)}
+  body.sheet-closed #scroll{visibility:hidden}
+  .handle,.sheethead{touch-action:none;cursor:grab;user-select:none}
+  .handle{padding:10px 0 8px}
+  .handle i{width:48px;height:5px;background:#8794A3}
+  #app.dragging .sheet,#app.dragging .fabs{transition:none}
+}
+
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -343,6 +373,31 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
   #report > .dpad,#tasksPage > .dpad{padding:24px!important;margin:24px auto!important;border:1px solid var(--line);min-height:0}
   .dbody{margin:24px auto;border:1px solid var(--line);min-height:0}
   #detail .dbody{margin:0;border:0}
+
+  /* Main menu: collapse to icons */
+  .nav-tools{display:block;padding:10px 8px 2px}
+  .nav-mini-btn{width:100%;justify-content:flex-start;gap:10px;min-height:36px;padding:0 10px;background:#fff;color:var(--ink-2);border:1px solid var(--line);font-size:13px;font-weight:500}
+  .nav-mini-btn:hover{background:var(--foam);color:var(--ink);border-color:var(--ink-2)}
+  .nav-mini-btn .i-open{display:none}
+  body.nav-mini{--navw:64px}
+  body.nav-mini .nav{overflow-x:hidden}
+  body.nav-mini .ni span,body.nav-mini .nav-mini-btn span{display:none}
+  body.nav-mini .ni{justify-content:center;padding:0 0 0 0}
+  body.nav-mini .ngt{height:0;padding:0;overflow:hidden}
+  body.nav-mini .ng{padding:6px 0}
+  body.nav-mini .nav-mini-btn{justify-content:center;padding:0}
+  body.nav-mini .nav-mini-btn .i-close{display:none}
+  body.nav-mini .nav-mini-btn .i-open{display:block}
+
+  /* Points panel: hide completely, reopen from the map edge */
+  body.pane-off{--panew:0px}
+  body.pane-off .pane{display:none}
+  .pane-tgl{display:inline-flex;position:absolute;z-index:1002;top:12px;left:var(--panew);min-height:40px;padding:0 8px;gap:6px;background:#fff;color:var(--ink);border:1px solid var(--line);border-left:0;box-shadow:2px 1px 4px rgba(11,27,46,.15);font-size:13px}
+  .pane-tgl:hover{background:var(--foam)}
+  .pane-tgl span,.pane-tgl .i-open{display:none}
+  body.pane-off .pane-tgl{left:0;padding:0 12px 0 8px;border-left:0}
+  body.pane-off .pane-tgl span,body.pane-off .pane-tgl .i-open{display:inline-flex}
+  body.pane-off .pane-tgl .i-close{display:none}
 }
 @media (max-width:1023px){
   .pane{display:contents}
@@ -364,6 +419,11 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
   <div class="ab-user"><b id="abName"></b><small id="abRole"></small></div>
 </header>
 <nav class="nav" id="nav" aria-label="Menyja kryesore">
+  <div class="nav-tools">
+    <button type="button" class="nav-mini-btn" id="navMini" aria-controls="nav" aria-expanded="true" title="Mbyll menunë">
+      <i data-lucide="panel-left-close" class="i-close"></i><i data-lucide="panel-left-open" class="i-open"></i><span>Mbyll menunë</span>
+    </button>
+  </div>
   <div class="ng"><div class="ngt">Harta</div>
     <button type="button" class="ni" data-nav="map"><i data-lucide="map"></i><span>Harta e pikave</span></button>
     <button type="button" class="ni" data-nav="zones" data-src="zoneBtn"><i data-lucide="map-pinned"></i><span>Zonat: qyteti dhe fshatrat</span></button>
@@ -402,10 +462,15 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
     </div>
     <div class="sheet" id="sheet">
       <div class="handle" id="handle" aria-label="Zgjat ose mbyll listën"><i></i></div>
-      <div class="sheethead"><h2 class="sh-t">Pikat në hartë</h2><span id="title">0 pika</span></div>
+      <div class="sheethead"><h2 class="sh-t">Pikat në hartë</h2><span id="title">0 pika</span>
+        <button type="button" class="sheet-tgl" id="sheetTgl" aria-controls="sheet" aria-label="Mbyll listën e pikave"><i data-lucide="chevron-down" class="i-down"></i><i data-lucide="chevron-up" class="i-up"></i></button>
+      </div>
       <div id="scroll"><div id="list"></div><div id="more"></div><div class="foot">Harta: Esri, OpenStreetMap</div></div>
     </div>
   </aside>
+  <button type="button" class="pane-tgl" id="paneTgl" aria-expanded="true" title="Fshih listën e pikave">
+    <i data-lucide="chevron-left" class="i-close"></i><i data-lucide="chevron-right" class="i-open"></i><span>Lista e pikave</span>
+  </button>
   <div class="fabs">
     <button id="layers" class="fab" type="button" aria-label="Satelit ose hartë normale" title="Satelit ose hartë normale"><i data-lucide="layers"></i></button>
     <button id="gps" class="fab" type="button" aria-label="Vendndodhja ime" title="Vendndodhja ime"><i data-lucide="locate-fixed"></i></button>
@@ -499,7 +564,9 @@ const MAIN = {};
 TREE.forEach(t => { MAIN[t.key] = t.key; t.subs.forEach(x => { MAIN[x] = t.key; }); });
 Object.assign(MAIN, {"Familje": "Banesa", "Guest house": "Biznese"});
 const LEGACY_SUB = {"Familje": "Shtëpi private", "Guest house": "Guest house / Bujtinë", "Institucion": "Institucione të tjera"};
-const STATES = ["56px", "42dvh", "80dvh"];
+const STATES = ["64px", "42dvh", "80dvh"];
+const SVG_NAV = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>';
+const SVG_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>';
 let me = null, picked = null, pickMarker = null, pickMode = false, editingId = null;
 let rows = [], allRows = [], filter = "all", subFilter = null, limit = 5, stateIdx = 1;
 let watchId = null, meMarker = null, firstFix = true, sat = true, timer = null, hadSearch = false;
@@ -545,7 +612,12 @@ function badges(b){
     (b.meter_no ? '<span class="badge">Matës: ' + esc(b.meter_no) + "</span>" : "") +
     (b.debtor ? '<span class="badge red">Debitor</span>' : "") + (stOf(b) === "prere" ? '<span class="badge dark">Prerë</span>' : stOf(b) === "pasiv" ? '<span class="badge dark">Pasiv</span>' : "");
 }
-function setSheet(i){ stateIdx = i; $("app").style.setProperty("--sh", STATES[i]); setTimeout(() => map.invalidateSize(), 300); }
+function setSheet(i){
+  stateIdx = i; $("app").style.setProperty("--sh", STATES[i]);
+  document.body.classList.toggle("sheet-closed", i === 0);
+  $("sheetTgl").setAttribute("aria-label", i === 0 ? "Hap listën e pikave" : "Mbyll listën e pikave");
+  setTimeout(() => map.invalidateSize(), 300);
+}
 
 function shrink(file){
   return new Promise((res, rej) => {
@@ -578,7 +650,7 @@ function render(pulse){
     '<div class="item" data-id="' + b.id + '">' + (b.photoUrl ? '<img alt="" src="' + esc(b.photoUrl) + '">' : '<div class="ph"></div>') +
     '<div class="b"><b>' + esc(b.name) + "</b>" + badges(b) +
     '<div class="meta">' + (b.phone ? esc(b.phone) + " · " : "") + "nga " + esc(b.owner_name || "përdorues") + "</div>" +
-    '<div class="acts"><a href="#" data-go="' + b.id + '">Shfaq në hartë</a><a target="_blank" rel="noopener" href="' + dirUrl(b) + '">Më ço atje</a></div></div></div>'
+    '<div class="acts"><a class="sbtn pri" target="_blank" rel="noopener" href="' + dirUrl(b) + '">' + SVG_NAV + 'Më ço atje</a><button type="button" class="sbtn" data-go="' + b.id + '">' + SVG_PIN + 'Shfaq në hartë</button></div></div></div>'
   ).join("") : '<p class="meta">Asnjë pikë nuk u gjet.</p>';
   $("more").innerHTML = rows.length > lim ? '<button class="alt" id="moreBtn" type="button" style="width:100%;margin-top:12px">Shfaq edhe ' + Math.min(5 * step, rows.length - lim) + '</button><p class="meta">Për të gjetur të tjerat, kërkoni me emër ose nr. kontrate.</p>' : "";
 }
@@ -716,7 +788,66 @@ document.addEventListener("click", async e => {
   const it = e.target.closest ? e.target.closest(".item") : null;
   if (it && !e.target.closest("a") && !e.target.closest("button")) openDetail(it.getAttribute("data-id"));
 });
-$("handle").onclick = () => setSheet((stateIdx + 1) % 3);
+/* Lista e pikave në celular: prekje, tërheqje dhe shigjetë hap/mbyll */
+let sheetDragAt = 0;
+$("handle").onclick = () => { if (Date.now() - sheetDragAt < 300) return; setSheet((stateIdx + 1) % 3); };
+$("sheetTgl").onclick = () => setSheet(stateIdx === 0 ? 1 : 0);
+(function(){
+  const sh = $("sheet"), app = $("app"), mob = () => !window.matchMedia("(min-width:1024px)").matches;
+  let y0 = null, h0 = 0, moved = false;
+  function down(e){
+    if (!mob() || e.target.closest("button")) return;
+    y0 = e.clientY; h0 = sh.getBoundingClientRect().height; moved = false;
+    app.classList.add("dragging");
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {}
+  }
+  function move(e){
+    if (y0 === null) return;
+    const dy = y0 - e.clientY; if (Math.abs(dy) > 5) moved = true;
+    if (!moved) return;
+    const h = Math.max(64, Math.min(app.clientHeight - 72, h0 + dy));
+    app.style.setProperty("--sh", h + "px");
+    document.body.classList.toggle("sheet-closed", h <= 72);
+  }
+  function up(){
+    if (y0 === null) return;
+    y0 = null; app.classList.remove("dragging");
+    if (!moved) return;
+    sheetDragAt = Date.now();
+    const h = sh.getBoundingClientRect().height;
+    if (h < 140) { setSheet(0); return; }
+    stateIdx = h > app.clientHeight * 0.7 ? 2 : 1;
+    document.body.classList.remove("sheet-closed");
+    $("sheetTgl").setAttribute("aria-label", "Mbyll listën e pikave");
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+  [$("handle"), document.querySelector(".sheethead")].forEach(el => {
+    el.addEventListener("pointerdown", down); el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  });
+})();
+/* Desktop: palos menynë kryesore dhe fshih listën e pikave */
+(function(){
+  const get = k => { try { return localStorage.getItem(k) === "1"; } catch (e) { return false; } };
+  const put = (k, v) => { try { localStorage.setItem(k, v ? "1" : "0"); } catch (e) {} };
+  function mini(on){
+    document.body.classList.toggle("nav-mini", on); put("pbNavMini", on);
+    const b = $("navMini"), t = on ? "Hap menunë" : "Mbyll menunë";
+    b.setAttribute("aria-expanded", on ? "false" : "true"); b.title = t; b.querySelector("span").textContent = t;
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+  function pane(off){
+    document.body.classList.toggle("pane-off", off); put("pbPaneOff", off);
+    const b = $("paneTgl");
+    b.setAttribute("aria-expanded", off ? "false" : "true"); b.title = off ? "Shfaq listën e pikave" : "Fshih listën e pikave";
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+  $("navMini").onclick = () => mini(!document.body.classList.contains("nav-mini"));
+  $("paneTgl").onclick = () => pane(!document.body.classList.contains("pane-off"));
+  document.querySelectorAll(".nav .ni").forEach(b => { const s = b.querySelector("span"); if (s) b.title = s.textContent; });
+  if (get("pbNavMini")) mini(true);
+  if (get("pbPaneOff")) pane(true);
+})();
 $("layers").onclick = () => { if (sat) { map.removeLayer(satellite); normal.addTo(map); } else { map.removeLayer(normal); satellite.addTo(map); } sat = !sat; };
 $("infoBtn").onclick = () => $("about").classList.remove("hide");
 $("aback").onclick = () => $("about").classList.add("hide");
@@ -910,7 +1041,7 @@ icons();
         '<div style="text-align:right"><div class="damt">' + lek(d.amount) + "</div>" + (d.invoices ? '<div class="meta">' + d.invoices + " fatura</div>" : "") + "</div></div>" +
         (open[d.id] ? (parts ? '<dl class="dl" style="margin:8px 0 0;font-size:14px">' + parts + "</dl>" : '<p class="meta">Pa detaje shumash.</p>') : "") +
         '<div class="meta" style="margin-top:4px">Gjendja më ' + esc(day ? day.split("-").reverse().join(".") : "–") + (d.note ? " · " + esc(d.note) : "") + "</div>" +
-        (pt ? '<a href="#" data-dmap="' + pt.id + '">Shfaq në hartë' + (pt.inside ? " (brenda: " + esc(pt.inside) + ")" : "") + "</a>" : "") + "</div>";
+        (pt ? '<div class="dmapb"><button type="button" class="sbtn" data-dmap="' + pt.id + '">' + SVG_PIN + "Shfaq në hartë" + (pt.inside ? " (brenda: " + esc(pt.inside) + ")" : "") + "</button></div>" : "") + "</div>";
     }).join("") : '<p class="meta">Lista është bosh.</p>') + (l.length > 150 ? '<p class="meta">Po shfaqen 150 të parët. Kërko ose përdor filtrin për të tjerët.</p>' : "");
     lucide.createIcons();
   }
@@ -2154,7 +2285,7 @@ window.addEventListener("DOMContentLoaded", function(){
           (c.description ? '<p style="margin:6px 0">' + esc(c.description) + "</p>" : "") +
           '<div class="cmstaff"><i data-lucide="users"></i> ' + (c.staff ? esc(c.staff) : '<span class="meta">Pa staf të caktuar</span>') + (c.deadline ? ' · <span class="' + (late ? "late" : "") + '">Afati: ' + esc(c.deadline.split("-").reverse().join(".")) + (late ? " (ka kaluar)" : "") + "</span>" : "") + "</div>" +
           (c.address ? '<div class="meta">Adresa: ' + esc(c.address) + "</div>" : "") +
-          (c.scan_path ? '<div class="cmscan ok"><i data-lucide="file-check"></i> Formulari i firmosur u dërgua te administratori' + (c.scan_sent_at ? " · " + esc(dfmt(c.scan_sent_at)) : "") + (urls[c.scan_path] ? ' · <a target="_blank" rel="noopener" href="' + esc(urls[c.scan_path]) + '">Shiko</a>' : "") + "</div>"
+          (c.scan_path ? '<div class="cmscan ok"><i data-lucide="file-check"></i> Formulari i firmosur u dërgua te administratori' + (c.scan_sent_at ? " · " + esc(dfmt(c.scan_sent_at)) : "") + (urls[c.scan_path] ? ' <a class="sbtn" style="margin-left:6px" target="_blank" rel="noopener" href="' + esc(urls[c.scan_path]) + '">Shiko formularin</a>' : "") + "</div>"
             : '<div class="cmscan"><i data-lucide="file-warning"></i> Formulari i firmosur nuk është ngarkuar ende</div>') +
           (c.resolution ? '<div class="cmres2"><b>Zgjidhja:</b> ' + esc(c.resolution) + "</div>" : "") +
           '<div class="bar" style="margin-top:8px">' + (!kl ? (c.point_id ? '<button type="button" class="alt" data-cmmap="' + c.point_id + '"><i data-lucide="map-pin"></i> Pika</button>' : "") +
@@ -2318,7 +2449,7 @@ window.addEventListener("DOMContentLoaded", function(){
       editId = null; sel = null; draw(); await loadList();
       const m = $("cmMsg");
       m.className = "msg"; m.innerHTML = (wasEdit ? "Formulari nr. " + (saved.form_no || saved.id) + " u ndryshua." : "Formulari nr. " + (saved.form_no || saved.id) + " u ruajt. Shkarkojeni, printojeni dhe pas firmës ngarkojeni te lista më poshtë.") +
-        ' <a href="#" data-cmpdf="' + saved.id + '">Shkarko PDF</a>' + (saved.staff ? ' · <a target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(saved)) + '">Dërgoja stafit në WhatsApp</a>' : "");
+        '<span class="acts" style="display:flex"><button type="button" class="sbtn pri" data-cmpdf="' + saved.id + '">Shkarko PDF</button>' + (saved.staff ? '<a class="sbtn" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(saved)) + '">Dërgoja stafit në WhatsApp</a>' : "") + "</span>";
     }
   });
   const od = openDetail;
