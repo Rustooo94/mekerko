@@ -614,7 +614,7 @@ body:not([data-view="home"]) .spanel{display:block}
     L.marker(ll, {interactive: false, keyboard: false, icon: L.divIcon({className: '', iconSize: [0, 0],
       html: '<div class="lbl' + (left ? ' l' : '') + '"><i></i><span>' + t + '</span></div>'})}).addTo(m);
   }
-  lbl([42.068, 19.513], 'Shkodër'); lbl([41.328, 19.819], 'Tiranë'); lbl([40.619, 20.781], 'Korçë'); lbl([40.076, 20.139], 'Gjirokastër', true);
+  lbl([40.076, 20.139], 'Gjirokastër', true);
   L.marker([40.234, 20.352], {interactive: false, keyboard: false, icon: L.divIcon({className: '', iconSize: [0, 0],
     html: '<div class="pin"><svg viewBox="0 0 28 36"><path d="M14 1C7 1 1.5 6.4 1.5 13.3 1.5 22.5 14 35 14 35s12.5-12.5 12.5-21.7C26.5 6.4 21 1 14 1z" fill="#fff"/><circle cx="14" cy="13" r="5" fill="#0B1B2E"/></svg><span>Përmet</span></div>'})}).addTo(m);
   var bounds = L.latLngBounds([[39.64, 19.26], [42.66, 21.06]]);
