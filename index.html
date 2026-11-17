@@ -250,7 +250,7 @@ body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!
 body.obs #addBtn,body.obs [data-edit],body.obs [data-ddel],body.obs #subBox .upbox,body.obs [data-sedit],body.obs [data-sdel],
 body.obs #upbox,body.obs [data-delb],body.obs #pfUp,body.obs [data-pfdelf],body.obs [data-pfdelp],body.obs #zUp,body.obs [data-zdel],
 body.obs #ivBox .upbox,body.obs [data-ivdel],body.obs #defects .dp > .upbox,body.obs [data-dfst],body.obs [data-dfdel],body.obs [data-dfrep],
-body.obs #abUp,body.obs [data-abdel],body.obs [data-cmsolve],body.obs [data-cmst],body.obs [data-cmed],body.obs .dbtn.upl,body.obs #cmForm,body.obs [data-cmrep]{display:none!important}
+body.obs [data-pay],body.obs #abUp,body.obs [data-abdel],body.obs [data-cmsolve],body.obs [data-cmst],body.obs [data-cmed],body.obs .dbtn.upl,body.obs #cmForm,body.obs [data-cmrep]{display:none!important}
 .obsbar{display:none}
 body.obs .obsbar{display:flex;align-items:center;gap:8px;padding:0 10px;min-height:28px;background:var(--amber-t);border:1px solid var(--amber-l);color:#4A3500;font-size:12px;font-weight:600;white-space:nowrap}
 @media (max-width:560px){body.obs .obsbar{display:none}}
@@ -365,6 +365,19 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 .pwrules li::before{content:"";width:10px;height:10px;border:1.5px solid #9AA7B6;flex:none}
 .pwrules li.ok{color:var(--ok)}
 .pwrules li.ok::before{background:var(--ok);border-color:var(--ok)}
+/* Raporti ditor dhe pagesat */
+.rbar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin:0 0 8px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.rbar input{width:auto}
+.rexp{display:flex;gap:8px;flex-wrap:wrap}
+.rh{margin:24px 0 8px;font-size:16px}
+.wstat b.c-ok{color:var(--ok)}.wstat b.c-am{color:var(--amber)}.wstat b.c-err{color:var(--warn)}
+.ivacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ivacts:empty{display:none}
+.paybar{display:inline-flex;gap:6px}
+.badge.pay-pagoi{background:var(--ok-t);color:var(--ok);border-color:#B8DCC6}
+.badge.pay-ne_pritje{background:var(--amber-t);color:var(--amber);border-color:var(--amber-l)}
+.badge.pay-nuk_pagoi{background:var(--err-t);color:var(--warn);border-color:#EBC0BA}
+#ivPayBox{margin-top:2px}
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -1804,28 +1817,136 @@ icons();
   sb.auth.getSession().then(({data}) => { if (data.session) startProfile(data.session.user); });
   sb.auth.onAuthStateChange((_e, s) => { setTimeout(() => { if (s) startProfile(s.user); if (!s) { profFor = null; shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); window.pbRole = null; window.dispatchEvent(new CustomEvent("pbprofile", {detail: null})); applyLimits(); } }, 0); });
 
+  const PAY = {ne_pritje: "Në pritje", pagoi: "Pagoi", nuk_pagoi: "Nuk pagoi"};
+  const PAY_ACTS = ["Kontroll", "Paralajmërim", "Prerje"];
+  const DSTAT = {e_re: "E re", ne_pune: "Në punë", rregulluar: "E rregulluar"};
+  const fmtD = d => (d || "").split("-").reverse().join(".");
+  const hm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+  const lekR = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
+  const ptName = id => { const b = allRows.find(x => String(x.id) === String(id)); return b ? b.name : ""; };
+  const payBadge = r => r.payment_status ? '<span class="badge pay-' + r.payment_status + '">Pagesa: ' + (PAY[r.payment_status] || r.payment_status) + "</span>" : "";
+  const payBtns = r => (r.payment_status && r.payment_status !== "pagoi" && (isAdm || canLog()) ?
+    '<span class="paybar"><button type="button" class="sbtn pri" data-pay="pagoi" data-iv="' + r.id + '">Pagoi</button>' +
+    (r.payment_status !== "nuk_pagoi" ? '<button type="button" class="sbtn red" data-pay="nuk_pagoi" data-iv="' + r.id + '">Nuk pagoi</button>' : '<button type="button" class="sbtn" data-pay="ne_pritje" data-iv="' + r.id + '">Në pritje</button>') + "</span>" : "") +
+    (r.payment_status === "pagoi" && (isAdm || canLog()) ? '<span class="paybar"><button type="button" class="sbtn" data-pay="ne_pritje" data-iv="' + r.id + '">Anulo konfirmimin</button></span>' : "");
+  window.pbPayBadge = payBadge; window.pbPayBtns = payBtns;
+
   async function openReport(){
     ov.classList.add("hide");
-    rp.innerHTML = '<div class="dhead"><button type="button" id="rBack"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Raporti i ditës</b></div><div class="dpad" style="max-width:720px;margin:0 auto">' +
-      '<div class="bar" style="margin:0 0 10px"><input type="date" id="rDay" value="' + today() + '" style="width:auto"><button type="button" class="alt" id="rXls"><i data-lucide="download"></i> Shkarko Excel</button></div><div id="rBody" class="meta">Duke ngarkuar…</div></div>';
+    rp.innerHTML = '<div class="dhead"><button type="button" id="rBack"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Raporti i ditës</b></div><div class="dpad" style="max-width:880px;margin:0 auto">' +
+      '<div class="rbar"><div><label for="rDay" style="margin-top:0">Data</label><input type="date" id="rDay" value="' + today() + '"></div>' +
+      '<div class="rexp"><button type="button" class="alt" id="rXls"><i data-lucide="file-spreadsheet"></i> Shkarko Excel</button><button type="button" id="rPdf"><i data-lucide="file-text"></i> Shkarko PDF</button></div></div>' +
+      '<div id="rBody" class="meta">Duke ngarkuar…</div></div>';
     rp.classList.remove("hide"); lucide.createIcons(); drawReport();
   }
-  let repRows = [];
+  let repRows = [], repDef = [], repPend = [];
   async function drawReport(){
     const day = $("rDay").value;
     let q = sb.from("interventions").select("*").eq("check_date", day).order("created_at");
     if (!isAdm) q = q.eq("created_by", me.id);
     const {data, error} = await q;
     if (error) { $("rBody").innerHTML = '<p class="msg err">S’u lexua raporti. Kontrollo që SQL-i u krye.</p>'; return; }
-    repRows = data;
-    const cnt = {}; ACTIONS.forEach(a => cnt[a] = 0); data.forEach(r => { cnt[r.action] = (cnt[r.action] || 0) + 1; });
-    const pt = id => { const b = allRows.find(x => x.id === id); return b ? b.name : "–"; };
-    const lekR = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
-    const debtSum = data.reduce((t, r) => t + (Number(r.debt_amount) || 0), 0), cutSum = data.filter(r => r.action === "Prerje").reduce((t, r) => t + (Number(r.debt_amount) || 0), 0);
-    $("rBody").innerHTML = (debtSum ? '<div class="dbanner" style="justify-content:space-between"><span>Borxhi i abonentëve të kontrolluar: <b>' + lekR(debtSum) + "</b></span>" + (cutSum ? "<span>Nga të prerët: <b>" + lekR(cutSum) + "</b></span>" : "") + "</div>" : "") + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">' + ACTIONS.map(a => '<div class="upbox" style="margin:0;text-align:center"><div style="font-size:24px;font-weight:700;color:#0443C4">' + cnt[a] + '</div><div class="meta">' + a + "</div></div>").join("") + "</div>" +
-      (data.length ? data.map(r => '<div class="drow"><b>' + esc(r.action) + " · " + esc(r.subscriber_name || pt(r.point_id)) + '</b><div class="meta">' + esc(pt(r.point_id)) + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + " · " + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + "</div>" + (r.debt_amount ? '<div style="color:#B42318;font-weight:700">Debi: ' + lekR(Number(r.debt_amount)) + "</div>" : "") + (r.note ? "<div>" + esc(r.note) + "</div>" : "") + ((isAdm || r.created_by === me.id) ? '<button type="button" class="red rdel" data-ivdel="' + r.id + '"><i data-lucide="trash-2"></i> Fshi këtë veprim</button>' : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje e regjistruar për këtë ditë.</p>');
+    repRows = data || [];
+    let pq = sb.from("interventions").select("*").eq("payment_status", "ne_pritje").order("check_date", {ascending: false});
+    if (!isAdm) pq = pq.eq("created_by", me.id);
+    const pr = await pq; repPend = pr.error ? [] : (pr.data || []);
+    repDef = [];
+    if (isAdm) {
+      const s = new Date(day + "T00:00:00"), e2 = new Date(s.getTime() + 864e5);
+      const dr = await sb.from("defects").select("*").gte("created_at", s.toISOString()).lt("created_at", e2.toISOString()).order("created_at");
+      repDef = dr.error ? [] : (dr.data || []);
+    }
+    const cnt = {}; ACTIONS.forEach(a => cnt[a] = 0); repRows.forEach(r => { cnt[r.action] = (cnt[r.action] || 0) + 1; });
+    const pc = k => repRows.filter(r => r.payment_status === k).length;
+    const debtSum = repRows.reduce((t, r) => t + (Number(r.debt_amount) || 0), 0), cutSum = repRows.filter(r => r.action === "Prerje").reduce((t, r) => t + (Number(r.debt_amount) || 0), 0);
+    const stat = (n, t, cls) => '<div class="wstat"><b' + (cls ? ' class="' + cls + '"' : "") + ">" + n + "</b><span>" + t + "</span></div>";
+    let h = '<h3 class="rh">Ndërhyrjet e stafit · ' + fmtD(day) + "</h3>" +
+      '<div class="wgrid g4">' + ACTIONS.map(a => stat(cnt[a], a)).join("") + "</div>" +
+      '<div class="wgrid g4">' + stat(pc("pagoi"), "Pagoi", "c-ok") + stat(pc("ne_pritje"), "Në pritje të pagesës", "c-am") + stat(pc("nuk_pagoi"), "Nuk pagoi", "c-err") + stat(debtSum ? lekR(debtSum) : "0", "Borxhi i kontrolluar") + "</div>" +
+      (cutSum ? '<p class="meta" style="margin:-4px 0 10px">Borxhi i abonentëve të prerë: <b>' + lekR(cutSum) + "</b></p>" : "") +
+      (repRows.length ? repRows.map(r => '<div class="drow"><b>' + esc(r.action) + " · " + esc(r.subscriber_name || ptName(r.point_id) || "–") + "</b> " + payBadge(r) +
+        '<div class="meta">' + esc(ptName(r.point_id) || "–") + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + (r.staff_name ? " · " + esc(r.staff_name) : "") + (r.created_name ? " · regjistroi " + esc(r.created_name) : "") + "</div>" +
+        (r.debt_amount ? '<div style="color:#B42318;font-weight:600">Debi: ' + lekR(Number(r.debt_amount)) + "</div>" : "") + (r.note ? "<div>" + esc(r.note) + "</div>" : "") +
+        (r.payment_status && r.payment_date ? '<div class="meta">Pagesa u konfirmua më ' + esc(fmtD(r.payment_date)) + (r.payment_by ? " nga " + esc(r.payment_by) : "") + "</div>" : "") +
+        '<div class="ivacts">' + payBtns(r) + ((isAdm || r.created_by === me.id) ? '<button type="button" class="sbtn red" data-ivdel="' + r.id + '"><i data-lucide="trash-2"></i> Fshi këtë veprim</button>' : "") + "</div></div>").join("")
+        : '<p class="meta">Asnjë ndërhyrje e regjistruar për këtë ditë.</p>');
+    const pend = repPend.filter(r => r.check_date !== day);
+    h += '<h3 class="rh">Pagesat në pritje nga ditët e mëparshme (' + pend.length + ")</h3>" +
+      (pend.length ? pend.slice(0, 50).map(r => '<div class="drow"><b>' + esc(r.subscriber_name || ptName(r.point_id) || "–") + "</b> " + payBadge(r) +
+        '<div class="meta">' + esc(r.action) + " më " + esc(fmtD(r.check_date)) + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + (r.debt_amount ? " · Debi: " + lekR(Number(r.debt_amount)) : "") + "</div>" +
+        '<div class="ivacts">' + payBtns(r) + "</div></div>").join("") : '<p class="meta">Asnjë pagesë në pritje.</p>');
+    if (isAdm) {
+      const dc = k => repDef.filter(d => d.status === k).length;
+      h += '<h3 class="rh">Defektet e raportuara · ' + fmtD(day) + "</h3>" +
+        '<div class="wgrid g4">' + stat(repDef.length, "Gjithsej") + stat(repDef.filter(d => d.source === "qytetar").length, "Nga qytetarët") + stat(repDef.filter(d => d.source !== "qytetar").length, "Nga stafi") + stat(repDef.filter(d => d.urgent).length, "Urgjente", "c-err") + "</div>" +
+        '<p class="meta" style="margin:-4px 0 10px">Statusi: ' + Object.keys(DSTAT).map(k => DSTAT[k] + " " + dc(k)).join(" · ") + "</p>" +
+        (repDef.length ? repDef.map(d => '<div class="drow"><b>' + esc(d.kind) + "</b> " + (d.urgent ? '<span class="badge red">Urgjent</span>' : "") + '<span class="badge st-' + d.status + '">' + (DSTAT[d.status] || d.status) + "</span>" + (d.source === "qytetar" ? '<span class="badge qyt">Qytetar</span>' : '<span class="badge">Stafi</span>') +
+          '<div class="meta">' + hm(d.created_at) + " · " + esc(d.created_name || (d.source === "qytetar" ? "Qytetar pa emër" : "–")) + (d.reporter_phone ? " · " + esc(d.reporter_phone) : "") + "</div>" +
+          (d.address || d.point_name ? '<div class="meta">' + esc([d.point_name ? "Pika: " + d.point_name : "", d.address ? "Adresa: " + d.address : ""].filter(Boolean).join(" · ")) + "</div>" : "") +
+          (d.description ? "<div>" + esc(d.description) + "</div>" : "") + "</div>").join("") : '<p class="meta">Asnjë defekt i raportuar këtë ditë.</p>');
+    }
+    $("rBody").className = ""; $("rBody").innerHTML = h;
     lucide.createIcons();
   }
+  function ivRow(r){ return {"Data": fmtD(r.check_date), "Veprimi": r.action, "Pika": ptName(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Debi (lekë)": r.debt_amount != null ? Number(r.debt_amount) : "", "Pagesa": PAY[r.payment_status] || "", "Konfirmuar më": fmtD(r.payment_date), "Konfirmoi": r.payment_by || "", "Stafi shoqërues": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""}; }
+  function exportXls(){
+    const day = $("rDay").value, wb = XLSX.utils.book_new();
+    const sheet = (rows, cols, name) => { const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [cols.reduce((o, c) => (o[c] = "", o), {})], {header: cols}); ws["!cols"] = cols.map(c => ({wch: Math.max(12, c.length + 4)})); XLSX.utils.book_append_sheet(wb, ws, name); };
+    const ivCols = ["Data", "Veprimi", "Pika", "Abonenti", "Kontrata", "Debi (lekë)", "Pagesa", "Konfirmuar më", "Konfirmoi", "Stafi shoqërues", "Shënim", "Regjistruar nga"];
+    sheet(repRows.map(ivRow), ivCols, "Ndërhyrjet");
+    sheet(repPend.map(ivRow), ivCols, "Pagesat në pritje");
+    if (isAdm) {
+      const dCols = ["Ora", "Lloji", "Urgjent", "Statusi", "Burimi", "Raportoi", "Telefoni", "Pika", "Adresa", "Përshkrimi", "Koordinatat"];
+      sheet(repDef.map(d => ({"Ora": hm(d.created_at), "Lloji": d.kind, "Urgjent": d.urgent ? "Po" : "Jo", "Statusi": DSTAT[d.status] || d.status, "Burimi": d.source === "qytetar" ? "Qytetar" : "Stafi", "Raportoi": d.created_name || "", "Telefoni": d.reporter_phone || "", "Pika": d.point_name || "", "Adresa": d.address || "", "Përshkrimi": d.description || "", "Koordinatat": d.lat != null ? d.lat.toFixed(5) + ", " + d.lng.toFixed(5) : ""})), dCols, "Defektet");
+    }
+    XLSX.writeFile(wb, "raporti_ditor_" + day + ".xlsx");
+  }
+  function exportPdf(){
+    const w = window.open("", "_blank");
+    if (!w) { alert("Shfletuesi e bllokoi dritaren. Lejoni dritaret (pop-up) për këtë faqe dhe provoni përsëri."); return; }
+    const day = $("rDay").value, e2 = s => esc(s == null ? "" : String(s));
+    const tbl = (cols, rows) => "<table><thead><tr>" + cols.map(c => "<th>" + e2(c) + "</th>").join("") + "</tr></thead><tbody>" +
+      (rows.length ? rows.map(r => "<tr>" + cols.map(c => "<td>" + e2(r[c]) + "</td>").join("") + "</tr>").join("") : '<tr><td colspan="' + cols.length + '" class="empty">Asnjë regjistrim.</td></tr>') + "</tbody></table>";
+    const cnt = a => repRows.filter(r => r.action === a).length, pc = k => repRows.filter(r => r.payment_status === k).length;
+    const ivCols = ["Veprimi", "Abonenti", "Kontrata", "Pika", "Debi (lekë)", "Pagesa", "Stafi shoqërues", "Shënim"];
+    const ivRows = repRows.map(r => { const o = ivRow(r); o["Debi (lekë)"] = r.debt_amount != null ? lekR(Number(r.debt_amount)) : ""; return o; });
+    const pend = repPend.filter(r => r.check_date !== day).map(r => { const o = ivRow(r); o["Debi (lekë)"] = r.debt_amount != null ? lekR(Number(r.debt_amount)) : ""; return o; });
+    let body = '<div class="hd">SHOQËRIA RAJONALE UJËSJELLËS KANALIZIME GJIROKASTËR SH.A.<br>NJËSIA PËRMET</div>' +
+      '<div class="tt"><b>RAPORTI DITOR</b><span>Data: ' + e2(fmtD(day)) + "</span></div>" +
+      '<h3>1. Ndërhyrjet e stafit</h3><p class="sum">' + ACTIONS.map(a => a + ": <b>" + cnt(a) + "</b>").join(" &nbsp;·&nbsp; ") + "<br>Pagoi: <b>" + pc("pagoi") + "</b> &nbsp;·&nbsp; Në pritje: <b>" + pc("ne_pritje") + "</b> &nbsp;·&nbsp; Nuk pagoi: <b>" + pc("nuk_pagoi") + "</b></p>" +
+      tbl(ivCols, ivRows) +
+      "<h3>2. Pagesat në pritje nga ditët e mëparshme</h3>" + tbl(["Data", "Veprimi", "Abonenti", "Kontrata", "Debi (lekë)", "Pagesa"], pend);
+    if (isAdm) {
+      body += '<h3>3. Defektet e raportuara</h3><p class="sum">Gjithsej: <b>' + repDef.length + "</b> &nbsp;·&nbsp; Nga qytetarët: <b>" + repDef.filter(d => d.source === "qytetar").length + "</b> &nbsp;·&nbsp; Nga stafi: <b>" + repDef.filter(d => d.source !== "qytetar").length + "</b> &nbsp;·&nbsp; Urgjente: <b>" + repDef.filter(d => d.urgent).length + "</b></p>" +
+        tbl(["Ora", "Lloji", "Urgjent", "Statusi", "Burimi", "Raportoi", "Vendndodhja", "Përshkrimi"], repDef.map(d => ({"Ora": hm(d.created_at), "Lloji": d.kind, "Urgjent": d.urgent ? "Po" : "Jo", "Statusi": DSTAT[d.status] || d.status, "Burimi": d.source === "qytetar" ? "Qytetar" : "Stafi", "Raportoi": [d.created_name, d.reporter_phone].filter(Boolean).join(", "), "Vendndodhja": d.point_name || d.address || (d.lat != null ? d.lat.toFixed(5) + ", " + d.lng.toFixed(5) : ""), "Përshkrimi": d.description || ""})));
+    }
+    body += '<div class="sg"><div>Përgatiti<i></i></div><div>Miratoi<i></i></div></div><p class="ft">Gjeneruar nga PikaBlu më ' + e2(new Date().toLocaleString("sq")) + "</p>";
+    w.document.open();
+    w.document.write('<!doctype html><html lang="sq"><head><meta charset="utf-8"><title>Raporti ditor ' + e2(fmtD(day)) + "</title><style>" +
+      "@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0;font-size:10pt}" +
+      ".hd{text-align:center;font-weight:bold;font-size:11pt;line-height:1.35}.tt{display:flex;justify-content:space-between;align-items:flex-end;margin:14px 0 6px;border-bottom:2px solid #000;padding-bottom:4px}.tt b{font-size:13pt}" +
+      "h3{font-size:11pt;margin:14px 0 4px}.sum{margin:0 0 6px}table{width:100%;border-collapse:collapse;margin-bottom:6px}th,td{border:1px solid #555;padding:3px 5px;text-align:left;vertical-align:top}th{background:#E8EFFE;font-size:9pt}td.empty{color:#555;text-align:center}" +
+      ".sg{display:flex;justify-content:space-between;margin-top:30px}.sg div{width:40%;font-weight:bold}.sg i{display:block;border-bottom:1px solid #000;height:30px}.ft{margin-top:14px;font-size:8pt;color:#555}" +
+      "@media screen{body{max-width:1100px;margin:20px auto;padding:0 16px}.pbar{position:sticky;top:0;background:#0B1B2E;padding:10px;text-align:center;margin:0 -16px 16px}.pbar button{font:600 15px Arial;padding:10px 16px;border:0;background:#fff;color:#0B1B2E;cursor:pointer}}@media print{.pbar{display:none}}" +
+      '</style></head><body><div class="pbar"><button onclick="window.print()">Ruaj si PDF / Printo</button></div>' + body +
+      "<script>window.onload=function(){setTimeout(function(){window.print()},400)}<\/script></body></html>");
+    w.document.close();
+  }
+  async function setPay(id, st, btnEl){
+    if (btnEl) btnEl.disabled = true;
+    const upd = {payment_status: st, payment_date: st === "ne_pritje" ? null : today(), payment_by: st === "ne_pritje" ? null : (prof ? prof.full_name : me.email)};
+    const {data, error} = await sb.from("interventions").update(upd).eq("id", id).select();
+    if (error || !data || !data.length) { if (btnEl) btnEl.disabled = false; toastMsg("Pagesa nuk u përditësua" + (error ? ": " + error.message : ". Mungon leja: ekzekutoni sql/pagesat.sql te Supabase.")); return false; }
+    return true;
+  }
+  document.addEventListener("click", async e => {
+    const pb = e.target.closest ? e.target.closest("[data-pay]") : null; if (!pb) return;
+    const st = pb.getAttribute("data-pay"), id = pb.getAttribute("data-iv");
+    if (st === "nuk_pagoi" && !confirm("Ta shënoj si \"Nuk pagoi\"?")) return;
+    if (!(await setPay(id, st, pb))) return;
+    if (!rp.classList.contains("hide")) drawReport();
+    const box = $("ivBox"); if (box && box.dataset.pid && !$("detail").classList.contains("hide")) drawIv(box.dataset.pid);
+  });
   rp.addEventListener("click", async e => {
     if (e.target.closest("#rBack")) rp.classList.add("hide");
     const dv = e.target.closest("[data-ivdel]");
@@ -1839,11 +1960,8 @@ icons();
       if (r.action === "Prerje" || r.action === "Rilidhje") toastMsg("Veprimi u fshi. Nëse ndryshoi statusin e kontratës, korrigjojeni te pika.");
       drawReport();
     }
-    if (e.target.closest("#rXls")) {
-      const pt = id => { const b = allRows.find(x => x.id === id); return b ? b.name : ""; };
-      const ws = XLSX.utils.json_to_sheet(repRows.map(r => ({"Data": r.check_date, "Veprimi": r.action, "Pika": pt(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Debi (lekë)": r.debt_amount != null ? Number(r.debt_amount) : "", "Stafi": r.staff_kind || "", "Emri i stafit": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""})));
-      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Raporti"); XLSX.writeFile(wb, "raporti_" + $("rDay").value + ".xlsx");
-    }
+    if (e.target.closest("#rXls")) exportXls();
+    if (e.target.closest("#rPdf")) exportPdf();
   });
   rp.addEventListener("change", e => { if (e.target.id === "rDay") drawReport(); });
   ov.addEventListener("click", e => {
@@ -1866,15 +1984,16 @@ icons();
     const ph = iv.data.filter(r => r.photo_path).map(r => r.photo_path), um = {};
     if (ph.length) { const {data: us} = await sb.storage.from("photos").createSignedUrls(ph, 3600); (us || []).forEach(u => { if (u.signedUrl) um[u.path] = u.signedUrl; }); }
     let h = "<h3>Ndërhyrjet (" + iv.data.length + ")</h3>" + (iv.data.length ? iv.data.slice(0, 20).map(r =>
-      '<div class="sub"><b>' + esc(r.action) + "</b> · " + esc(r.check_date) + (r.subscriber_name ? " · " + esc(r.subscriber_name) : "") +
+      '<div class="sub"><b>' + esc(r.action) + "</b> · " + esc(r.check_date) + (r.subscriber_name ? " · " + esc(r.subscriber_name) : "") + " " + payBadge(r) +
       '<div class="meta">' + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + (r.created_name ? " · regjistruar nga " + esc(r.created_name) : "") + "</div>" +
-      (r.note ? "<div>" + esc(r.note) + "</div>" : "") +
+      (r.note ? "<div>" + esc(r.note) + "</div>" : "") + (r.payment_status && r.payment_date ? '<div class="meta">Pagesa u konfirmua më ' + esc(fmtD(r.payment_date)) + (r.payment_by ? " nga " + esc(r.payment_by) : "") + "</div>" : "") + '<div class="ivacts">' + payBtns(r) + "</div>" +
       (um[r.photo_path] ? '<a href="' + esc(um[r.photo_path]) + '" target="_blank" rel="noopener"><img alt="Foto e ndërhyrjes" src="' + esc(um[r.photo_path]) + '" style="width:130px;height:96px;object-fit:cover;border-radius:0;margin-top:6px;display:block"></a>' : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje ende.</p>');
     if (canLog()) {
       h += '<div class="upbox" style="margin-top:10px"><b>Regjistro ndërhyrje</b>' +
         (subsCache.length ? '<label for="ivSub">Abonenti</label><select id="ivSub"><option value="">E gjithë pika</option>' + subsCache.map(x => '<option value="' + x.id + '">' + esc(x.full_name + (x.apartment ? " (" + x.apartment + ")" : "")) + "</option>").join("") + "</select>" : "") +
         '<div class="row"><div><label for="ivDate">Data e kontrollit</label><input id="ivDate" type="date" value="' + today() + '"></div>' +
         '<div><label for="ivAct">Veprimi</label><select id="ivAct">' + ACTIONS.map(a => "<option>" + a + "</option>").join("") + "</select></div></div>" +
+        '<div id="ivPayBox"><label for="ivPay">Pagesa e debisë pas njoftimit</label><select id="ivPay"><option value="ne_pritje">Në pritje: abonenti u njoftua, pagesa ende pa u konfirmuar</option><option value="pagoi">Pagoi: pagesa u konfirmua</option><option value="nuk_pagoi">Nuk pagoi</option></select><p class="meta" style="margin:4px 0 0">Kur abonenti paguan më vonë, shtypni “Pagoi” te ndërhyrja ose te Raporti i ditës.</p></div>' +
         '<div class="ivcrew"><b>Stafi shoqërues</b> <span class="meta">(plotësoni vetëm emrat e atyre që dolën)</span>' +
         '<label style="margin-top:6px">Hidraulikë</label><div class="row3">' + [1, 2, 3].map(i => '<input id="ivH' + i + '" maxlength="60" placeholder="Hidrauliku ' + i + '">').join("") + "</div>" +
         '<label style="margin-top:6px">Specialistë prerje debie</label><div class="row">' + [1, 2].map(i => '<input id="ivS' + i + '" maxlength="60" placeholder="Specialisti ' + i + '">').join("") + "</div></div>" +
@@ -1905,12 +2024,15 @@ icons();
       const row = {point_id: pid, subscriber_id: s ? s.id : null, subscriber_name: s ? s.full_name : null, contract_no: s ? (s.contract_no || null) : (b ? b.contract_no || null : null),
         check_date: $("ivDate").value, action: act, staff_kind: crew.kind, staff_name: crew.names, note: $("ivNote").value.trim(), photo_path,
         created_name: prof ? prof.full_name : ((me.user_metadata && me.user_metadata.username) || me.email)};
+      if (PAY_ACTS.indexOf(act) >= 0 && $("ivPay")) { row.payment_status = $("ivPay").value; if (row.payment_status !== "ne_pritje") { row.payment_date = $("ivDate").value; row.payment_by = row.created_name; } }
       const dd = window.pbDebtFor ? window.pbDebtFor(row.contract_no) : null;
       if (dd && dd.amount != null) row.debt_amount = dd.amount;
       let {error} = await sb.from("interventions").insert(row);
       if (error && row.debt_amount != null && /debt_amount/.test(error.message || "")) { delete row.debt_amount; ({error} = await sb.from("interventions").insert(row)); }
+      let payWarn = "";
+      if (error && row.payment_status && /payment_/.test(error.message || "")) { delete row.payment_status; delete row.payment_date; delete row.payment_by; payWarn = " Statusi i pagesës nuk u ruajt: ekzekutoni sql/pagesat.sql te Supabase."; ({error} = await sb.from("interventions").insert(row)); }
       if (error) throw error;
-      let warn = "";
+      let warn = payWarn;
       if ($("ivSet").checked && (act === "Prerje" || act === "Rilidhje")) {
         const v = act === "Prerje";
         const upd = {is_cut: v, contract_status: v ? "prere" : "aktiv"};
@@ -1937,6 +2059,7 @@ icons();
 document.addEventListener("change", e => {
   if (e.target.id === "d") document.getElementById("dAmtBox").classList.toggle("hide", !e.target.checked);
   if (e.target.id === "sD") document.getElementById("sDABox").classList.toggle("hide", !e.target.checked);
+  if (e.target.id === "ivAct") { const pb = document.getElementById("ivPayBox"); if (pb) pb.classList.toggle("hide", e.target.value === "Rilidhje"); }
 });
 </script>
 <script>
