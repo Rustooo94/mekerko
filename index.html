@@ -2005,7 +2005,7 @@ icons();
     (sp.length ? sp : [""]).forEach(n => out.push(["Specialisti i prerjes së debisë", n]));
     (hi.length ? hi : [""]).forEach(n => out.push(["Hidrauliku", n]));
     out.push(["Abonenti ose përfaqësuesi", r.subscriber_name || (b ? b.name : "")]);
-    return out.map(x => "<tr><td>" + e2(x[0]) + "</td><td>" + e2(x[1]) + "</td><td></td></tr>").join("");
+    return out.map(x => '<div class="sgi"><small>' + e2(x[0]) + '</small><div class="sgl"><b>' + e2(x[1]) + "</b><i></i></div></div>").join("");
   }
   function sealLine(r){ return (r.old_seal || r.new_seal) ? '<div class="meta">Vula: ' + (r.old_seal ? "e vjetër " + esc(r.old_seal) : "pa vulë të vjetër") + (r.new_seal ? " → e re <b>" + esc(r.new_seal) + "</b>" : "") + "</div>" : ""; }
   window.pbSealLine = sealLine;
@@ -2162,7 +2162,7 @@ icons();
       ".hd{text-align:center;font-weight:bold;font-size:12.5pt;line-height:1.35}.tt{text-align:center;margin:22px 0 4px}.tt b{display:block;font-size:16pt;letter-spacing:.06em}.tt span{font-size:12pt}" +
       ".nr{display:flex;justify-content:space-between;margin:14px 0 10px;font-size:11.5pt}table{width:100%;border-collapse:collapse}td{border:1px solid #000;padding:6px 8px;vertical-align:top}td:first-child{width:34%;font-weight:bold;background:#F2F2F2}" +
       ".tx{margin:14px 0;line-height:1.5;text-align:justify}.ph{display:flex;gap:10px;margin:10px 0}.ph img{flex:1;max-width:50%;height:200px;object-fit:cover;border:1px solid #000}" +
-      ".sgh{margin:26px 0 6px;font-weight:bold;font-size:12pt}table.sgt td{height:46px;vertical-align:middle}table.sgt td:first-child{width:34%}table.sgt td:nth-child(2){width:36%;font-weight:bold}table.sgt th{border:1px solid #000;padding:5px 8px;text-align:left;font-size:10.5pt;background:#F2F2F2}" +
+      ".sgb{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 26px;margin-top:30px}.sgi small{display:block;font-size:10pt;margin-bottom:14px}.sgl{display:flex;align-items:flex-end;gap:8px}.sgl b{font-size:11.5pt;white-space:nowrap}.sgl i{flex:1;min-width:60px;border-bottom:1px solid #000;height:18px}" +
       ".rf{margin-top:16px;font-size:11pt}.ft{margin-top:18px;font-size:9pt;color:#444}" +
       "@media screen{body{max-width:800px;margin:20px auto;padding:0 16px}.pbar{position:sticky;top:0;background:#0B1B2E;padding:10px;text-align:center;margin:0 -16px 16px}.pbar button{font:600 15px Arial;padding:10px 16px;border:0;background:#fff;color:#0B1B2E;cursor:pointer}}@media print{.pbar{display:none}}" +
       '</style></head><body><div class="pbar"><button onclick="window.print()">Ruaj si PDF / Printo</button></div>' +
@@ -2173,7 +2173,7 @@ icons();
       '<p class="tx">Sot, më ' + e2(fmtD(r.check_date)) + ", stafi i Njësisë Përmet, i shënuar në këtë procesverbal, " + e2(PV_TXT[r.action] || "") + " Ky procesverbal mbahet në tri kopje.</p>" +
       (fund ? '<p class="tx" style="border:1px solid #000;padding:8px 10px"><b>Përfundimi:</b> ' + e2(fund) + "</p>" : "") +
       (photos ? '<div class="ph">' + photos + "</div>" : "") +
-      '<div class="sgh">Firmat</div><table class="sgt"><tr><th>Roli</th><th>Emri dhe mbiemri</th><th>Firma</th></tr>' + sigRows(cp, r, b) + "</table>" +
+      '<div class="sgb">' + sigRows(cp, r, b) + "</div>" +
       '<p class="rf">&#9744; Abonenti nuk ishte i pranishëm &nbsp;&nbsp;&nbsp; &#9744; Abonenti refuzoi të firmosë</p>' +
       '<p class="ft">Regjistruar në PikaBlu' + (r.created_name ? " nga " + e2(r.created_name) : "") + (r.created_at ? " më " + e2(new Date(r.created_at).toLocaleString("sq")) : "") + ".</p>" +
       "<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>";
