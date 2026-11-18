@@ -2187,7 +2187,7 @@ icons();
       ".hd{text-align:center;font-weight:bold;font-size:12.5pt;line-height:1.35}.tt{text-align:center;margin:22px 0 4px}.tt b{display:block;font-size:16pt;letter-spacing:.06em}.tt span{font-size:12pt}" +
       ".nr{display:flex;justify-content:space-between;margin:14px 0 10px;font-size:11.5pt}table{width:100%;border-collapse:collapse}td{border:1px solid #000;padding:6px 8px;vertical-align:top}td:first-child{width:34%;font-weight:bold;background:#F2F2F2}" +
       ".tx{margin:14px 0;line-height:1.5;text-align:justify}.ph{display:flex;gap:10px;margin:10px 0}.ph img{flex:1;max-width:50%;height:200px;object-fit:cover;border:1px solid #000}" +
-      ".sgb{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 26px;margin-top:30px}.sgi small{display:block;font-size:10pt;margin-bottom:14px}.sgl{display:flex;align-items:flex-end;gap:8px}.sgl b{font-size:11.5pt;white-space:nowrap}.sgl i{flex:1;min-width:60px;border-bottom:1px solid #000;height:18px;position:relative}.sgl i img{position:absolute;left:0;bottom:-6px;height:54px;max-width:100%;object-fit:contain}" +
+      ".sgb{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 26px;margin-top:30px}.sgi small{display:block;font-size:10pt;margin-bottom:6px}.sgl{display:flex;align-items:flex-end;gap:8px;padding-top:50px}.sgl b{font-size:11.5pt;white-space:nowrap}.sgl i{flex:1;min-width:60px;border-bottom:1px solid #000;height:18px;position:relative}.sgl i img{position:absolute;left:4px;bottom:3px;height:50px;max-width:calc(100% - 8px);object-fit:contain;object-position:left bottom}" +
       ".rf{margin-top:16px;font-size:11pt}.ft{margin-top:18px;font-size:9pt;color:#444}" +
       "@media screen{body{max-width:800px;margin:20px auto;padding:0 16px}.pbar{position:sticky;top:0;background:#0B1B2E;padding:10px;text-align:center;margin:0 -16px 16px}.pbar button{font:600 15px Arial;padding:10px 16px;border:0;background:#fff;color:#0B1B2E;cursor:pointer}}@media print{.pbar{display:none}}" +
       '</style></head><body><div class="pbar"><button onclick="window.print()">Ruaj si PDF / Printo</button></div>' +
@@ -2200,8 +2200,8 @@ icons();
       (photos ? '<div class="ph">' + photos + "</div>" : "") +
       '<div class="sgb">' + sigRows(cp, r, b, um) + "</div>" +
       '<p class="rf">' + box("mungonte") + " Abonenti nuk ishte i pranishëm &nbsp;&nbsp;&nbsp; " + box("refuzoi") + " Abonenti refuzoi të firmosë</p>" +
-      (sigPaths.length ? '<p class="ft">Firmat u vendosën në mënyrë elektronike në PikaBlu' + ((r.signatures || [])[0] && r.signatures[0].at ? " më " + e2(new Date(r.signatures[0].at).toLocaleString("sq")) : "") + ".</p>" : "") +
-      '<p class="ft">Regjistruar në PikaBlu' + (r.created_name ? " nga " + e2(r.created_name) : "") + (r.created_at ? " më " + e2(new Date(r.created_at).toLocaleString("sq")) : "") + ".</p>" +
+      (sigPaths.length ? '<p class="ft">Firmat u vendosën në mënyrë elektronike në PikaBlu' + ((r.signatures || [])[0] && r.signatures[0].at ? " më " + e2(new Date(r.signatures[0].at).toLocaleString("sq").replace(/.$/, "")) : "") + ".</p>" : "") +
+      '<p class="ft">Regjistruar në PikaBlu' + (r.created_name ? " nga " + e2(r.created_name) : "") + (r.created_at ? " më " + e2(new Date(r.created_at).toLocaleString("sq").replace(/.$/, "")) : "") + ".</p>" +
       "<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>";
     w.document.open(); w.document.write(html); w.document.close();
   }
@@ -2252,6 +2252,17 @@ icons();
       abSync();
     });
   }
+  /* Pret hapësirën bosh rreth firmës, që të dalë e qartë te procesverbali */
+  function trimSig(cv){
+    const ctx = cv.getContext("2d"), w = cv.width, h = cv.height, d = ctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return new Promise(res => cv.toBlob(res, "image/png"));
+    const pad = Math.round(6 * (window.devicePixelRatio || 1)); x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+    const out = document.createElement("canvas"); out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+    out.getContext("2d").drawImage(cv, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+    return new Promise(res => out.toBlob(res, "image/png"));
+  }
   function abSync(){
     const v = (sg.querySelector('input[name="sgAb"]:checked') || {}).value || "";
     pads.forEach(p => { if (p.s.key !== "ab") return; p.off = !!v; p.cv.parentNode.classList.toggle("off", !!v); if (v) p.clear(); });
@@ -2270,7 +2281,7 @@ icons();
       const sm = sigMap(r), at = new Date().toISOString();
       for (const p of pads) {
         if (!p.dirty) continue;
-        const blob = await new Promise(res => p.cv.toBlob(res, "image/png"));
+        const blob = await trimSig(p.cv);
         const path = me.id + "/sig_" + r.id + "_" + p.s.key + "_" + Date.now() + ".png";
         const up = await sb.storage.from("photos").upload(path, blob, {contentType: "image/png"});
         if (up.error) throw up.error;
