@@ -133,7 +133,7 @@ body:not(.in) .appbar,body:not(.in) .nav,body:not(.in) .nav-scrim{display:none}
 #pickbar button{background:#fff;color:var(--ink)}
 
 /* Pages (modules) */
-#detail,#about,#pwPage,#abonentet,#debts,#plan2,#zones2,#defects,#complaints,#report,#tasksPage{position:fixed!important;top:var(--top)!important;left:var(--navw)!important;right:0!important;bottom:0!important;z-index:2100;background:var(--foam)!important;overflow-y:auto}
+#detail,#about,#signPage,#pwPage,#abonentet,#debts,#plan2,#zones2,#defects,#complaints,#report,#tasksPage{position:fixed!important;top:var(--top)!important;left:var(--navw)!important;right:0!important;bottom:0!important;z-index:2100;background:var(--foam)!important;overflow-y:auto}
 #about{z-index:2300}
 #defects,#complaints{z-index:2200}
 #report{z-index:2550}#tasksPage{z-index:2560}
@@ -152,7 +152,7 @@ body:not(.in) .appbar,body:not(.in) .nav,body:not(.in) .nav-scrim{display:none}
 .dbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;background:var(--blue);color:#fff;border:1px solid var(--blue);padding:0 14px;font-size:14px;font-weight:600;text-decoration:none}
 .dbtn:hover{background:var(--blue-d);color:#fff}
 .dbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-#pwPage .dp,#abonentet .dp,#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{max-width:880px;margin:0 auto;padding:16px}
+#signPage .dp,#pwPage .dp,#abonentet .dp,#debts .dp,#plan2 .dp,#zones2 .dp,#defects .dp,#complaints .dp{max-width:880px;margin:0 auto;padding:16px}
 #report > .dpad,#tasksPage > .dpad{max-width:880px!important;margin:0 auto!important;background:#fff;min-height:calc(100% - 56px)}
 
 /* Point form (modal) */
@@ -250,7 +250,7 @@ body.lim #subBox .upbox,body.lim [data-sedit],body.lim [data-sdel]{display:none!
 body.obs #addBtn,body.obs [data-edit],body.obs [data-ddel],body.obs #subBox .upbox,body.obs [data-sedit],body.obs [data-sdel],
 body.obs #upbox,body.obs [data-delb],body.obs #pfUp,body.obs [data-pfdelf],body.obs [data-pfdelp],body.obs #zUp,body.obs [data-zdel],
 body.obs #ivBox .upbox,body.obs [data-ivdel],body.obs #defects .dp > .upbox,body.obs [data-dfst],body.obs [data-dfdel],body.obs [data-dfrep],
-body.obs [data-pay],body.obs #abUp,body.obs [data-abdel],body.obs [data-cmsolve],body.obs [data-cmst],body.obs [data-cmed],body.obs .dbtn.upl,body.obs #cmForm,body.obs [data-cmrep]{display:none!important}
+body.obs [data-pay],body.obs [data-sign],body.obs #abUp,body.obs [data-abdel],body.obs [data-cmsolve],body.obs [data-cmst],body.obs [data-cmed],body.obs .dbtn.upl,body.obs #cmForm,body.obs [data-cmrep]{display:none!important}
 .obsbar{display:none}
 body.obs .obsbar{display:flex;align-items:center;gap:8px;padding:0 10px;min-height:28px;background:var(--amber-t);border:1px solid var(--amber-l);color:#4A3500;font-size:12px;font-weight:600;white-space:nowrap}
 @media (max-width:560px){body.obs .obsbar{display:none}}
@@ -388,6 +388,19 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 .ivfund-r .badge{margin:0}
 .ivend-h{margin-top:8px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--blue-d)}
 .pvok{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0 4px;padding:10px 12px;background:var(--ok-t);border:1px solid #B8DCC6;color:var(--ok);font-weight:600;font-size:14px}
+/* Firmat në tablet */
+#signPage{z-index:2400}
+.sgp .pad{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:12px}
+.padh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+.padh small{display:block;font-size:12px;color:var(--mut)}
+.padh b{font-size:16px}
+.padn{max-width:320px;margin-top:4px}
+.padr{display:flex;flex-wrap:wrap;gap:6px 18px;margin:2px 0 10px}
+.padc{position:relative;border:1px dashed #8794A3;background:#FBFCFD}
+.padc canvas{display:block;touch-action:none;cursor:crosshair}
+.padl{position:absolute;left:16px;right:16px;bottom:44px;border-bottom:1px solid #AEB9C6;pointer-events:none}
+.padc.off{opacity:.35;background:var(--foam)}
+.padc.off canvas{cursor:not-allowed}
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -1999,13 +2012,23 @@ icons();
     const o = {sp: "", hi: ""}; String(t || "").split(" · ").forEach(p => { if (/^Specialist/i.test(p)) o.sp = p.replace(/^[^:]+:\s*/, ""); else if (/^Hidraulik/i.test(p)) o.hi = p.replace(/^[^:]+:\s*/, ""); });
     return o;
   }
-  function sigRows(cp, r, b){
-    const e2 = v => esc(v == null ? "" : String(v)), list = s => String(s || "").split(",").map(x => x.trim()).filter(Boolean);
-    const sp = list(cp.sp), hi = list(cp.hi), out = [];
-    (sp.length ? sp : [""]).forEach(n => out.push(["Specialisti i prerjes së debisë", n]));
-    (hi.length ? hi : [""]).forEach(n => out.push(["Hidrauliku", n]));
-    out.push(["Abonenti ose përfaqësuesi", r.subscriber_name || (b ? b.name : "")]);
-    return out.map(x => '<div class="sgi"><small>' + e2(x[0]) + '</small><div class="sgl"><b>' + e2(x[1]) + "</b><i></i></div></div>").join("");
+  function signers(cp, r, b){
+    const list = s => String(s || "").split(",").map(x => x.trim()).filter(Boolean), sp = list(cp.sp), hi = list(cp.hi), out = [];
+    (sp.length ? sp : [""]).forEach((n, i) => out.push({key: "sp" + i, role: "Specialisti i prerjes së debisë", name: n}));
+    (hi.length ? hi : [""]).forEach((n, i) => out.push({key: "hi" + i, role: "Hidrauliku", name: n}));
+    out.push({key: "ab", role: "Abonenti ose përfaqësuesi", name: r.subscriber_name || (b ? b.name : "")});
+    return out;
+  }
+  const sigMap = r => { const m = {}; (Array.isArray(r.signatures) ? r.signatures : []).forEach(s => { if (s && s.key) m[s.key] = s; }); return m; };
+  function sigRows(cp, r, b, um){
+    const e2 = v => esc(v == null ? "" : String(v)), sm = sigMap(r);
+    return signers(cp, r, b).map(x => { const s = sm[x.key], src = s && um && um[s.path];
+      return '<div class="sgi"><small>' + e2(x.role) + '</small><div class="sgl"><b>' + e2((s && s.name) || x.name) + "</b><i>" + (src ? '<img src="' + e2(src) + '" alt="Firma">' : "") + "</i></div></div>"; }).join("");
+  }
+  function sigStatus(r){
+    const b = allRows.find(x => String(x.id) === String(r.point_id)), list = signers(crewParts(r.staff_name), r, b), sm = sigMap(r);
+    const done = list.filter(x => sm[x.key] || (x.key === "ab" && r.sign_note)).length;
+    return done ? '<span class="badge ' + (done === list.length ? "pay-pagoi" : "pay-ne_pritje") + '">Firmosur ' + done + "/" + list.length + "</span>" : '<span class="badge">Pa firma</span>';
   }
   function sealLine(r){ return (r.old_seal || r.new_seal) ? '<div class="meta">Vula: ' + (r.old_seal ? "e vjetër " + esc(r.old_seal) : "pa vulë të vjetër") + (r.new_seal ? " → e re <b>" + esc(r.new_seal) + "</b>" : "") + "</div>" : ""; }
   window.pbSealLine = sealLine;
@@ -2029,7 +2052,7 @@ icons();
       (r.payment_status ? '<div class="ivend ivfund"><div class="ivend-h">Përfundimi</div><div class="ivfund-r"><span>Pagesa e debisë:</span> ' + payBadge(r).replace("Pagesa: ", "") +
         (r.payment_date && r.payment_status !== "ne_pritje" ? '<span class="meta">' + esc(fmtD(r.payment_date)) + (r.payment_by ? " · " + esc(r.payment_by) : "") + "</span>" : "") + "</div>" +
         (r.payment_status === "ne_pritje" ? '<p class="meta" style="margin:4px 0 0">Kur abonenti paguan, shtypni “Pagoi”.</p>' : "") + '<div class="ivacts">' + payBtns(r) + "</div></div>" : "") +
-      '<div class="ivacts"><button type="button" class="sbtn" data-pv="' + r.id + '"><i data-lucide="file-text"></i> Procesverbali</button></div></div>').join("") : '<p class="meta">Asnjë ndërhyrje ende.</p>');
+      '<div class="ivacts"><button type="button" class="sbtn" data-pv="' + r.id + '"><i data-lucide="file-text"></i> Procesverbali</button><button type="button" class="sbtn" data-sign="' + r.id + '"><i data-lucide="pen-line"></i> Firmo në tablet</button>' + sigStatus(r) + "</div></div>").join("") : '<p class="meta">Asnjë ndërhyrje ende.</p>');
     if (canLog()) {
       const s0 = sealOf(null, b);
       h += '<div class="upbox" style="margin-top:10px"><b>Regjistro ndërhyrje (procesverbal)</b>' +
@@ -2148,7 +2171,8 @@ icons();
     w.document.write('<p style="font:16px Arial;padding:20px">Duke përgatitur procesverbalin…</p>');
     const b = allRows.find(x => String(x.id) === String(r.point_id)), e2 = v => esc(v == null ? "" : String(v));
     const zn = b && b.zone_id && window.pbZoneName ? window.pbZoneName(b.zone_id) : "";
-    const ps = [r.photo_path, r.photo_path2].filter(Boolean), um = {};
+    const sigPaths = (Array.isArray(r.signatures) ? r.signatures : []).map(s => s && s.path).filter(Boolean);
+    const ps = [r.photo_path, r.photo_path2].filter(Boolean).concat(sigPaths), um = {};
     if (ps.length) { try { const {data: us} = await sb.storage.from("photos").createSignedUrls(ps, 3600); (us || []).forEach(u => { if (u.signedUrl) um[u.path] = u.signedUrl; }); } catch (x) {} }
     const cp = crewParts(r.staff_name), lek = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
     const rows = [["Abonenti", r.subscriber_name || (b ? b.name : "")], ["Kontrata", r.contract_no], ["Pika / adresa", [b ? b.name : "", zn].filter(Boolean).join(", ")],
@@ -2156,13 +2180,14 @@ icons();
     if (SEAL_ACTS.indexOf(r.action) >= 0 || r.old_seal || r.new_seal) rows.push(["Vula e vjetër", r.old_seal || (r.action === "Prerje" ? "Nuk kishte" : "")], ["Vula e re", r.new_seal]);
     const fund = r.payment_status === "pagoi" ? "Abonenti e shlyeu detyrimin" + (r.payment_date ? " më " + fmtD(r.payment_date) : "") + "." : r.payment_status === "nuk_pagoi" ? "Abonenti nuk e shlyeu detyrimin." : "";
     rows.push(["Shënime", r.note]);
-    const photos = ps.filter(p => um[p]).map(p => '<img src="' + e2(um[p]) + '" alt="Foto">').join("");
+    const photos = [r.photo_path, r.photo_path2].filter(p => p && um[p]).map(p => '<img src="' + e2(um[p]) + '" alt="Foto">').join("");
+    const box = k => r.sign_note === k ? "&#9746;" : "&#9744;";
     const html = '<!doctype html><html lang="sq"><head><meta charset="utf-8"><title>Procesverbal PV-' + e2(r.id) + "</title><style>" +
       "@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:'Times New Roman',Times,serif;color:#000;margin:0;font-size:12pt}" +
       ".hd{text-align:center;font-weight:bold;font-size:12.5pt;line-height:1.35}.tt{text-align:center;margin:22px 0 4px}.tt b{display:block;font-size:16pt;letter-spacing:.06em}.tt span{font-size:12pt}" +
       ".nr{display:flex;justify-content:space-between;margin:14px 0 10px;font-size:11.5pt}table{width:100%;border-collapse:collapse}td{border:1px solid #000;padding:6px 8px;vertical-align:top}td:first-child{width:34%;font-weight:bold;background:#F2F2F2}" +
       ".tx{margin:14px 0;line-height:1.5;text-align:justify}.ph{display:flex;gap:10px;margin:10px 0}.ph img{flex:1;max-width:50%;height:200px;object-fit:cover;border:1px solid #000}" +
-      ".sgb{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 26px;margin-top:30px}.sgi small{display:block;font-size:10pt;margin-bottom:14px}.sgl{display:flex;align-items:flex-end;gap:8px}.sgl b{font-size:11.5pt;white-space:nowrap}.sgl i{flex:1;min-width:60px;border-bottom:1px solid #000;height:18px}" +
+      ".sgb{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 26px;margin-top:30px}.sgi small{display:block;font-size:10pt;margin-bottom:14px}.sgl{display:flex;align-items:flex-end;gap:8px}.sgl b{font-size:11.5pt;white-space:nowrap}.sgl i{flex:1;min-width:60px;border-bottom:1px solid #000;height:18px;position:relative}.sgl i img{position:absolute;left:0;bottom:-6px;height:54px;max-width:100%;object-fit:contain}" +
       ".rf{margin-top:16px;font-size:11pt}.ft{margin-top:18px;font-size:9pt;color:#444}" +
       "@media screen{body{max-width:800px;margin:20px auto;padding:0 16px}.pbar{position:sticky;top:0;background:#0B1B2E;padding:10px;text-align:center;margin:0 -16px 16px}.pbar button{font:600 15px Arial;padding:10px 16px;border:0;background:#fff;color:#0B1B2E;cursor:pointer}}@media print{.pbar{display:none}}" +
       '</style></head><body><div class="pbar"><button onclick="window.print()">Ruaj si PDF / Printo</button></div>' +
@@ -2173,8 +2198,9 @@ icons();
       '<p class="tx">Sot, më ' + e2(fmtD(r.check_date)) + ", stafi i Njësisë Përmet, i shënuar në këtë procesverbal, " + e2(PV_TXT[r.action] || "") + " Ky procesverbal mbahet në tri kopje.</p>" +
       (fund ? '<p class="tx" style="border:1px solid #000;padding:8px 10px"><b>Përfundimi:</b> ' + e2(fund) + "</p>" : "") +
       (photos ? '<div class="ph">' + photos + "</div>" : "") +
-      '<div class="sgb">' + sigRows(cp, r, b) + "</div>" +
-      '<p class="rf">&#9744; Abonenti nuk ishte i pranishëm &nbsp;&nbsp;&nbsp; &#9744; Abonenti refuzoi të firmosë</p>' +
+      '<div class="sgb">' + sigRows(cp, r, b, um) + "</div>" +
+      '<p class="rf">' + box("mungonte") + " Abonenti nuk ishte i pranishëm &nbsp;&nbsp;&nbsp; " + box("refuzoi") + " Abonenti refuzoi të firmosë</p>" +
+      (sigPaths.length ? '<p class="ft">Firmat u vendosën në mënyrë elektronike në PikaBlu' + ((r.signatures || [])[0] && r.signatures[0].at ? " më " + e2(new Date(r.signatures[0].at).toLocaleString("sq")) : "") + ".</p>" : "") +
       '<p class="ft">Regjistruar në PikaBlu' + (r.created_name ? " nga " + e2(r.created_name) : "") + (r.created_at ? " më " + e2(new Date(r.created_at).toLocaleString("sq")) : "") + ".</p>" +
       "<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>";
     w.document.open(); w.document.write(html); w.document.close();
@@ -2183,6 +2209,89 @@ icons();
     const pv = e.target.closest ? e.target.closest("[data-pv]") : null; if (!pv) return;
     const id = pv.getAttribute("data-pv"), all = ivCache.concat(repRows, repPend), r = all.find(x => String(x.id) === String(id));
     if (r) openPV(r);
+  });
+
+  /* Firmat në tablet: një kuti firme për çdo person, me stilolaps ose me gisht */
+  const sg = document.createElement("div"); sg.id = "signPage"; sg.className = "hide"; document.body.appendChild(sg);
+  let sgR = null, pads = [];
+  function padInit(cv){
+    const dpr = Math.max(1, window.devicePixelRatio || 1), w = cv.parentNode.clientWidth, h = 190;
+    cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + "px"; cv.style.height = h + "px";
+    const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#0B1B2E";
+    const pad = {cv, ctx, dirty: false, last: null, off: false};
+    const pos = e => { const r = cv.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; };
+    cv.addEventListener("pointerdown", e => { if (pad.off) return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} pad.last = pos(e); pad.dirty = true; ctx.beginPath(); ctx.arc(pad.last.x, pad.last.y, 0.8, 0, Math.PI * 2); ctx.fillStyle = "#0B1B2E"; ctx.fill(); });
+    cv.addEventListener("pointermove", e => {
+      if (!pad.last || pad.off) return; e.preventDefault();
+      const p = pos(e), pr = e.pointerType === "pen" && e.pressure ? e.pressure : 0.5;
+      ctx.lineWidth = e.pointerType === "pen" ? 1 + pr * 3.2 : 2.4;
+      ctx.beginPath(); ctx.moveTo(pad.last.x, pad.last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); pad.last = p;
+    });
+    const end = () => { pad.last = null; };
+    cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end); cv.addEventListener("pointerleave", end);
+    pad.clear = () => { ctx.clearRect(0, 0, w, h); pad.dirty = false; };
+    return pad;
+  }
+  function openSign(r){
+    sgR = r;
+    const b = allRows.find(x => String(x.id) === String(r.point_id)), list = signers(crewParts(r.staff_name), r, b), sm = sigMap(r);
+    sg.innerHTML = '<div class="dhead"><button type="button" id="sgBack"><i data-lucide="arrow-left"></i> Mbrapa</button><b>Firmat e procesverbalit PV-' + esc(r.id) + "</b></div>" +
+      '<div class="dp sgp"><p class="meta" style="margin:0 0 14px">' + esc(r.action) + " · " + esc(fmtD(r.check_date)) + (r.subscriber_name ? " · " + esc(r.subscriber_name) : "") + ". Firmoni brenda kutisë me stilolaps ose me gisht.</p>" +
+      list.map((s, i) => '<div class="pad" data-i="' + i + '"><div class="padh"><div><small>' + esc(s.role) + "</small>" +
+        (s.name ? "<b>" + esc(s.name) + "</b>" : '<input class="padn" data-i="' + i + '" maxlength="60" placeholder="Emri dhe mbiemri">') + "</div>" +
+        '<button type="button" class="sbtn" data-clr="' + i + '">Pastro</button></div>' +
+        (s.key === "ab" ? '<div class="padr" role="radiogroup" aria-label="Abonenti"><label class="chk"><input type="radio" name="sgAb" value="" ' + (r.sign_note ? "" : "checked") + "> Firmos</label>" +
+          '<label class="chk"><input type="radio" name="sgAb" value="mungonte" ' + (r.sign_note === "mungonte" ? "checked" : "") + "> Nuk ishte i pranishëm</label>" +
+          '<label class="chk"><input type="radio" name="sgAb" value="refuzoi" ' + (r.sign_note === "refuzoi" ? "checked" : "") + "> Refuzoi të firmosë</label></div>" : "") +
+        '<div class="padc"><canvas aria-label="Kutia e firmës: ' + esc(s.role) + '"></canvas><span class="padl"></span></div>' +
+        (sm[s.key] ? '<p class="meta" style="margin:6px 0 0">Firmosur më ' + esc(new Date(sm[s.key].at).toLocaleString("sq")) + ". Firma e re zëvendëson të vjetrën.</p>" : "") + "</div>").join("") +
+      '<div class="bar"><button type="button" id="sgSave"><i data-lucide="check"></i> Ruaj firmat</button><button type="button" class="alt" id="sgCancel">Anulo</button></div><p class="msg" id="sgMsg"></p></div>';
+    sg.classList.remove("hide"); sg.scrollTop = 0; lucide.createIcons();
+    requestAnimationFrame(() => {
+      pads = Array.from(sg.querySelectorAll("canvas")).map((cv, i) => Object.assign(padInit(cv), {s: list[i]}));
+      abSync();
+    });
+  }
+  function abSync(){
+    const v = (sg.querySelector('input[name="sgAb"]:checked') || {}).value || "";
+    pads.forEach(p => { if (p.s.key !== "ab") return; p.off = !!v; p.cv.parentNode.classList.toggle("off", !!v); if (v) p.clear(); });
+  }
+  sg.addEventListener("change", e => { if (e.target.name === "sgAb") abSync(); });
+  sg.addEventListener("click", async e => {
+    if (e.target.closest("#sgBack") || e.target.closest("#sgCancel")) { sg.classList.add("hide"); return; }
+    const c = e.target.closest("[data-clr]"); if (c) { const p = pads[+c.getAttribute("data-clr")]; if (p) p.clear(); return; }
+    if (!e.target.closest("#sgSave") || !sgR) return;
+    const r = sgR, note = (sg.querySelector('input[name="sgAb"]:checked') || {}).value || null;
+    if (!pads.some(p => p.dirty) && note === (r.sign_note || null)) return say("sgMsg", "Nuk ka firma të reja për të ruajtur.", true);
+    const btn = $("sgSave"); btn.disabled = true; say("sgMsg", "Duke ruajtur firmat…");
+    try {
+      let gps = null;
+      try { gps = await new Promise(res => { setTimeout(() => res(null), 3000); if (!navigator.geolocation) return res(null); navigator.geolocation.getCurrentPosition(p => res({lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6)}), () => res(null), {timeout: 3000, maximumAge: 60000}); }); } catch (x) {}
+      const sm = sigMap(r), at = new Date().toISOString();
+      for (const p of pads) {
+        if (!p.dirty) continue;
+        const blob = await new Promise(res => p.cv.toBlob(res, "image/png"));
+        const path = me.id + "/sig_" + r.id + "_" + p.s.key + "_" + Date.now() + ".png";
+        const up = await sb.storage.from("photos").upload(path, blob, {contentType: "image/png"});
+        if (up.error) throw up.error;
+        const ni = sg.querySelector('.padn[data-i="' + pads.indexOf(p) + '"]');
+        sm[p.s.key] = {key: p.s.key, role: p.s.role, name: p.s.name || (ni ? ni.value.trim() : ""), path, at, gps};
+      }
+      if (note) delete sm.ab;
+      const signatures = Object.values(sm), upd = {signatures, sign_note: note};
+      const {data, error} = await sb.from("interventions").update(upd).eq("id", r.id).select();
+      if (error) throw new Error(/signatures|sign_note/.test(error.message || "") ? "ekzekutoni sql/firmat.sql te Supabase." : error.message);
+      if (!data || !data.length) throw new Error("mungon leja për të ndryshuar këtë ndërhyrje.");
+      Object.assign(r, upd);
+      sg.classList.add("hide");
+      const box = $("ivBox"); if (box && box.dataset.pid && !$("detail").classList.contains("hide")) drawIv(box.dataset.pid);
+      if (!rp.classList.contains("hide")) drawReport();
+    } catch (err) { say("sgMsg", "Firmat nuk u ruajtën: " + (err.message || err), true); btn.disabled = false; }
+  });
+  document.addEventListener("click", e => {
+    const s = e.target.closest ? e.target.closest("[data-sign]") : null; if (!s) return;
+    const all = ivCache.concat(repRows, repPend), r = all.find(x => String(x.id) === String(s.getAttribute("data-sign")));
+    if (r) openSign(r);
   });
   const od = openDetail;
   openDetail = function(id){
@@ -2488,7 +2597,7 @@ document.addEventListener("change", e => {
 /* Menyja kryesore: lidh butonat e moduleve me navigimin anësor */
 window.addEventListener("DOMContentLoaded", function(){
   const nav = $("nav"), scrim = $("navScrim"), openB = $("navOpen");
-  const PAGES = ["detail", "about", "pwPage", "abonentet", "debts", "plan2", "zones2", "defects", "complaints", "report", "tasksPage", "welcome"];
+  const PAGES = ["detail", "about", "signPage", "pwPage", "abonentet", "debts", "plan2", "zones2", "defects", "complaints", "report", "tasksPage", "welcome"];
   const OWN = {zones: ["zones2"], pw: ["pwPage"], abon: ["abonentet"], debts: ["debts"], staff: ["tasksPage", "report", "welcome"], defects: ["defects"], complaints: ["complaints"], plan: ["plan2"], about: ["about"]};
   const items = Array.from(document.querySelectorAll("[data-nav]"));
   function drawer(on){
