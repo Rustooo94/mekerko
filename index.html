@@ -378,6 +378,11 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 .badge.pay-ne_pritje{background:var(--amber-t);color:var(--amber);border-color:var(--amber-l)}
 .badge.pay-nuk_pagoi{background:var(--err-t);color:var(--warn);border-color:#EBC0BA}
 #ivPayBox{margin-top:2px}
+/* Procesverbali dhe vulat */
+.ivph{display:flex;gap:6px;margin-top:8px}
+.ivph img{width:130px;height:96px;object-fit:cover;display:block;border:1px solid var(--line)}
+.ivseal{background:var(--foam);border:1px solid var(--line);padding:4px 12px 12px;margin-top:10px}
+.pvok{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0 4px;padding:10px 12px;background:var(--ok-t);border:1px solid #B8DCC6;color:var(--ok);font-weight:600;font-size:14px}
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -1574,6 +1579,7 @@ icons();
 (function(){
   let zones = [], activeZone = null, staff = false, kind = "qytet";
   const zname = id => { const z = zones.find(x => x.id === id); return z ? z.name : ""; };
+  window.pbZoneName = zname;
   const btn = document.createElement("button");
   btn.type = "button"; btn.id = "zoneBtn"; btn.setAttribute("aria-label", "Zonat");
   btn.innerHTML = '<i data-lucide="map-pinned"></i>';
@@ -1868,7 +1874,7 @@ icons();
         '<div class="meta">' + esc(ptName(r.point_id) || "–") + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + (r.staff_name ? " · " + esc(r.staff_name) : "") + (r.created_name ? " · regjistroi " + esc(r.created_name) : "") + "</div>" +
         (r.debt_amount ? '<div style="color:#B42318;font-weight:600">Debi: ' + lekR(Number(r.debt_amount)) + "</div>" : "") + (r.note ? "<div>" + esc(r.note) + "</div>" : "") +
         (r.payment_status && r.payment_date ? '<div class="meta">Pagesa u konfirmua më ' + esc(fmtD(r.payment_date)) + (r.payment_by ? " nga " + esc(r.payment_by) : "") + "</div>" : "") +
-        '<div class="ivacts">' + payBtns(r) + ((isAdm || r.created_by === me.id) ? '<button type="button" class="sbtn red" data-ivdel="' + r.id + '"><i data-lucide="trash-2"></i> Fshi këtë veprim</button>' : "") + "</div></div>").join("")
+        (window.pbSealLine ? window.pbSealLine(r) : "") + '<div class="ivacts"><button type="button" class="sbtn" data-pv="' + r.id + '">Procesverbali</button>' + payBtns(r) + ((isAdm || r.created_by === me.id) ? '<button type="button" class="sbtn red" data-ivdel="' + r.id + '"><i data-lucide="trash-2"></i> Fshi këtë veprim</button>' : "") + "</div></div>").join("")
         : '<p class="meta">Asnjë ndërhyrje e regjistruar për këtë ditë.</p>');
     const pend = repPend.filter(r => r.check_date !== day);
     h += '<h3 class="rh">Pagesat në pritje nga ditët e mëparshme (' + pend.length + ")</h3>" +
@@ -1888,11 +1894,11 @@ icons();
     $("rBody").className = ""; $("rBody").innerHTML = h;
     lucide.createIcons();
   }
-  function ivRow(r){ return {"Data": fmtD(r.check_date), "Veprimi": r.action, "Pika": ptName(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Debi (lekë)": r.debt_amount != null ? Number(r.debt_amount) : "", "Pagesa": PAY[r.payment_status] || "", "Konfirmuar më": fmtD(r.payment_date), "Konfirmoi": r.payment_by || "", "Stafi shoqërues": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""}; }
+  function ivRow(r){ return {"Data": fmtD(r.check_date), "Veprimi": r.action, "Pika": ptName(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Debi (lekë)": r.debt_amount != null ? Number(r.debt_amount) : "", "Pagesa": PAY[r.payment_status] || "", "Konfirmuar më": fmtD(r.payment_date), "Konfirmoi": r.payment_by || "", "Vula e vjetër": r.old_seal || "", "Vula e re": r.new_seal || "", "Nr. procesverbali": "PV-" + r.id, "Stafi shoqërues": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""}; }
   function exportXls(){
     const day = $("rDay").value, wb = XLSX.utils.book_new();
     const sheet = (rows, cols, name) => { const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [cols.reduce((o, c) => (o[c] = "", o), {})], {header: cols}); ws["!cols"] = cols.map(c => ({wch: Math.max(12, c.length + 4)})); XLSX.utils.book_append_sheet(wb, ws, name); };
-    const ivCols = ["Data", "Veprimi", "Pika", "Abonenti", "Kontrata", "Debi (lekë)", "Pagesa", "Konfirmuar më", "Konfirmoi", "Stafi shoqërues", "Shënim", "Regjistruar nga"];
+    const ivCols = ["Nr. procesverbali", "Data", "Veprimi", "Pika", "Abonenti", "Kontrata", "Debi (lekë)", "Pagesa", "Konfirmuar më", "Konfirmoi", "Vula e vjetër", "Vula e re", "Stafi shoqërues", "Shënim", "Regjistruar nga"];
     sheet(repRows.map(ivRow), ivCols, "Ndërhyrjet");
     sheet(repPend.map(ivRow), ivCols, "Pagesat në pritje");
     if (isAdm) {
@@ -1908,7 +1914,7 @@ icons();
     const tbl = (cols, rows) => "<table><thead><tr>" + cols.map(c => "<th>" + e2(c) + "</th>").join("") + "</tr></thead><tbody>" +
       (rows.length ? rows.map(r => "<tr>" + cols.map(c => "<td>" + e2(r[c]) + "</td>").join("") + "</tr>").join("") : '<tr><td colspan="' + cols.length + '" class="empty">Asnjë regjistrim.</td></tr>') + "</tbody></table>";
     const cnt = a => repRows.filter(r => r.action === a).length, pc = k => repRows.filter(r => r.payment_status === k).length;
-    const ivCols = ["Veprimi", "Abonenti", "Kontrata", "Pika", "Debi (lekë)", "Pagesa", "Stafi shoqërues", "Shënim"];
+    const ivCols = ["Nr. procesverbali", "Veprimi", "Abonenti", "Kontrata", "Debi (lekë)", "Pagesa", "Vula e vjetër", "Vula e re", "Stafi shoqërues", "Shënim"];
     const ivRows = repRows.map(r => { const o = ivRow(r); o["Debi (lekë)"] = r.debt_amount != null ? lekR(Number(r.debt_amount)) : ""; return o; });
     const pend = repPend.filter(r => r.check_date !== day).map(r => { const o = ivRow(r); o["Debi (lekë)"] = r.debt_amount != null ? lekR(Number(r.debt_amount)) : ""; return o; });
     let body = '<div class="hd">SHOQËRIA RAJONALE UJËSJELLËS KANALIZIME GJIROKASTËR SH.A.<br>NJËSIA PËRMET</div>' +
@@ -1974,77 +1980,171 @@ icons();
   });
   btn.onclick = () => { if (prof && (ROLES[prof.role] || {tasks: []}).tasks.length) openTasks(); else if (prof) showWelcome(); else openReport(); };
 
+  let ivCache = [], pvLast = null;
+  const SEAL_ACTS = ["Prerje", "Rilidhje"];
+  const PV_SUB = {Prerje: "për ndërprerjen e furnizimit me ujë", Rilidhje: "për rilidhjen e furnizimit me ujë", "Paralajmërim": "për njoftimin e detyrimit të papaguar", Kontroll: "për kontrollin e matësit dhe të lidhjes"};
+  const PV_TXT = {
+    Prerje: "u krye ndërprerja e furnizimit me ujë për abonentin e mësipërm, për shkak të detyrimeve të papaguara. Pas ndërprerjes u vendos vula e re e shënuar në këtë procesverbal.",
+    Rilidhje: "u krye rilidhja e furnizimit me ujë për abonentin e mësipërm. Vula e vjetër u këput dhe u vendos vula e re e shënuar në këtë procesverbal.",
+    "Paralajmërim": "abonenti i mësipërm u njoftua për detyrimin e papaguar dhe për ndërprerjen e furnizimit me ujë nëse detyrimi nuk shlyhet.",
+    Kontroll: "u krye kontrolli i matësit dhe i lidhjes së abonentit të mësipërm."
+  };
+  const sealOf = (s, b) => (s && s.seal_no) || (b && b.seal_no) || "";
+  function crewParts(t){
+    const o = {sp: "", hi: ""}; String(t || "").split(" · ").forEach(p => { if (/^Specialist/i.test(p)) o.sp = p.replace(/^[^:]+:\s*/, ""); else if (/^Hidraulik/i.test(p)) o.hi = p.replace(/^[^:]+:\s*/, ""); });
+    return o;
+  }
+  function sealLine(r){ return (r.old_seal || r.new_seal) ? '<div class="meta">Vula: ' + (r.old_seal ? "e vjetër " + esc(r.old_seal) : "pa vulë të vjetër") + (r.new_seal ? " → e re <b>" + esc(r.new_seal) + "</b>" : "") + "</div>" : ""; }
+  window.pbSealLine = sealLine;
+
   async function drawIv(pid){
     const box = $("ivBox"); if (!box) return;
     const b = allRows.find(x => String(x.id) === String(pid));
     const [iv, sb2] = await Promise.all([sb.from("interventions").select("*").eq("point_id", pid).order("check_date", {ascending: false}).order("created_at", {ascending: false}),
-      sb.from("subscribers").select("id,full_name,contract_no,apartment").eq("point_id", pid).order("apartment")]);
+      sb.from("subscribers").select("id,full_name,contract_no,apartment,seal_no").eq("point_id", pid).order("apartment")]);
     if (iv.error) { box.innerHTML = '<h3>Ndërhyrjet</h3><p class="msg err">S’u lexuan ndërhyrjet. Kontrollo që SQL-i u krye.</p>'; return; }
-    subsCache = sb2.data || [];
-    const ph = iv.data.filter(r => r.photo_path).map(r => r.photo_path), um = {};
+    subsCache = sb2.data || []; ivCache = iv.data || [];
+    const ph = []; ivCache.forEach(r => { if (r.photo_path) ph.push(r.photo_path); if (r.photo_path2) ph.push(r.photo_path2); });
+    const um = {};
     if (ph.length) { const {data: us} = await sb.storage.from("photos").createSignedUrls(ph, 3600); (us || []).forEach(u => { if (u.signedUrl) um[u.path] = u.signedUrl; }); }
-    let h = "<h3>Ndërhyrjet (" + iv.data.length + ")</h3>" + (iv.data.length ? iv.data.slice(0, 20).map(r =>
-      '<div class="sub"><b>' + esc(r.action) + "</b> · " + esc(r.check_date) + (r.subscriber_name ? " · " + esc(r.subscriber_name) : "") + " " + payBadge(r) +
-      '<div class="meta">' + esc(r.staff_kind || "") + (r.staff_name ? ": " + esc(r.staff_name) : "") + (r.created_name ? " · regjistruar nga " + esc(r.created_name) : "") + "</div>" +
-      (r.note ? "<div>" + esc(r.note) + "</div>" : "") + (r.payment_status && r.payment_date ? '<div class="meta">Pagesa u konfirmua më ' + esc(fmtD(r.payment_date)) + (r.payment_by ? " nga " + esc(r.payment_by) : "") + "</div>" : "") + '<div class="ivacts">' + payBtns(r) + "</div>" +
-      (um[r.photo_path] ? '<a href="' + esc(um[r.photo_path]) + '" target="_blank" rel="noopener"><img alt="Foto e ndërhyrjes" src="' + esc(um[r.photo_path]) + '" style="width:130px;height:96px;object-fit:cover;border-radius:0;margin-top:6px;display:block"></a>' : "") + "</div>").join("") : '<p class="meta">Asnjë ndërhyrje ende.</p>');
+    const img = p => um[p] ? '<a href="' + esc(um[p]) + '" target="_blank" rel="noopener"><img alt="Foto e ndërhyrjes" src="' + esc(um[p]) + '"></a>' : "";
+    let h = "<h3>Ndërhyrjet (" + ivCache.length + ")</h3>" + (ivCache.length ? ivCache.slice(0, 20).map(r =>
+      '<div class="sub"><b>' + esc(r.action) + "</b> · " + esc(fmtD(r.check_date)) + (r.subscriber_name ? " · " + esc(r.subscriber_name) : "") + " " + payBadge(r) +
+      '<div class="meta">' + esc(r.staff_name || "") + (r.created_name ? (r.staff_name ? " · " : "") + "regjistruar nga " + esc(r.created_name) : "") + "</div>" + sealLine(r) +
+      (r.note ? "<div>" + esc(r.note) + "</div>" : "") + (r.payment_status && r.payment_date ? '<div class="meta">Pagesa u konfirmua më ' + esc(fmtD(r.payment_date)) + (r.payment_by ? " nga " + esc(r.payment_by) : "") + "</div>" : "") +
+      ((um[r.photo_path] || um[r.photo_path2]) ? '<div class="ivph">' + img(r.photo_path) + img(r.photo_path2) + "</div>" : "") +
+      '<div class="ivacts"><button type="button" class="sbtn" data-pv="' + r.id + '"><i data-lucide="file-text"></i> Procesverbali</button>' + payBtns(r) + "</div></div>").join("") : '<p class="meta">Asnjë ndërhyrje ende.</p>');
     if (canLog()) {
-      h += '<div class="upbox" style="margin-top:10px"><b>Regjistro ndërhyrje</b>' +
+      const s0 = sealOf(null, b);
+      h += '<div class="upbox" style="margin-top:10px"><b>Regjistro ndërhyrje (procesverbal)</b>' +
+        (pvLast ? '<div class="pvok"><span>Ndërhyrja u ruajt.</span><button type="button" class="sbtn pri" data-pv="' + pvLast + '"><i data-lucide="file-down"></i> Shkarko procesverbalin</button></div>' : "") +
         (subsCache.length ? '<label for="ivSub">Abonenti</label><select id="ivSub"><option value="">E gjithë pika</option>' + subsCache.map(x => '<option value="' + x.id + '">' + esc(x.full_name + (x.apartment ? " (" + x.apartment + ")" : "")) + "</option>").join("") + "</select>" : "") +
-        '<div class="row"><div><label for="ivDate">Data e kontrollit</label><input id="ivDate" type="date" value="' + today() + '"></div>' +
+        '<div class="row"><div><label for="ivDate">Data</label><input id="ivDate" type="date" value="' + today() + '"></div>' +
         '<div><label for="ivAct">Veprimi</label><select id="ivAct">' + ACTIONS.map(a => "<option>" + a + "</option>").join("") + "</select></div></div>" +
         '<div id="ivPayBox"><label for="ivPay">Pagesa e debisë pas njoftimit</label><select id="ivPay"><option value="ne_pritje">Në pritje: abonenti u njoftua, pagesa ende pa u konfirmuar</option><option value="pagoi">Pagoi: pagesa u konfirmua</option><option value="nuk_pagoi">Nuk pagoi</option></select><p class="meta" style="margin:4px 0 0">Kur abonenti paguan më vonë, shtypni “Pagoi” te ndërhyrja ose te Raporti i ditës.</p></div>' +
+        '<div id="ivSealBox" class="ivseal hide"><div class="row"><div><label for="ivSealOld">Vula e vjetër <span class="opt-l">(nëse ka)</span></label><input id="ivSealOld" maxlength="40" value="' + esc(s0) + '"></div>' +
+        '<div><label for="ivSealNew">Vula e re</label><input id="ivSealNew" maxlength="40"></div></div><p class="meta" id="ivSealHint" style="margin:4px 0 0"></p></div>' +
         '<div class="ivcrew"><b>Stafi shoqërues</b> <span class="meta">(plotësoni vetëm emrat e atyre që dolën)</span>' +
-        '<label style="margin-top:6px">Hidraulikë</label><div class="row3">' + [1, 2, 3].map(i => '<input id="ivH' + i + '" maxlength="60" placeholder="Hidrauliku ' + i + '">').join("") + "</div>" +
-        '<label style="margin-top:6px">Specialistë prerje debie</label><div class="row">' + [1, 2].map(i => '<input id="ivS' + i + '" maxlength="60" placeholder="Specialisti ' + i + '">').join("") + "</div></div>" +
+        '<label style="margin-top:6px">Specialistë prerje debie</label><div class="row">' + [1, 2].map(i => '<input id="ivS' + i + '" maxlength="60" placeholder="Specialisti ' + i + '">').join("") + "</div>" +
+        '<label style="margin-top:6px">Hidraulikë</label><div class="row3">' + [1, 2, 3].map(i => '<input id="ivH' + i + '" maxlength="60" placeholder="Hidrauliku ' + i + '">').join("") + "</div></div>" +
         '<label for="ivNote">Shënime dhe dokumentacion</label><input id="ivNote" maxlength="300">' +
-        '<label for="ivF">Foto e ndërhyrjes (opsionale)</label><input id="ivF" type="file" accept="image/*">' +
+        '<div class="row"><div><label for="ivF">Foto 1 <span class="opt-l">(opsionale)</span></label><input id="ivF" type="file" accept="image/*"></div>' +
+        '<div><label for="ivF2">Foto 2 <span class="opt-l">(opsionale)</span></label><input id="ivF2" type="file" accept="image/*"></div></div>' +
         '<label class="chk" style="margin-top:8px"><input type="checkbox" id="ivSet" checked> Përditëso statusin e kontratës sipas veprimit (Prerje → Prerë, Rilidhje → Aktiv)</label>' +
         '<div class="bar"><button type="button" id="ivGo">Ruaj ndërhyrjen</button></div><p class="msg" id="ivMsg"></p></div>';
     }
-    box.innerHTML = h; box.dataset.pid = pid;
+    box.innerHTML = h; box.dataset.pid = pid; pvLast = null;
+    lucide.createIcons(); ivSync();
+  }
+  function ivSync(){
+    const a = $("ivAct"); if (!a) return;
+    const v = a.value, sb3 = $("ivSealBox"), pb = $("ivPayBox");
+    if (pb) pb.classList.toggle("hide", PAY_ACTS.indexOf(v) < 0);
+    if (sb3) sb3.classList.toggle("hide", SEAL_ACTS.indexOf(v) < 0);
+    const hint = $("ivSealHint");
+    if (hint) hint.textContent = v === "Prerje" ? "Pas prerjes vendoset vula e re. Numri i vulës së re ruhet te abonenti." : v === "Rilidhje" ? "Vula e vjetër këputet dhe vendoset vula e re. Numri i vulës së re ruhet te abonenti." : "";
+  }
+  document.addEventListener("change", e => {
+    if (e.target.id === "ivAct") ivSync();
+    if (e.target.id === "ivSub") {
+      const box = $("ivBox"), b = box ? allRows.find(x => String(x.id) === String(box.dataset.pid)) : null, s = subsCache.find(x => String(x.id) === e.target.value);
+      const o = $("ivSealOld"); if (o) o.value = sealOf(s, s ? null : b);
+    }
+  });
+  async function upPhoto(f, tag){
+    const blob = await shrink(f), path = me.id + "/" + tag + Date.now() + ".jpg";
+    const up = await sb.storage.from("photos").upload(path, blob, {contentType: "image/jpeg"});
+    if (up.error) throw up.error;
+    return path;
   }
   document.addEventListener("click", async e => {
     if (!e.target.closest || !e.target.closest("#ivGo")) return;
     const box = $("ivBox"), pid = +box.dataset.pid, b = allRows.find(x => x.id === pid);
     const sid = $("ivSub") ? $("ivSub").value : "", s = subsCache.find(x => String(x.id) === sid);
-    const act = $("ivAct").value, f = $("ivF").files[0];
-    if (!$("ivDate").value) return say("ivMsg", "Zgjidh datën.", true);
+    const act = $("ivAct").value, f1 = $("ivF").files[0], f2 = $("ivF2").files[0];
+    if (!$("ivDate").value) return say("ivMsg", "Zgjidhni datën.", true);
+    const sealNew = SEAL_ACTS.indexOf(act) >= 0 ? $("ivSealNew").value.trim() : "", sealOld = SEAL_ACTS.indexOf(act) >= 0 ? $("ivSealOld").value.trim() : "";
+    if (SEAL_ACTS.indexOf(act) >= 0 && !sealNew && !confirm("Nuk keni shënuar numrin e vulës së re. Ta ruaj pa vulë të re?")) { $("ivSealNew").focus(); return; }
     $("ivGo").disabled = true; say("ivMsg", "Duke ruajtur…");
     try {
-      let photo_path = null;
-      if (f) {
-        const blob = await shrink(f), path = me.id + "/i" + Date.now() + ".jpg";
-        const up = await sb.storage.from("photos").upload(path, blob, {contentType: "image/jpeg"});
-        if (up.error) throw up.error;
-        photo_path = path;
-      }
-      const hs = [1, 2, 3].map(i => $("ivH" + i).value.trim()).filter(Boolean), ss = [1, 2].map(i => $("ivS" + i).value.trim()).filter(Boolean);
-      const crew = {kind: hs.length || ss.length ? "Stafi shoqërues" : null, names: [hs.length ? "Hidraulikë: " + hs.join(", ") : "", ss.length ? "Specialistë: " + ss.join(", ") : ""].filter(Boolean).join(" · ") || null};
+      const photo_path = f1 ? await upPhoto(f1, "i") : null, photo_path2 = f2 ? await upPhoto(f2, "i2_") : null;
+      const ss = [1, 2].map(i => $("ivS" + i).value.trim()).filter(Boolean), hs = [1, 2, 3].map(i => $("ivH" + i).value.trim()).filter(Boolean);
+      const crew = {kind: hs.length || ss.length ? "Stafi shoqërues" : null, names: [ss.length ? "Specialistë: " + ss.join(", ") : "", hs.length ? "Hidraulikë: " + hs.join(", ") : ""].filter(Boolean).join(" · ") || null};
       const row = {point_id: pid, subscriber_id: s ? s.id : null, subscriber_name: s ? s.full_name : null, contract_no: s ? (s.contract_no || null) : (b ? b.contract_no || null : null),
         check_date: $("ivDate").value, action: act, staff_kind: crew.kind, staff_name: crew.names, note: $("ivNote").value.trim(), photo_path,
         created_name: prof ? prof.full_name : ((me.user_metadata && me.user_metadata.username) || me.email)};
+      if (photo_path2) row.photo_path2 = photo_path2;
+      if (sealOld) row.old_seal = sealOld;
+      if (sealNew) row.new_seal = sealNew;
       if (PAY_ACTS.indexOf(act) >= 0 && $("ivPay")) { row.payment_status = $("ivPay").value; if (row.payment_status !== "ne_pritje") { row.payment_date = $("ivDate").value; row.payment_by = row.created_name; } }
       const dd = window.pbDebtFor ? window.pbDebtFor(row.contract_no) : null;
       if (dd && dd.amount != null) row.debt_amount = dd.amount;
-      let {error} = await sb.from("interventions").insert(row);
-      if (error && row.debt_amount != null && /debt_amount/.test(error.message || "")) { delete row.debt_amount; ({error} = await sb.from("interventions").insert(row)); }
-      let payWarn = "";
-      if (error && row.payment_status && /payment_/.test(error.message || "")) { delete row.payment_status; delete row.payment_date; delete row.payment_by; payWarn = " Statusi i pagesës nuk u ruajt: ekzekutoni sql/pagesat.sql te Supabase."; ({error} = await sb.from("interventions").insert(row)); }
-      if (error) throw error;
-      let warn = payWarn;
-      if ($("ivSet").checked && (act === "Prerje" || act === "Rilidhje")) {
-        const v = act === "Prerje";
-        const upd = {is_cut: v, contract_status: v ? "prere" : "aktiv"};
+      const OPT = [[/debt_amount/, ["debt_amount"], ""], [/payment_/, ["payment_status", "payment_date", "payment_by"], " Statusi i pagesës nuk u ruajt: ekzekutoni sql/pagesat.sql te Supabase."],
+        [/old_seal|new_seal|photo_path2/, ["old_seal", "new_seal", "photo_path2"], " Vulat dhe foto e dytë nuk u ruajtën: ekzekutoni sql/procesverbal.sql te Supabase."]];
+      let warn = "", res = await sb.from("interventions").insert(row).select().single();
+      for (let k = 0; k < 3 && res.error; k++) {
+        const o = OPT.find(x => x[0].test(res.error.message || "") && x[1].some(c => c in row)); if (!o) break;
+        o[1].forEach(c => delete row[c]); warn += o[2];
+        res = await sb.from("interventions").insert(row).select().single();
+      }
+      if (res.error) throw res.error;
+      const upd = {};
+      if ($("ivSet").checked && SEAL_ACTS.indexOf(act) >= 0) { upd.is_cut = act === "Prerje"; upd.contract_status = act === "Prerje" ? "prere" : "aktiv"; }
+      if (sealNew) upd.seal_no = sealNew;
+      if (Object.keys(upd).length) {
         const doUp = u => s ? sb.from("subscribers").update(u).eq("id", s.id).select() : sb.from("businesses").update(u).eq("id", pid).select();
         let r2 = await doUp(upd);
-        if (r2.error && /contract_status/.test(r2.error.message || "")) r2 = await doUp({is_cut: v});
-        if (r2.error || !r2.data || !r2.data.length) warn = " Statusi i kontratës nuk u përditësua (mungon leja).";
+        if (r2.error && /contract_status/.test(r2.error.message || "")) { delete upd.contract_status; r2 = await doUp(upd); }
+        if (r2.error || !r2.data || !r2.data.length) warn += " Statusi i kontratës ose vula nuk u përditësua te abonenti (mungon leja).";
       }
-      say("ivMsg", "U ruajt." + warn, !!warn);
-      if (!s && !warn && (act === "Prerje" || act === "Rilidhje") && $("ivSet").checked) { await load(); openDetail(pid); return; }
+      pvLast = res.data && res.data.id;
+      if (!s && Object.keys(upd).length) { await load(); openDetail(pid); if (warn) toastMsg("U ruajt." + warn); return; }
       await drawIv(pid);
+      if (warn) say("ivMsg", "U ruajt." + warn, true);
     } catch (err) { say("ivMsg", "S’u ruajt: " + (err.message || err), true); $("ivGo").disabled = false; }
+  });
+
+  /* Procesverbali: dokument A4 për printim ose ruajtje si PDF */
+  async function openPV(r){
+    const w = window.open("", "_blank");
+    if (!w) { alert("Shfletuesi e bllokoi dritaren. Lejoni dritaret (pop-up) për këtë faqe dhe provoni përsëri."); return; }
+    w.document.write('<p style="font:16px Arial;padding:20px">Duke përgatitur procesverbalin…</p>');
+    const b = allRows.find(x => String(x.id) === String(r.point_id)), e2 = v => esc(v == null ? "" : String(v));
+    const zn = b && b.zone_id && window.pbZoneName ? window.pbZoneName(b.zone_id) : "";
+    const ps = [r.photo_path, r.photo_path2].filter(Boolean), um = {};
+    if (ps.length) { try { const {data: us} = await sb.storage.from("photos").createSignedUrls(ps, 3600); (us || []).forEach(u => { if (u.signedUrl) um[u.path] = u.signedUrl; }); } catch (x) {} }
+    const cp = crewParts(r.staff_name), lek = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
+    const rows = [["Abonenti", r.subscriber_name || (b ? b.name : "")], ["Kontrata", r.contract_no], ["Pika / adresa", [b ? b.name : "", zn].filter(Boolean).join(", ")],
+      ["Koordinatat", b ? b.lat.toFixed(5) + ", " + b.lng.toFixed(5) : ""], ["Veprimi", r.action], ["Detyrimi (debia)", r.debt_amount != null ? lek(Number(r.debt_amount)) : ""]];
+    if (SEAL_ACTS.indexOf(r.action) >= 0 || r.old_seal || r.new_seal) rows.push(["Vula e vjetër", r.old_seal || (r.action === "Prerje" ? "Nuk kishte" : "")], ["Vula e re", r.new_seal]);
+    if (r.payment_status) rows.push(["Pagesa", (PAY[r.payment_status] || r.payment_status) + (r.payment_date ? ", konfirmuar më " + fmtD(r.payment_date) : "")]);
+    rows.push(["Specialistë prerje debie", cp.sp], ["Hidraulikë", cp.hi], ["Shënime", r.note]);
+    const photos = ps.filter(p => um[p]).map(p => '<img src="' + e2(um[p]) + '" alt="Foto">').join("");
+    const html = '<!doctype html><html lang="sq"><head><meta charset="utf-8"><title>Procesverbal PV-' + e2(r.id) + "</title><style>" +
+      "@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:'Times New Roman',Times,serif;color:#000;margin:0;font-size:12pt}" +
+      ".hd{text-align:center;font-weight:bold;font-size:12.5pt;line-height:1.35}.tt{text-align:center;margin:22px 0 4px}.tt b{display:block;font-size:16pt;letter-spacing:.06em}.tt span{font-size:12pt}" +
+      ".nr{display:flex;justify-content:space-between;margin:14px 0 10px;font-size:11.5pt}table{width:100%;border-collapse:collapse}td{border:1px solid #000;padding:6px 8px;vertical-align:top}td:first-child{width:34%;font-weight:bold;background:#F2F2F2}" +
+      ".tx{margin:14px 0;line-height:1.5;text-align:justify}.ph{display:flex;gap:10px;margin:10px 0}.ph img{flex:1;max-width:50%;height:200px;object-fit:cover;border:1px solid #000}" +
+      ".sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;margin-top:34px}.sg div{font-size:11pt;font-weight:bold}.sg i{display:block;border-bottom:1px solid #000;height:40px;margin-bottom:4px}.sg small{font-weight:normal}" +
+      ".rf{margin-top:16px;font-size:11pt}.ft{margin-top:18px;font-size:9pt;color:#444}" +
+      "@media screen{body{max-width:800px;margin:20px auto;padding:0 16px}.pbar{position:sticky;top:0;background:#0B1B2E;padding:10px;text-align:center;margin:0 -16px 16px}.pbar button{font:600 15px Arial;padding:10px 16px;border:0;background:#fff;color:#0B1B2E;cursor:pointer}}@media print{.pbar{display:none}}" +
+      '</style></head><body><div class="pbar"><button onclick="window.print()">Ruaj si PDF / Printo</button></div>' +
+      '<div class="hd">SHOQËRIA RAJONALE UJËSJELLËS KANALIZIME GJIROKASTËR SH.A.<br>NJËSIA PËRMET</div>' +
+      '<div class="tt"><b>PROCESVERBAL</b><span>' + e2(PV_SUB[r.action] || "") + "</span></div>" +
+      '<div class="nr"><span>Nr. <b>PV-' + e2(r.id) + "</b></span><span>Data: <b>" + e2(fmtD(r.check_date)) + "</b></span></div>" +
+      "<table>" + rows.map(x => "<tr><td>" + e2(x[0]) + "</td><td>" + e2(x[1]) + "</td></tr>").join("") + "</table>" +
+      '<p class="tx">Sot, më ' + e2(fmtD(r.check_date)) + ", stafi i Njësisë Përmet, i shënuar në këtë procesverbal, " + e2(PV_TXT[r.action] || "") + " Ky procesverbal mbahet në tri kopje.</p>" +
+      (photos ? '<div class="ph">' + photos + "</div>" : "") +
+      '<div class="sg"><div><i></i>Specialisti i prerjes së debisë<br><small>' + e2(cp.sp) + '</small></div><div><i></i>Hidrauliku<br><small>' + e2(cp.hi) + '</small></div><div><i></i>Abonenti ose përfaqësuesi<br><small>' + e2(r.subscriber_name || "") + "</small></div></div>" +
+      '<p class="rf">&#9744; Abonenti nuk ishte i pranishëm &nbsp;&nbsp;&nbsp; &#9744; Abonenti refuzoi të firmosë</p>' +
+      '<p class="ft">Regjistruar në PikaBlu' + (r.created_name ? " nga " + e2(r.created_name) : "") + (r.created_at ? " më " + e2(new Date(r.created_at).toLocaleString("sq")) : "") + ".</p>" +
+      "<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>";
+    w.document.open(); w.document.write(html); w.document.close();
+  }
+  document.addEventListener("click", e => {
+    const pv = e.target.closest ? e.target.closest("[data-pv]") : null; if (!pv) return;
+    const id = pv.getAttribute("data-pv"), all = ivCache.concat(repRows, repPend), r = all.find(x => String(x.id) === String(id));
+    if (r) openPV(r);
   });
   const od = openDetail;
   openDetail = function(id){
