@@ -382,6 +382,8 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 .ivph{display:flex;gap:6px;margin-top:8px}
 .ivph img{width:130px;height:96px;object-fit:cover;display:block;border:1px solid var(--line)}
 .ivseal{background:var(--foam);border:1px solid var(--line);padding:4px 12px 12px;margin-top:10px}
+.ivend{margin-top:14px;padding:4px 12px 12px;border:1px solid var(--line);border-top:3px solid var(--blue);background:#fff}
+.ivend-h{margin-top:8px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--blue-d)}
 .pvok{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0 4px;padding:10px 12px;background:var(--ok-t);border:1px solid #B8DCC6;color:var(--ok);font-weight:600;font-size:14px}
 /* Small screens */
 @media (max-width:560px){
@@ -2021,7 +2023,7 @@ icons();
         (subsCache.length ? '<label for="ivSub">Abonenti</label><select id="ivSub"><option value="">E gjithë pika</option>' + subsCache.map(x => '<option value="' + x.id + '">' + esc(x.full_name + (x.apartment ? " (" + x.apartment + ")" : "")) + "</option>").join("") + "</select>" : "") +
         '<div class="row"><div><label for="ivDate">Data</label><input id="ivDate" type="date" value="' + today() + '"></div>' +
         '<div><label for="ivAct">Veprimi</label><select id="ivAct">' + ACTIONS.map(a => "<option>" + a + "</option>").join("") + "</select></div></div>" +
-        '<div id="ivPayBox"><label for="ivPay">Pagesa e debisë pas njoftimit</label><select id="ivPay"><option value="ne_pritje">Në pritje: abonenti u njoftua, pagesa ende pa u konfirmuar</option><option value="pagoi">Pagoi: pagesa u konfirmua</option><option value="nuk_pagoi">Nuk pagoi</option></select><p class="meta" style="margin:4px 0 0">Kur abonenti paguan më vonë, shtypni “Pagoi” te ndërhyrja ose te Raporti i ditës.</p></div>' +
+        '<div id="ivDebtBox"><label for="ivDebt">Detyrimi (debia, lekë)</label><input id="ivDebt" inputmode="decimal" maxlength="20" placeholder="p.sh. 25000"><p class="meta" id="ivDebtHint" style="margin:4px 0 0"></p></div>' +
         '<div id="ivSealBox" class="ivseal hide"><div class="row"><div><label for="ivSealOld">Vula e vjetër <span class="opt-l">(nëse ka)</span></label><input id="ivSealOld" maxlength="40" value="' + esc(s0) + '"></div>' +
         '<div><label for="ivSealNew">Vula e re</label><input id="ivSealNew" maxlength="40"></div></div><p class="meta" id="ivSealHint" style="margin:4px 0 0"></p></div>' +
         '<div class="ivcrew"><b>Stafi shoqërues</b> <span class="meta">(plotësoni vetëm emrat e atyre që dolën)</span>' +
@@ -2031,15 +2033,34 @@ icons();
         '<div class="row"><div><label for="ivF">Foto 1 <span class="opt-l">(opsionale)</span></label><input id="ivF" type="file" accept="image/*"></div>' +
         '<div><label for="ivF2">Foto 2 <span class="opt-l">(opsionale)</span></label><input id="ivF2" type="file" accept="image/*"></div></div>' +
         '<label class="chk" style="margin-top:8px"><input type="checkbox" id="ivSet" checked> Përditëso statusin e kontratës sipas veprimit (Prerje → Prerë, Rilidhje → Aktiv)</label>' +
+        '<div id="ivPayBox" class="ivend"><div class="ivend-h">Përfundimi</div><label for="ivPay" style="margin-top:6px">Pagesa e debisë</label><select id="ivPay"><option value="ne_pritje">Në pritje: abonenti u njoftua, pagesa ende pa u konfirmuar</option><option value="pagoi">Pagoi: abonenti e shlyeu detyrimin</option><option value="nuk_pagoi">Nuk pagoi</option></select><p class="meta" style="margin:4px 0 0">Kur abonenti paguan më vonë, shtypni “Pagoi” te ndërhyrja ose te Raporti i ditës. “Në pritje” nuk shfaqet te procesverbali.</p></div>' +
         '<div class="bar"><button type="button" id="ivGo">Ruaj ndërhyrjen</button></div><p class="msg" id="ivMsg"></p></div>';
     }
     box.innerHTML = h; box.dataset.pid = pid; pvLast = null;
-    lucide.createIcons(); ivSync();
+    if ($("ivS1") && prof && prof.role === "prerje" && prof.full_name) $("ivS1").value = prof.full_name;
+    lucide.createIcons(); ivSync(); ivDebtFill();
+  }
+  function ivTarget(){
+    const box = $("ivBox"), b = box ? allRows.find(x => String(x.id) === String(box.dataset.pid)) : null;
+    const s = $("ivSub") ? subsCache.find(x => String(x.id) === $("ivSub").value) : null;
+    return {b, s, contract: s ? s.contract_no : (b ? b.contract_no : null)};
+  }
+  function ivDebtFill(){
+    const inp = $("ivDebt"), hint = $("ivDebtHint"); if (!inp) return;
+    const t = ivTarget(), d = window.pbDebtFor && t.contract ? window.pbDebtFor(t.contract) : null;
+    if (d && d.amount != null) {
+      inp.value = Math.round(d.amount); inp.dataset.auto = "1";
+      hint.textContent = "Nga lista e debitorëve" + (d.list_date ? " (gjendja më " + fmtD(d.list_date) + ")" : "") + ". Mund ta korrigjoni nëse ka ndryshuar.";
+    } else {
+      if (inp.dataset.auto) inp.value = ""; inp.dataset.auto = "";
+      hint.textContent = t.contract ? "Kontrata " + t.contract + " nuk është në listën e debitorëve. Shkruani shumën nëse ka detyrim." : "Pa kontratë. Shkruani shumën nëse ka detyrim.";
+    }
   }
   function ivSync(){
     const a = $("ivAct"); if (!a) return;
-    const v = a.value, sb3 = $("ivSealBox"), pb = $("ivPayBox");
+    const v = a.value, sb3 = $("ivSealBox"), pb = $("ivPayBox"), db = $("ivDebtBox");
     if (pb) pb.classList.toggle("hide", PAY_ACTS.indexOf(v) < 0);
+    if (db) db.classList.toggle("hide", PAY_ACTS.indexOf(v) < 0);
     if (sb3) sb3.classList.toggle("hide", SEAL_ACTS.indexOf(v) < 0);
     const hint = $("ivSealHint");
     if (hint) hint.textContent = v === "Prerje" ? "Pas prerjes vendoset vula e re. Numri i vulës së re ruhet te abonenti." : v === "Rilidhje" ? "Vula e vjetër këputet dhe vendoset vula e re. Numri i vulës së re ruhet te abonenti." : "";
@@ -2049,7 +2070,9 @@ icons();
     if (e.target.id === "ivSub") {
       const box = $("ivBox"), b = box ? allRows.find(x => String(x.id) === String(box.dataset.pid)) : null, s = subsCache.find(x => String(x.id) === e.target.value);
       const o = $("ivSealOld"); if (o) o.value = sealOf(s, s ? null : b);
+      ivDebtFill();
     }
+    if (e.target.id === "ivDebt") e.target.dataset.auto = "";
   });
   async function upPhoto(f, tag){
     const blob = await shrink(f), path = me.id + "/" + tag + Date.now() + ".jpg";
@@ -2077,8 +2100,8 @@ icons();
       if (sealOld) row.old_seal = sealOld;
       if (sealNew) row.new_seal = sealNew;
       if (PAY_ACTS.indexOf(act) >= 0 && $("ivPay")) { row.payment_status = $("ivPay").value; if (row.payment_status !== "ne_pritje") { row.payment_date = $("ivDate").value; row.payment_by = row.created_name; } }
-      const dd = window.pbDebtFor ? window.pbDebtFor(row.contract_no) : null;
-      if (dd && dd.amount != null) row.debt_amount = dd.amount;
+      const dd = window.pbDebtFor ? window.pbDebtFor(row.contract_no) : null, dv = PAY_ACTS.indexOf(act) >= 0 && $("ivDebt") ? numIn("ivDebt") : null;
+      if (dv != null) row.debt_amount = dv; else if (dd && dd.amount != null) row.debt_amount = dd.amount;
       const OPT = [[/debt_amount/, ["debt_amount"], ""], [/payment_/, ["payment_status", "payment_date", "payment_by"], " Statusi i pagesës nuk u ruajt: ekzekutoni sql/pagesat.sql te Supabase."],
         [/old_seal|new_seal|photo_path2/, ["old_seal", "new_seal", "photo_path2"], " Vulat dhe foto e dytë nuk u ruajtën: ekzekutoni sql/procesverbal.sql te Supabase."]];
       let warn = "", res = await sb.from("interventions").insert(row).select().single();
@@ -2117,7 +2140,7 @@ icons();
     const rows = [["Abonenti", r.subscriber_name || (b ? b.name : "")], ["Kontrata", r.contract_no], ["Pika / adresa", [b ? b.name : "", zn].filter(Boolean).join(", ")],
       ["Koordinatat", b ? b.lat.toFixed(5) + ", " + b.lng.toFixed(5) : ""], ["Veprimi", r.action], ["Detyrimi (debia)", r.debt_amount != null ? lek(Number(r.debt_amount)) : ""]];
     if (SEAL_ACTS.indexOf(r.action) >= 0 || r.old_seal || r.new_seal) rows.push(["Vula e vjetër", r.old_seal || (r.action === "Prerje" ? "Nuk kishte" : "")], ["Vula e re", r.new_seal]);
-    if (r.payment_status) rows.push(["Pagesa", (PAY[r.payment_status] || r.payment_status) + (r.payment_date ? ", konfirmuar më " + fmtD(r.payment_date) : "")]);
+    const fund = r.payment_status === "pagoi" ? "Abonenti e shlyeu detyrimin" + (r.payment_date ? " më " + fmtD(r.payment_date) : "") + "." : r.payment_status === "nuk_pagoi" ? "Abonenti nuk e shlyeu detyrimin." : "";
     rows.push(["Specialistë prerje debie", cp.sp], ["Hidraulikë", cp.hi], ["Shënime", r.note]);
     const photos = ps.filter(p => um[p]).map(p => '<img src="' + e2(um[p]) + '" alt="Foto">').join("");
     const html = '<!doctype html><html lang="sq"><head><meta charset="utf-8"><title>Procesverbal PV-' + e2(r.id) + "</title><style>" +
@@ -2134,6 +2157,7 @@ icons();
       '<div class="nr"><span>Nr. <b>PV-' + e2(r.id) + "</b></span><span>Data: <b>" + e2(fmtD(r.check_date)) + "</b></span></div>" +
       "<table>" + rows.map(x => "<tr><td>" + e2(x[0]) + "</td><td>" + e2(x[1]) + "</td></tr>").join("") + "</table>" +
       '<p class="tx">Sot, më ' + e2(fmtD(r.check_date)) + ", stafi i Njësisë Përmet, i shënuar në këtë procesverbal, " + e2(PV_TXT[r.action] || "") + " Ky procesverbal mbahet në tri kopje.</p>" +
+      (fund ? '<p class="tx" style="border:1px solid #000;padding:8px 10px"><b>Përfundimi:</b> ' + e2(fund) + "</p>" : "") +
       (photos ? '<div class="ph">' + photos + "</div>" : "") +
       '<div class="sg"><div><i></i>Specialisti i prerjes së debisë<br><small>' + e2(cp.sp) + '</small></div><div><i></i>Hidrauliku<br><small>' + e2(cp.hi) + '</small></div><div><i></i>Abonenti ose përfaqësuesi<br><small>' + e2(r.subscriber_name || "") + "</small></div></div>" +
       '<p class="rf">&#9744; Abonenti nuk ishte i pranishëm &nbsp;&nbsp;&nbsp; &#9744; Abonenti refuzoi të firmosë</p>' +
