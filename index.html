@@ -168,8 +168,11 @@ body:not(.in) .appbar,body:not(.in) .nav,body:not(.in) .nav-scrim{display:none}
 
 /* Map markers (round by convention) */
 .me{position:relative;width:22px;height:22px}
-.me::before{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(5,88,252,.45);animation:pulse 1.6s ease-out infinite}
-.me span{position:absolute;inset:3px;border-radius:50%;background:var(--blue);border:3px solid #fff}
+.me::before{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(22,163,74,.5);animation:pulse 1.6s ease-out infinite}
+.me span{position:absolute;inset:2px;border-radius:50%;background:#16A34A;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+#gps{position:relative;overflow:visible}
+#gps.on{background:#16A34A;border-color:#16A34A;color:#fff}
+.gpsacc{position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);white-space:nowrap;background:#16A34A;color:#fff;font-size:12px;font-weight:600;padding:4px 8px}
 .pt{position:relative;width:24px;height:24px}
 .pt span{position:absolute;inset:4px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45)}
 .pt.red span{background:#D92D20}
@@ -551,7 +554,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
   </button>
   <div class="fabs">
     <button id="layers" class="fab" type="button" aria-label="Satelit ose hartë normale" title="Satelit ose hartë normale"><i data-lucide="layers"></i></button>
-    <button id="gps" class="fab" type="button" aria-label="Vendndodhja ime" title="Vendndodhja ime"><i data-lucide="locate-fixed"></i></button>
+    <button id="gps" class="fab" type="button" aria-label="Shko te vendndodhja ime" title="Shko te vendndodhja ime"><i data-lucide="locate-fixed"></i><span id="gpsAcc" class="gpsacc hide" aria-live="polite"></span></button>
     <button id="addBtn" class="fab main" type="button" aria-label="Shto pikë"><i data-lucide="plus"></i></button>
   </div>
   <div id="pickbar" class="hide"><span>Prek hartën për të zgjedhur pikën</span><button id="pickdone" type="button">U bë</button></div>
@@ -930,22 +933,51 @@ $("layers").onclick = () => { if (sat) { map.removeLayer(satellite); normal.addT
 $("infoBtn").onclick = () => $("about").classList.remove("hide");
 $("aback").onclick = () => $("about").classList.add("hide");
 
+/* Vendndodhja ime: ndjekje e vazhdueshme, rreth i saktësisë, qendërzim me butonin */
+let lastFix = null, accCircle = null, wantCenter = 0;
+function gpsLabel(t){ const el = $("gpsAcc"); if (!el) return; el.textContent = t || ""; el.classList.toggle("hide", !t); }
 function stopGps(){
   if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
   if (meMarker) { map.removeLayer(meMarker); meMarker = null; }
+  if (accCircle) { map.removeLayer(accCircle); accCircle = null; }
+  lastFix = null; wantCenter = 0; gpsLabel("");
   $("gps").classList.remove("on");
+}
+/* Qendërzon në pjesën e dukshme të hartës (mbi listën e pikave në celular) */
+function centerOn(ll, z){
+  let dy = 0;
+  if (!window.matchMedia("(min-width:1024px)").matches) { const sh = $("sheet").getBoundingClientRect().height || 0; dy = sh / 2; }
+  const pt = map.project(ll, z).add([0, dy]);
+  map.setView(map.unproject(pt, z), z, {animate: false});
+}
+function onFix(p){
+  const ll = [p.coords.latitude, p.coords.longitude], acc = Math.round(p.coords.accuracy || 0);
+  if (lastFix && acc > lastFix.acc * 3 && acc > 150 && Date.now() - lastFix.t < 15000) return;
+  lastFix = {ll, acc, t: Date.now()};
+  if (!meMarker) meMarker = L.marker(ll, {icon: meIcon, interactive: false, zIndexOffset: 1000}).addTo(map); else meMarker.setLatLng(ll);
+  if (!accCircle) accCircle = L.circle(ll, {radius: acc, color: "#16A34A", weight: 1, opacity: .6, fillColor: "#16A34A", fillOpacity: .1, interactive: false}).addTo(map);
+  else { accCircle.setLatLng(ll); accCircle.setRadius(acc); }
+  gpsLabel("±" + acc + " m");
+  if (wantCenter && Date.now() - wantCenter < 25000) {
+    centerOn(ll, acc > 300 ? 15 : acc > 60 ? 17 : 18);
+    if (acc <= 25) wantCenter = 0;
+  }
 }
 function startGps(silent){
   if (watchId !== null || !navigator.geolocation) return;
-  firstFix = true; $("gps").classList.add("on");
-  watchId = navigator.geolocation.watchPosition(p => {
-    const ll = [p.coords.latitude, p.coords.longitude];
-    if (!meMarker) meMarker = L.marker(ll, {icon: meIcon, interactive: false, zIndexOffset: 1000}).addTo(map); else meMarker.setLatLng(ll);
-    if (firstFix && !silent) map.setView(ll, 16);
-    firstFix = false;
-  }, () => { stopGps(); if (!silent) alert("Vendndodhja nuk u lejua. Lejoje te shfletuesi."); }, {enableHighAccuracy: true, maximumAge: 5000});
+  $("gps").classList.add("on");
+  watchId = navigator.geolocation.watchPosition(onFix, err => {
+    if (err && err.code === 1) { stopGps(); if (!silent) alert("Vendndodhja nuk u lejua. Lejojeni te shfletuesi (ikona e drynit pranë adresës)."); }
+    else if (!silent && !lastFix) gpsLabel("Duke kërkuar sinjal GPS…");
+  }, {enableHighAccuracy: true, maximumAge: 0, timeout: 20000});
 }
-$("gps").onclick = () => { if (watchId !== null) stopGps(); else startGps(false); };
+$("gps").onclick = () => {
+  wantCenter = Date.now();
+  if (watchId === null) { gpsLabel("Duke kërkuar sinjal GPS…"); startGps(false); return; }
+  if (lastFix) { if (stateIdx === 2) setSheet(1); centerOn(lastFix.ll, lastFix.acc > 300 ? 15 : lastFix.acc > 60 ? 17 : 18); }
+  else gpsLabel("Duke kërkuar sinjal GPS…");
+};
+window.pbLastFix = () => lastFix;
 
 window.pikaLogin = async function (email, password) {
   const {error} = await sb.auth.signInWithPassword({email, password});
@@ -977,7 +1009,9 @@ $("pickdone").onclick = () => { pickMode = false; $("pickbar").classList.add("hi
 $("loc").onclick = () => {
   if (!navigator.geolocation) return say("msg", "Pajisja nuk mbështet vendndodhjen.", true);
   say("msg", "Duke marrë vendndodhjen…");
-  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); say("msg", ""); }, () => say("msg", "Vendndodhja nuk u lejua. Përdor “Zgjidh në hartë”.", true), {enableHighAccuracy: true});
+  const lf = lastFix;
+  if (lf && Date.now() - lf.t < 30000 && lf.acc <= 50) { setPick(lf.ll[0], lf.ll[1]); say("msg", "Vendndodhja u mor (saktësia ±" + lf.acc + " m)."); return; }
+  navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); say("msg", "Vendndodhja u mor (saktësia ±" + Math.round(p.coords.accuracy) + " m)." + (p.coords.accuracy > 50 ? " Saktësi e ulët: dilni në hapësirë të hapur ose kontrolloni pikën në hartë." : ""), p.coords.accuracy > 50); }, () => say("msg", "Vendndodhja nuk u lejua. Përdor “Zgjidh në hartë”.", true), {enableHighAccuracy: true, maximumAge: 0, timeout: 20000});
 };
 $("add").onclick = async () => {
   const name = $("n").value.trim(), mainSel = $("catMain").value, subSel = $("catSub").value, cs = subSel ? [mainSel, subSel] : [mainSel];
