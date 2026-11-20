@@ -546,7 +546,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
       <div class="sheethead"><h2 class="sh-t">Pikat në hartë</h2><span id="title">0 pika</span>
         <button type="button" class="sheet-tgl" id="sheetTgl" aria-controls="sheet" aria-label="Mbyll listën e pikave"><i data-lucide="chevron-down" class="i-down"></i><i data-lucide="chevron-up" class="i-up"></i></button>
       </div>
-      <div id="scroll"><div id="list"></div><div id="more"></div><div class="foot">Harta: Esri, OpenStreetMap</div></div>
+      <div id="scroll"><div id="list"></div><div id="more"></div><div class="foot" id="mapCredit">Harta: Esri, OpenStreetMap</div></div>
     </div>
   </aside>
   <button type="button" class="pane-tgl" id="paneTgl" aria-expanded="true" title="Fshih listën e pikave">
@@ -660,7 +660,7 @@ const satellite = L.layerGroup([
   L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {maxZoom: 21, maxNativeZoom: 17}),
   L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {maxZoom: 21, maxNativeZoom: 16})
 ]);
-const normal = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 21, maxNativeZoom: 19});
+const normal = L.layerGroup([L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 21, maxNativeZoom: 19})]);
 satellite.addTo(map);
 const layer = L.layerGroup().addTo(map);
 const meIcon = L.divIcon({className: "", html: '<div class="me"><span></span></div>', iconSize: [22, 22]});
@@ -2639,6 +2639,48 @@ document.addEventListener("change", e => {
     }
     go.disabled = false;
   });
+})();
+</script>
+<script>
+/* Harta Google: çelësi merret nga Supabase vetëm pas hyrjes; nuk ruhet në kod as në GitHub.
+   Nëse çelësi mungon ose refuzohet, mbetet harta Esri / OpenStreetMap. */
+(function(){
+  let state = "idle", esriSat = null, osmRoad = null;
+  const loadScript = src => new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.async = true; s.onload = res; s.onerror = () => rej(new Error("Nuk u ngarkua: " + src.split("?")[0])); document.head.appendChild(s); });
+  function revert(){
+    if (!esriSat) return;
+    satellite.clearLayers(); esriSat.forEach(l => satellite.addLayer(l));
+    normal.clearLayers(); osmRoad.forEach(l => normal.addLayer(l));
+    const c = $("mapCredit"); if (c) c.textContent = "Harta: Esri, OpenStreetMap";
+    state = "esri";
+  }
+  async function useGoogle(){
+    if (state !== "idle") return;
+    state = "loading";
+    try {
+      const {data, error} = await sb.from("app_config").select("value").eq("key", "google_maps_key").maybeSingle();
+      const key = !error && data && data.value ? String(data.value).trim() : "";
+      if (!/^AIza[0-9A-Za-z_-]{35}$/.test(key)) { if (key) console.warn("PikaBlu: çelësi i Google Maps nuk ka formatin e duhur. Po përdoret Esri."); state = "esri"; return; }
+      window.gm_authFailure = () => { console.warn("PikaBlu: Google Maps e refuzoi çelësin. Po përdoret Esri."); revert(); };
+      const BAD = /Google Maps JavaScript API (error|warning): (InvalidKey|RefererNotAllowedMapError|ApiNotActivatedMapError|BillingNotEnabledMapError|ApiTargetBlockedMapError|ExpiredKeyMapError|DeletedApiProjectMapError|InvalidKeyMapError)/;
+      ["error", "warn"].forEach(k => { const o = console[k].bind(console); console[k] = function(){ try { if (state !== "esri" && BAD.test(String(arguments[0]))) { o("PikaBlu: problem me çelësin e Google Maps. Po përdoret Esri."); revert(); } } catch (x) {} return o.apply(null, arguments); }; });
+      await new Promise((res, rej) => {
+        window.pbGmReady = res;
+        loadScript("https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&v=weekly&language=sq&region=AL&loading=async&callback=pbGmReady").catch(rej);
+        setTimeout(() => rej(new Error("Google Maps nuk u përgjigj")), 15000);
+      });
+      await loadScript("https://cdn.jsdelivr.net/npm/leaflet.gridlayer.googlemutant@0.15.0/dist/Leaflet.GoogleMutant.js");
+      if (!L.gridLayer || !L.gridLayer.googleMutant) throw new Error("Shtesa GoogleMutant mungon");
+      esriSat = satellite.getLayers(); osmRoad = normal.getLayers();
+      satellite.clearLayers(); satellite.addLayer(L.gridLayer.googleMutant({type: "hybrid", maxZoom: 21}));
+      normal.clearLayers(); normal.addLayer(L.gridLayer.googleMutant({type: "roadmap", maxZoom: 21}));
+      const c = $("mapCredit"); if (c) c.textContent = "Harta: Google";
+      state = "google";
+    } catch (e) { console.warn("PikaBlu: harta Google nuk u ngarkua, po përdoret Esri.", e.message || e); revert(); if (state === "loading") state = "esri"; }
+  }
+  const check = () => { if (document.body.classList.contains("in")) useGoogle(); };
+  new MutationObserver(check).observe(document.body, {attributes: true, attributeFilter: ["class"]});
+  check();
 })();
 </script>
 <script>
