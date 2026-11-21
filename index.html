@@ -468,6 +468,21 @@ body.arka > *:not(#arka):not(#gate2):not(script):not(#pbNtfToast):not(#stToast){
 .akrow .acts .ghost:hover{background:var(--foam)}
 .akempty{padding:24px 14px;background:#fff;border:1px solid var(--line);margin-top:10px;color:var(--mut)}
 @media (max-width:640px){.akrow .dl2{grid-template-columns:1fr 1fr}.akh .bt small{display:none}.akrow .acts button{flex:1}}
+/* Zhvendosja e pikës nga administratori */
+#movebar{position:absolute;z-index:1150;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;padding:12px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;box-shadow:0 6px 20px rgba(11,27,46,.35)}
+#movebar .mt{flex:1;min-width:200px;line-height:1.35}
+#movebar .mt b{display:block;font-size:15px}
+#movebar .mt span{display:block;font-size:13px;color:#C9D6E6}
+#movebar .md{font-size:20px;font-weight:600;min-width:72px;text-align:right}
+#movebar .md small{display:block;font-size:11px;font-weight:400;color:#AFC0D6}
+#movebar .mb{display:flex;gap:8px}
+#movebar .mb .alt{background:transparent;color:#fff;border:1px solid #4A6080}
+#movebar .mb .alt:hover{background:#16304F}
+.mvpin{width:30px;height:30px;position:relative;cursor:grab}
+.mvpin::before{content:"";position:absolute;inset:6px;background:#E8702A;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+.mvpin::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;background:#fff;border-radius:50%}
+body.moving .pane,body.moving #addBtn{visibility:hidden}
+@media (min-width:1024px){#movebar{left:calc(var(--panew) + 16px);right:16px;max-width:680px;margin:0 auto}body.moving .pane{visibility:visible}}
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -3635,12 +3650,80 @@ window.addEventListener("DOMContentLoaded", function(){
     akLoad();
   }
 
+  window.pbToast = toast;
   window.addEventListener("pbprofile", e => {
     const r = e.detail;
     if (!r || !me) { stop(); akClose(); NB.classList.add("hide"); return; }
     if (r.role === "arketare" && !r.adm) akOpen(); else akClose();
     start(me, r).catch(err => console.warn("PikaBlu njoftimet:", err));
   });
+})();
+</script>
+<script>
+/* Zhvendosja e pikës: administratori e tërheq pikën në vendin e saktë. Leja dhe regjistri: sql/zhvendosja.sql */
+(function(){
+  let mv = null;
+  const canMove = () => { const r = window.pbRole; return !!(r && r.adm && !window.pbObserver); };
+  const od = openDetail;
+  openDetail = function(id){
+    od(id);
+    if (!canMove()) return;
+    const bar = document.querySelector("#detail .dbar"), b = allRows.find(x => String(x.id) === String(id));
+    if (bar && b && !bar.querySelector("[data-move]")) {
+      const x = document.createElement("button"); x.type = "button"; x.className = "alt"; x.setAttribute("data-move", b.id);
+      x.innerHTML = '<i data-lucide="move"></i> Zhvendos pikën'; x.onclick = () => startMove(b);
+      bar.appendChild(x); lucide.createIcons();
+    }
+  };
+  const mtxt = m => m < 1000 ? Math.round(m) + " m" : (m / 1000).toFixed(2).replace(".", ",") + " km";
+  function upd(){
+    const ll = mv.mk.getLatLng(), d = map.distance(mv.orig, ll);
+    mv.line.setLatLngs([mv.orig, ll]);
+    $("mvD").innerHTML = mtxt(d) + "<small>zhvendosur</small>";
+    $("mvSave").disabled = d < 0.5;
+  }
+  function startMove(b){
+    if (mv) endMove();
+    closeDetail(); if (typeof stateIdx !== "undefined" && stateIdx === 2) setSheet(1);
+    document.body.classList.add("moving");
+    const orig = L.latLng(b.lat, b.lng);
+    mv = {b, orig,
+      line: L.polyline([orig, orig], {color: "#E8702A", weight: 2, dashArray: "6 6"}).addTo(map),
+      mk: L.marker(orig, {draggable: true, autoPan: true, zIndexOffset: 2000, icon: L.divIcon({className: "", html: '<div class="mvpin"></div>', iconSize: [30, 30]})}).addTo(map)};
+    mv.mk.on("drag", upd);
+    const bar = document.createElement("div"); bar.id = "movebar"; bar.setAttribute("role", "region"); bar.setAttribute("aria-label", "Zhvendosja e pikës");
+    bar.innerHTML = '<div class="mt"><b>Zhvendos: ' + esc(b.name || "pika") + "</b><span>Tërhiqni pikën portokalli ose prekni hartën te vendi i saktë.</span></div>" +
+      '<div class="md" id="mvD" aria-live="polite">0 m<small>zhvendosur</small></div>' +
+      '<div class="mb"><button type="button" class="alt" id="mvCancel">Anulo</button><button type="button" id="mvSave" disabled><i data-lucide="check"></i> Ruaj vendndodhjen</button></div>';
+    $("app").appendChild(bar); lucide.createIcons();
+    $("mvCancel").onclick = () => { const id = mv.b.id; endMove(); openDetail(id); };
+    $("mvSave").onclick = save;
+    map.flyTo(orig, Math.max(map.getZoom(), 19), {duration: 0.8});
+  }
+  function endMove(){
+    if (!mv) return;
+    map.removeLayer(mv.mk); map.removeLayer(mv.line);
+    const bar = $("movebar"); if (bar) bar.remove();
+    document.body.classList.remove("moving"); mv = null;
+  }
+  map.on("click", e => { if (mv) { mv.mk.setLatLng(e.latlng); upd(); } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && mv) $("mvCancel").click(); });
+  async function save(){
+    const b = mv.b, ll = mv.mk.getLatLng(), d = map.distance(mv.orig, ll);
+    if (d > 150 && !confirm("Pika do të zhvendoset " + mtxt(d) + ". Jeni të sigurt?")) return;
+    const btn = $("mvSave"); btn.disabled = true; btn.textContent = "Duke ruajtur…";
+    const lat = +ll.lat.toFixed(7), lng = +ll.lng.toFixed(7);
+    let {error} = await sb.rpc("zhvendos_piken", {p_id: String(b.id), p_lat: lat, p_lng: lng});
+    if (error && /zhvendos_piken|schema cache|PGRST202|function/i.test((error.message || "") + (error.code || ""))) {
+      const r2 = await sb.from("businesses").update({lat, lng}).eq("id", b.id).select();
+      error = r2.error || (!r2.data || !r2.data.length ? {message: "Mungon leja. Ekzekutoni sql/zhvendosja.sql te Supabase."} : null);
+    }
+    if (error) { btn.disabled = false; btn.innerHTML = '<i data-lucide="check"></i> Ruaj vendndodhjen'; lucide.createIcons(); alert("Pika nuk u zhvendos: " + error.message); return; }
+    b.lat = lat; b.lng = lng;
+    endMove(); filterRows(); openDetail(b.id);
+    if (window.pbToast) window.pbToast({kind: "pagoi", title: "Pika u zhvendos " + mtxt(d), body: (b.name || "") + " · " + lat.toFixed(5) + ", " + lng.toFixed(5)});
+  }
+  window.addEventListener("pbprofile", () => { if (mv && !canMove()) endMove(); });
 })();
 </script>
 </body>
