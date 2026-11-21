@@ -407,6 +407,67 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 /* Kamera direkte */
 .camrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:6px 0}
 .camrow .sbtn{min-height:42px;font-size:14px}
+/* Njoftimet: kambana te shiriti i sipërm */
+#ntfBtn{position:relative;width:40px;height:40px;min-height:0;padding:0;margin-left:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);flex:none}
+#ntfBtn:hover{background:var(--foam)}
+#ntfBtn:not(.hide) ~ .ab-user{margin-left:0}
+#ntfBtn .ncount{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;background:var(--warn);color:#fff;font-size:12px;font-weight:600;line-height:20px;text-align:center;border-radius:10px}
+#ntfBtn.ring svg{animation:pbring .9s ease-in-out 2}
+@keyframes pbring{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-4deg)}}
+body.obs #ntfBtn{display:none!important}
+#ntfPanel{position:fixed;z-index:2790;top:calc(var(--top) + 6px);right:8px;width:380px;max-width:calc(100vw - 16px);max-height:calc(100dvh - var(--top) - 16px);overflow-y:auto;background:#fff;border:1px solid var(--line);border-top:3px solid var(--blue);box-shadow:0 8px 30px rgba(11,27,46,.25)}
+#ntfPanel .nh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+#ntfPanel .nh b{font-size:15px}
+.nitem{padding:11px 14px;border-bottom:1px solid var(--line-2);border-left:3px solid transparent}
+.nitem.new{background:var(--blue-t);border-left-color:var(--blue)}
+.nitem.k-nuk_pagoi{border-left-color:var(--warn)}
+.nitem.k-pagoi.new{border-left-color:var(--ok)}
+.nitem b{display:block;font-size:14px}
+.nitem .meta{margin-top:2px}
+.nperm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;background:var(--amber-t);border-bottom:1px solid var(--amber-l);font-size:13px;color:#4A3500}
+#pbNtfToast{position:fixed;z-index:3500;top:calc(var(--top) + 10px);left:50%;transform:translateX(-50%);width:440px;max-width:calc(100vw - 24px);background:#0B1B2E;color:#fff;padding:12px 14px 12px 16px;border-left:4px solid var(--cyan);box-shadow:0 10px 30px rgba(11,27,46,.4);display:flex;gap:12px;align-items:flex-start;cursor:pointer}
+#pbNtfToast.k-pagoi{border-left-color:#3FB37A}
+#pbNtfToast.k-nuk_pagoi{border-left-color:#F0725F}
+#pbNtfToast b{display:block;font-size:15px}
+#pbNtfToast span{display:block;font-size:13px;color:#C9D6E6;margin-top:2px}
+#pbNtfToast svg{width:22px;height:22px;flex:none;color:var(--cyan);margin-top:1px}
+/* Arka: pamja e vetme e arkëtares */
+body.arka > *:not(#arka):not(#gate2):not(script):not(#pbNtfToast):not(#stToast){display:none!important}
+#arka{position:fixed;inset:0;z-index:2800;background:var(--bg,#F4F6F9);overflow-y:auto}
+.akh{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;background:#0B1B2E;color:#fff}
+.akh .logo{width:20px;height:28px;flex:none;background:var(--logo) center/contain no-repeat;filter:brightness(0) invert(1)}
+.akh .bt b{display:block;font-size:16px;line-height:1.1}.akh .bt small{display:block;font-size:12px;color:#AFC0D6}
+.akh .who{margin-left:auto;text-align:right;line-height:1.25;min-width:0}
+.akh .who b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.akh .who small{display:block;font-size:12px;color:#AFC0D6}
+.akh button{min-height:36px;background:transparent;border:1px solid #3A4F6B;color:#fff;padding:0 10px}
+.akh button:hover{background:#16304F}
+.akb{max-width:880px;margin:0 auto;padding:16px 16px 40px}
+.akb h1{font-size:22px;margin:4px 0 2px}
+.aksnd{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;margin:12px 0;background:#fff;border:1px solid var(--line);font-size:13px}
+.aksnd.off{background:var(--amber-t);border-color:var(--amber-l);color:#4A3500}
+.aksnd svg{width:18px;height:18px;flex:none}
+.aksnd .sp{flex:1;min-width:180px}
+.aktabs{display:flex;gap:0;margin:16px 0 0;border-bottom:1px solid var(--line)}
+.aktabs button{background:none;color:var(--ink-2);border:0;border-bottom:3px solid transparent;margin-bottom:-1px;min-height:44px;padding:0 14px}
+.aktabs button.on{color:var(--blue-d);border-bottom-color:var(--blue)}
+.aktabs button:hover{background:var(--foam)}
+.aksearch{margin:12px 0 4px}
+.akrow{background:#fff;border:1px solid var(--line);border-left:4px solid var(--amber-l);padding:12px 14px;margin-top:10px}
+.akrow.st-pagoi{border-left-color:#7CC49A}.akrow.st-nuk_pagoi{border-left-color:#EBA197}
+.akrow.fresh{border-left-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.akrow .t{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.akrow .t b{font-size:16px}
+.akrow .dl2{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 12px;margin:10px 0 0;font-size:13px}
+.akrow .dl2 small{display:block;color:var(--mut);font-size:12px}
+.akrow .dl2 .debt{color:var(--warn);font-weight:600}
+.akrow .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.akrow .acts button{min-width:120px}
+.akrow .acts .no{background:#fff;color:var(--warn);border:1px solid #E7B4AE}
+.akrow .acts .no:hover{background:var(--err-t);border-color:var(--warn)}
+.akrow .acts .ghost{background:#fff;color:var(--ink-2);border:1px solid var(--line)}
+.akrow .acts .ghost:hover{background:var(--foam)}
+.akempty{padding:24px 14px;background:#fff;border:1px solid var(--line);margin-top:10px;color:var(--mut)}
+@media (max-width:640px){.akrow .dl2{grid-template-columns:1fr 1fr}.akh .bt small{display:none}.akrow .acts button{flex:1}}
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -495,6 +556,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
     <span><b>PikaBlu</b><small>Sistemi i menaxhimit të ujësjellësit</small></span>
   </a>
   <span class="obsbar" style="margin-left:auto">Vëzhgues: vetëm shikim</span>
+  <button type="button" id="ntfBtn" class="hide" aria-label="Njoftimet" aria-haspopup="true" aria-expanded="false"><i data-lucide="bell"></i><span class="ncount hide" id="ntfCount"></span></button>
   <div class="ab-user"><b id="abName"></b><small id="abRole"></small></div>
 </header>
 <nav class="nav" id="nav" aria-label="Menyja kryesore">
@@ -1802,6 +1864,7 @@ icons();
       '<div class="wbar"><button type="button" id="wRules2">Lexo rregullat <i data-lucide="arrow-right"></i></button></div>';
   }
   async function showWelcome(){
+    if (prof.role === "arketare" && !isAdm) return;
     const r = ROLES[prof.role] || {tasks: []};
     const nm = (prof.salutation ? prof.salutation + " " : "") + prof.full_name;
     let nd = null;
@@ -1886,10 +1949,12 @@ icons();
   const lekR = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
   const ptName = id => { const b = allRows.find(x => String(x.id) === String(id)); return b ? b.name : ""; };
   const payBadge = r => r.payment_status ? '<span class="badge pay-' + r.payment_status + '">Pagesa: ' + (PAY[r.payment_status] || r.payment_status) + "</span>" : "";
-  const payBtns = r => (r.payment_status && r.payment_status !== "pagoi" && (isAdm || canLog()) ?
+  /* Pagoi / Nuk pagoi i shënon arka. Nga harta i shënon vetëm administratori. */
+  const payAdm = () => isAdm && !window.pbObserver;
+  const payBtns = r => !payAdm() ? (r.payment_status === "ne_pritje" ? '<span class="meta">Pret konfirmimin nga arka.</span>' : "") : (r.payment_status && r.payment_status !== "pagoi" ?
     '<span class="paybar"><button type="button" class="sbtn pri" data-pay="pagoi" data-iv="' + r.id + '">Pagoi</button>' +
     (r.payment_status !== "nuk_pagoi" ? '<button type="button" class="sbtn red" data-pay="nuk_pagoi" data-iv="' + r.id + '">Nuk pagoi</button>' : '<button type="button" class="sbtn" data-pay="ne_pritje" data-iv="' + r.id + '">Në pritje</button>') + "</span>" : "") +
-    (r.payment_status === "pagoi" && (isAdm || canLog()) ? '<span class="paybar"><button type="button" class="sbtn" data-pay="ne_pritje" data-iv="' + r.id + '">Anulo konfirmimin</button></span>' : "");
+    (r.payment_status === "pagoi" ? '<span class="paybar"><button type="button" class="sbtn" data-pay="ne_pritje" data-iv="' + r.id + '">Anulo konfirmimin</button></span>' : "");
   window.pbPayBadge = payBadge; window.pbPayBtns = payBtns;
 
   async function openReport(){
@@ -2088,7 +2153,7 @@ icons();
       ((um[r.photo_path] || um[r.photo_path2]) ? '<div class="ivph">' + img(r.photo_path) + img(r.photo_path2) + "</div>" : "") +
       (r.payment_status ? '<div class="ivend ivfund"><div class="ivend-h">Përfundimi</div><div class="ivfund-r"><span>Pagesa e debisë:</span> ' + payBadge(r).replace("Pagesa: ", "") +
         (r.payment_date && r.payment_status !== "ne_pritje" ? '<span class="meta">' + esc(fmtD(r.payment_date)) + (r.payment_by ? " · " + esc(r.payment_by) : "") + "</span>" : "") + "</div>" +
-        (r.payment_status === "ne_pritje" ? '<p class="meta" style="margin:4px 0 0">Kur abonenti paguan, shtypni “Pagoi”.</p>' : "") + '<div class="ivacts">' + payBtns(r) + "</div></div>" : "") +
+        (r.payment_status === "ne_pritje" ? '<p class="meta" style="margin:4px 0 0">' + (payAdm() ? "Kur abonenti paguan, shtypni “Pagoi”." : "Arka shënon “Pagoi” ose “Nuk pagoi”. Do të merrni njoftim te kambana.") + "</p>" : "") + '<div class="ivacts">' + payBtns(r) + "</div></div>" : "") +
       '<div class="ivacts"><button type="button" class="sbtn" data-pv="' + r.id + '"><i data-lucide="file-text"></i> Procesverbali</button><button type="button" class="sbtn" data-sign="' + r.id + '"><i data-lucide="pen-line"></i> Firmo në tablet</button>' + sigStatus(r) + "</div></div>").join("") : '<p class="meta">Asnjë ndërhyrje ende.</p>');
     if (canLog()) {
       const s0 = sealOf(null, b);
@@ -2107,7 +2172,7 @@ icons();
         '<div class="row"><div><label for="ivF">Foto 1 <span class="opt-l">(opsionale)</span></label><input id="ivF" type="file" accept="image/*"></div>' +
         '<div><label for="ivF2">Foto 2 <span class="opt-l">(opsionale)</span></label><input id="ivF2" type="file" accept="image/*"></div></div>' +
         '<label class="chk" style="margin-top:8px"><input type="checkbox" id="ivSet" checked> Përditëso statusin e kontratës sipas veprimit (Prerje → Prerë, Rilidhje → Aktiv)</label>' +
-        '<p class="meta" id="ivPayBox" style="margin:10px 0 0">Pagesa e debisë regjistrohet si “Në pritje”. Përfundimin (Pagoi ose Nuk pagoi) e shënoni te ndërhyrja e ruajtur, kur të konfirmohet.</p>' +
+        '<p class="meta" id="ivPayBox" style="margin:10px 0 0">Pagesa e debisë regjistrohet si “Në pritje” dhe i shkon arkës. Kur arkëtarja shënon “Pagoi” ose “Nuk pagoi”, ju vjen njoftim te kambana.</p>' +
         '<div class="bar"><button type="button" id="ivGo">Ruaj ndërhyrjen</button></div><p class="msg" id="ivMsg"></p></div>';
     }
     box.innerHTML = h; box.dataset.pid = pid; pvLast = null;
@@ -3282,6 +3347,277 @@ window.addEventListener("DOMContentLoaded", function(){
       bar.appendChild(x); lucide.createIcons();
     }
   };
+})();
+</script>
+<script>
+/* Njoftimet me tingull dhe Arka.
+   Arkëtarja (staff_profiles.role = "arketare") sheh vetëm pagesat e debisë dhe shënon Pagoi ose Nuk pagoi.
+   Specialisti që bëri ndërhyrjen merr njoftim te kambana. Të dhënat dhe lejet: sql/arka.sql. */
+(function(){
+  const NB = $("ntfBtn"), NC = $("ntfCount");
+  const pad2 = n => String(n).padStart(2, "0");
+  const fmtD = d => (d || "").split("-").reverse().join(".");
+  const PAYL = {ne_pritje: "Në pritje", pagoi: "Pagoi", nuk_pagoi: "Nuk pagoi"};
+  let uid = null, role = null, list = [], lastId = 0, chan = null, poll = null, panel = null, ready = false;
+
+  /* Tingulli: krijohet në shfletues, pa skedarë. Shfletuesi e lejon pas prekjes së parë të faqes. */
+  let ac = null, sndOn = true;
+  try { sndOn = localStorage.getItem("pbSnd") !== "0"; } catch (e) {}
+  function actx(){
+    if (!ac) { const C = window.AudioContext || window.webkitAudioContext; if (C) { ac = new C(); ac.onstatechange = () => akSnd(); } }
+    return ac;
+  }
+  function unlock(){ const c = actx(); if (c && c.state === "suspended") c.resume().catch(() => {}); }
+  ["pointerdown", "keydown", "touchend"].forEach(ev => document.addEventListener(ev, unlock, {passive: true}));
+  function chime(force){
+    if (!sndOn && !force) return;
+    const c = actx(); if (!c) return;
+    if (c.state === "suspended") c.resume().catch(() => {});
+    const t0 = c.currentTime + 0.03;
+    [[784, 0], [1175, 0.15], [1568, 0.3]].forEach(([f, d]) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + d);
+      g.gain.exponentialRampToValueAtTime(0.32, t0 + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.5);
+      o.connect(g); g.connect(c.destination); o.start(t0 + d); o.stop(t0 + d + 0.55);
+    });
+    try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate([140, 70, 140]); } catch (e) {}
+  }
+  const sndReady = () => !!(ac && ac.state === "running");
+
+  /* Njoftimet e sistemit (kur faqja është në sfond) */
+  const canOS = () => "Notification" in window;
+  let swReg = null;
+  async function sw(){
+    if (swReg || !("serviceWorker" in navigator)) return swReg;
+    try { swReg = await navigator.serviceWorker.register("sw.js"); } catch (e) { swReg = null; }
+    return swReg;
+  }
+  async function askOS(){
+    if (!canOS()) { alert("Ky shfletues nuk i mbështet njoftimet e sistemit. Tingulli brenda faqes punon gjithsesi."); return; }
+    let p = Notification.permission;
+    if (p === "default") { try { p = await Notification.requestPermission(); } catch (e) {} }
+    if (p === "granted") await sw();
+    else if (p === "denied") alert("Njoftimet janë bllokuar për këtë faqe. Lejojini te cilësimet e shfletuesit (ikona pranë adresës).");
+    akSnd(); if (panel && !panel.classList.contains("hide")) drawPanel();
+  }
+  async function osNotify(n){
+    if (!canOS() || Notification.permission !== "granted" || !document.hidden) return;
+    const opt = {body: n.body || "", tag: "pb-" + n.id, lang: "sq"};
+    try { const r = await sw(); if (r && r.showNotification) { await r.showNotification(n.title, opt); return; } } catch (e) {}
+    try { new Notification(n.title, opt); } catch (e) {}
+  }
+
+  let tT = null;
+  function toast(n){
+    let el = $("pbNtfToast");
+    if (!el) {
+      el = document.createElement("div"); el.id = "pbNtfToast"; el.setAttribute("role", "status");
+      el.onclick = () => { el.style.display = "none"; if (role !== "arketare") openPanel(); };
+      document.body.appendChild(el);
+    }
+    el.className = "k-" + (n.kind || "info");
+    el.innerHTML = '<i data-lucide="' + (n.kind === "arka_e_re" ? "banknote" : "bell-ring") + '"></i><div><b>' + esc(n.title) + "</b>" + (n.body ? "<span>" + esc(n.body) + "</span>" : "") + "</div>";
+    el.style.display = "flex"; lucide.createIcons();
+    clearTimeout(tT); tT = setTimeout(() => { el.style.display = "none"; }, 10000);
+  }
+  function when(t){
+    const d = new Date(t), now = new Date(), y = new Date(now.getTime() - 864e5), hm = pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+    return d.toDateString() === now.toDateString() ? "Sot " + hm : d.toDateString() === y.toDateString() ? "Dje " + hm : pad2(d.getDate()) + "." + pad2(d.getMonth() + 1) + "." + d.getFullYear() + " " + hm;
+  }
+
+  function got(n, quiet){
+    if (!n || list.some(x => x.id === n.id)) return;
+    list.unshift(n); list = list.slice(0, 60); if (n.id > lastId) lastId = n.id;
+    badge();
+    if (quiet) return;
+    chime(); toast(n); osNotify(n);
+    NB.classList.remove("ring"); void NB.offsetWidth; NB.classList.add("ring");
+    if (role === "arketare") akLoad(n.intervention_id);
+    if (panel && !panel.classList.contains("hide")) drawPanel();
+  }
+  async function fetchNew(){
+    if (!uid || !ready) return;
+    const {data, error} = await sb.from("njoftimet").select("*").eq("user_id", uid).gt("id", lastId).order("id", {ascending: true}).limit(50);
+    if (!error && data) data.forEach(n => got(n));
+  }
+  function onVis(){ if (!document.hidden) fetchNew(); }
+  function stop(){
+    if (chan) { try { sb.removeChannel(chan); } catch (e) {} chan = null; }
+    clearInterval(poll); poll = null; uid = null; role = null; list = []; lastId = 0; ready = false;
+    document.removeEventListener("visibilitychange", onVis);
+    if (panel) panel.classList.add("hide");
+  }
+  async function start(u, r){
+    stop();
+    uid = u.id; role = r.role;
+    const {data, error} = await sb.from("njoftimet").select("*").eq("user_id", uid).order("id", {ascending: false}).limit(40);
+    if (uid !== u.id) return;
+    ready = !error;
+    if (error) console.warn("PikaBlu: njoftimet nuk u lexuan. Ekzekutoni sql/arka.sql te Supabase.", error.message);
+    list = data || []; lastId = list.reduce((m, x) => Math.max(m, x.id), 0);
+    NB.classList.toggle("hide", !ready || role === "arketare" || !!window.pbObserver);
+    badge();
+    if (!ready) return;
+    const un = list.filter(x => !x.read_at);
+    if (un.length && role !== "arketare") setTimeout(() => {
+      chime();
+      toast({kind: un[0].kind, title: un.length === 1 ? un[0].title : "Keni " + un.length + " njoftime të palexuara", body: un.length === 1 ? un[0].body : "I fundit: " + un[0].title});
+    }, 1500);
+    try {
+      chan = sb.channel("pb-ntf-" + uid).on("postgres_changes", {event: "INSERT", schema: "public", table: "njoftimet", filter: "user_id=eq." + uid}, p => got(p.new)).subscribe();
+    } catch (e) { chan = null; }
+    poll = setInterval(fetchNew, 20000);
+    document.addEventListener("visibilitychange", onVis);
+  }
+
+  /* Kambana dhe paneli i njoftimeve (specialisti) */
+  function badge(){
+    const n = list.filter(x => !x.read_at).length;
+    NC.textContent = n > 99 ? "99+" : String(n); NC.classList.toggle("hide", !n);
+    NB.setAttribute("aria-label", n ? "Njoftimet: " + n + " të palexuara" : "Njoftimet");
+  }
+  function permRow(){
+    if (!canOS() || Notification.permission !== "default") return "";
+    return '<div class="nperm"><span style="flex:1;min-width:170px">Lejoni njoftimet që t’ju vijnë edhe kur faqja është në sfond.</span><button type="button" class="sbtn pri" data-ntfperm>Lejo njoftimet</button></div>';
+  }
+  function drawPanel(){
+    panel.innerHTML = '<div class="nh"><b>Njoftimet</b><button type="button" class="sbtn" id="ntfX" aria-label="Mbyll njoftimet"><i data-lucide="x"></i></button></div>' + permRow() +
+      (list.length ? list.map(n => '<div class="nitem k-' + esc(n.kind) + (n.read_at ? "" : " new") + '"><b>' + esc(n.title) + "</b>" + (n.body ? "<div>" + esc(n.body) + "</div>" : "") + '<div class="meta">' + when(n.created_at) + "</div></div>").join("")
+        : '<p class="meta" style="padding:14px;margin:0">Nuk keni njoftime. Kur arka shënon “Pagoi” ose “Nuk pagoi” për ndërhyrjet tuaja, njoftimi del këtu.</p>');
+    lucide.createIcons();
+  }
+  async function openPanel(){
+    if (!panel) {
+      panel = document.createElement("div"); panel.id = "ntfPanel"; panel.className = "hide"; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "Njoftimet");
+      document.body.appendChild(panel);
+      panel.addEventListener("click", e => { if (e.target.closest("#ntfX")) closePanel(); if (e.target.closest("[data-ntfperm]")) askOS(); });
+    }
+    drawPanel(); panel.classList.remove("hide"); NB.setAttribute("aria-expanded", "true");
+    const un = list.filter(x => !x.read_at);
+    if (un.length) {
+      const at = new Date().toISOString();
+      const {error} = await sb.from("njoftimet").update({read_at: at}).eq("user_id", uid).is("read_at", null);
+      if (!error) { un.forEach(x => { x.read_at = at; }); badge(); }
+    }
+  }
+  function closePanel(){ if (panel) panel.classList.add("hide"); NB.setAttribute("aria-expanded", "false"); }
+  NB.addEventListener("click", e => { e.stopPropagation(); if (panel && !panel.classList.contains("hide")) closePanel(); else openPanel(); });
+  document.addEventListener("click", e => { if (panel && !panel.classList.contains("hide") && !e.target.closest("#ntfPanel") && !e.target.closest("#ntfBtn")) closePanel(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && panel && !panel.classList.contains("hide")) { closePanel(); NB.focus(); } });
+
+  /* Arka */
+  let ak = null, akRows = [], akTab = "pritje", akQ = "", akErr = "", akFresh = new Set(), akBusy = false;
+  function akHead(){
+    const p = window.pbProf || {};
+    return '<header class="akh"><span class="logo" aria-hidden="true"></span><div class="bt"><b>PikaBlu · Arka</b><small>Konfirmimi i pagesave të debisë</small></div>' +
+      '<div class="who"><b>' + esc((p.salutation ? p.salutation + " " : "") + (p.full_name || (me && me.email) || "")) + "</b><small>" + esc(p.title || "Arkëtare") + "</small></div>" +
+      '<button type="button" id="akOut" aria-label="Dil nga llogaria"><i data-lucide="log-out"></i> Dil</button></header>';
+  }
+  function akOpen(){
+    if (!ak) {
+      ak = document.createElement("div"); ak.id = "arka";
+      document.body.appendChild(ak);
+      ak.addEventListener("click", akClick);
+      ak.addEventListener("input", e => { if (e.target.id === "akQ") { akQ = e.target.value; akList(); } });
+    }
+    document.body.classList.add("arka");
+    try { stopGps(); } catch (e) {}
+    ak.innerHTML = akHead() + '<div class="akb"><h1>Pagesat për t’u kontrolluar</h1>' +
+      '<p class="meta">Kur specialisti regjistron paralajmërim, kontroll ose prerje me debi, pagesa del këtu. Kontrolloni në arkë dhe shtypni <b>Pagoi</b> ose <b>Nuk pagoi</b>. Specialisti njoftohet menjëherë.</p>' +
+      '<div id="akSnd"></div><div id="akStats"></div>' +
+      '<div class="aktabs" role="tablist"><button type="button" role="tab" data-aktab="pritje"></button><button type="button" role="tab" data-aktab="shenuar"></button></div>' +
+      '<div class="aksearch"><input id="akQ" type="search" placeholder="Kërko sipas emrit, kontratës ose specialistit" aria-label="Kërko pagesat"></div>' +
+      '<div id="akList"><p class="meta">Duke ngarkuar…</p></div></div>';
+    lucide.createIcons(); akSnd(); akLoad();
+  }
+  function akClose(){ document.body.classList.remove("arka"); if (ak) { ak.remove(); ak = null; } akRows = []; akFresh.clear(); akQ = ""; akTab = "pritje"; }
+  function akSnd(){
+    const el = $("akSnd"); if (!el) return;
+    const os = canOS() && Notification.permission === "default" ? '<button type="button" class="sbtn" data-ntfperm>Lejo njoftimet në sfond</button>' : "";
+    let h;
+    if (!sndOn) h = '<div class="aksnd off"><i data-lucide="volume-x"></i><span class="sp">Tingulli i njoftimeve është i fikur.</span><button type="button" class="sbtn pri" data-snd="on">Ndiz tingullin</button>' + os + "</div>";
+    else if (!sndReady()) h = '<div class="aksnd off"><i data-lucide="volume-1"></i><span class="sp">Shtypni “Aktivizo tingullin” që shfletuesi të lejojë tingullin kur vjen një pagesë e re.</span><button type="button" class="sbtn pri" data-snd="test">Aktivizo tingullin</button>' + os + "</div>";
+    else h = '<div class="aksnd"><i data-lucide="volume-2" style="color:var(--ok)"></i><span class="sp">Njoftimet me tingull janë aktive. Mbajeni këtë faqe të hapur.</span><button type="button" class="sbtn" data-snd="test">Provo tingullin</button><button type="button" class="sbtn" data-snd="off">Fik tingullin</button>' + os + "</div>";
+    el.innerHTML = h; lucide.createIcons();
+  }
+  async function akLoad(freshId){
+    if (!ak) return;
+    if (freshId) { akFresh.add(String(freshId)); akTab = "pritje"; }
+    const {data, error} = await sb.rpc("arka_lista");
+    if (!ak) return;
+    akErr = error ? "Lista e arkës nuk u lexua. Administratori duhet të ekzekutojë sql/arka.sql te Supabase." : "";
+    if (error) console.warn("PikaBlu arka:", error.message);
+    akRows = data || [];
+    akStats(); akList();
+    if (ready && uid && document.visibilityState === "visible") sb.from("njoftimet").update({read_at: new Date().toISOString()}).eq("user_id", uid).is("read_at", null).then(() => {}, () => {});
+  }
+  function akStats(){
+    const el = $("akStats"); if (!el) return;
+    const td = (() => { const d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); })();
+    const pend = akRows.filter(r => r.payment_status === "ne_pritje");
+    const sum = pend.reduce((t, r) => t + (Number(r.debt_amount) || 0), 0);
+    const st = (n, t, c) => '<div class="wstat"><b' + (c ? ' class="' + c + '"' : "") + ">" + n + "</b><span>" + t + "</span></div>";
+    el.innerHTML = '<div class="wgrid g4">' + st(pend.length, "Në pritje", "c-am") + st(akRows.filter(r => r.payment_status === "pagoi" && r.payment_date === td).length, "Pagoi sot", "c-ok") +
+      st(akRows.filter(r => r.payment_status === "nuk_pagoi" && r.payment_date === td).length, "Nuk pagoi sot", "c-err") + st(sum ? lekF(sum) : "0", "Debia në pritje") + "</div>";
+    const tb = ak.querySelectorAll("[data-aktab]");
+    tb[0].textContent = "Në pritje (" + pend.length + ")"; tb[1].textContent = "Të shënuara (60 ditët e fundit)";
+    tb.forEach(b => { const on = b.getAttribute("data-aktab") === akTab; b.classList.toggle("on", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+  }
+  function akList(){
+    const el = $("akList"); if (!el) return;
+    if (akErr) { el.innerHTML = '<p class="msg err">' + esc(akErr) + "</p>"; return; }
+    const q = akQ.trim().toLowerCase();
+    let rows = akRows.filter(r => akTab === "pritje" ? r.payment_status === "ne_pritje" : r.payment_status !== "ne_pritje");
+    if (akTab !== "pritje") rows = rows.slice().sort((a, b) => String(b.payment_date || "").localeCompare(String(a.payment_date || "")));
+    if (q) rows = rows.filter(r => [r.subscriber_name, r.contract_no, r.specialist].some(v => String(v || "").toLowerCase().indexOf(q) >= 0));
+    if (!rows.length) { el.innerHTML = '<div class="akempty">' + (q ? "Asnjë rezultat për këtë kërkim." : akTab === "pritje" ? "Asnjë pagesë në pritje. Kur specialisti regjistron një ndërhyrje me debi, ju vjen njoftim me tingull." : "Asnjë pagesë e shënuar në 60 ditët e fundit.") + "</div>"; return; }
+    el.innerHTML = rows.map(r => {
+      const s = r.payment_status, id = esc(r.id);
+      const acts = s === "ne_pritje" ? '<button type="button" data-ak="pagoi" data-id="' + id + '"><i data-lucide="check"></i> Pagoi</button><button type="button" class="no" data-ak="nuk_pagoi" data-id="' + id + '"><i data-lucide="x"></i> Nuk pagoi</button>'
+        : s === "nuk_pagoi" ? '<button type="button" data-ak="pagoi" data-id="' + id + '"><i data-lucide="check"></i> Pagoi tani</button><button type="button" class="ghost" data-ak="ne_pritje" data-id="' + id + '">Kthe në pritje</button>'
+        : '<button type="button" class="ghost" data-ak="ne_pritje" data-id="' + id + '">Kthe në pritje</button>';
+      return '<div class="akrow st-' + esc(s) + (akFresh.has(String(r.id)) && s === "ne_pritje" ? " fresh" : "") + '">' +
+        '<div class="t"><b>' + esc(r.subscriber_name || "Abonent pa emër") + '</b><span class="badge pay-' + esc(s) + '">' + (PAYL[s] || esc(s)) + "</span>" + (akFresh.has(String(r.id)) && s === "ne_pritje" ? '<span class="badge" style="background:var(--blue);color:#fff;border-color:var(--blue)">E re</span>' : "") + "</div>" +
+        '<div class="dl2"><div><small>Kontrata</small>' + esc(r.contract_no || "–") + '</div><div><small>Debia</small><span class="debt">' + (r.debt_amount != null ? lekF(r.debt_amount) : "–") + "</span></div>" +
+        "<div><small>Veprimi</small>" + esc(r.action || "–") + " · " + esc(fmtD(r.check_date)) + "</div><div><small>Specialisti</small>" + esc(r.specialist || "–") + "</div></div>" +
+        (s !== "ne_pritje" && r.payment_date ? '<p class="meta" style="margin:8px 0 0">Shënuar më ' + esc(fmtD(r.payment_date)) + (r.payment_by ? " nga " + esc(r.payment_by) : "") + "</p>" : "") +
+        '<div class="acts">' + acts + "</div></div>";
+    }).join("");
+    lucide.createIcons();
+  }
+  async function akClick(e){
+    if (e.target.closest("#akOut")) { $("out").click(); return; }
+    const tb = e.target.closest("[data-aktab]"); if (tb) { akTab = tb.getAttribute("data-aktab"); akStats(); akList(); return; }
+    if (e.target.closest("[data-ntfperm]")) { askOS(); return; }
+    const sb2 = e.target.closest("[data-snd]");
+    if (sb2) {
+      const k = sb2.getAttribute("data-snd");
+      if (k === "off") sndOn = false; else { sndOn = true; unlock(); chime(true); }
+      try { localStorage.setItem("pbSnd", sndOn ? "1" : "0"); } catch (x) {}
+      setTimeout(akSnd, 120); return;
+    }
+    const b = e.target.closest("[data-ak]"); if (!b || akBusy) return;
+    const st = b.getAttribute("data-ak"), id = b.getAttribute("data-id"), r = akRows.find(x => String(x.id) === id); if (!r) return;
+    const nm = r.subscriber_name || "abonentin";
+    if (st === "nuk_pagoi" && !confirm("Ta shënoj “Nuk pagoi” për " + nm + "?\nSpecialisti " + (r.specialist || "") + " do të njoftohet.")) return;
+    if (st === "ne_pritje" && !confirm("Ta kthej në pritje pagesën e " + nm + "?")) return;
+    akBusy = true; b.disabled = true;
+    const {error} = await sb.rpc("arka_pagesa", {p_id: id, p_status: st});
+    akBusy = false;
+    if (error) { b.disabled = false; alert("Nuk u ruajt: " + error.message); return; }
+    akFresh.delete(id);
+    toast({kind: st, title: st === "pagoi" ? nm + ": Pagoi" : st === "nuk_pagoi" ? nm + ": Nuk pagoi" : nm + ": u kthye në pritje", body: st === "ne_pritje" ? "" : "Specialisti u njoftua."});
+    akLoad();
+  }
+
+  window.addEventListener("pbprofile", e => {
+    const r = e.detail;
+    if (!r || !me) { stop(); akClose(); NB.classList.add("hide"); return; }
+    if (r.role === "arketare" && !r.adm) akOpen(); else akClose();
+    start(me, r).catch(err => console.warn("PikaBlu njoftimet:", err));
+  });
 })();
 </script>
 </body>
