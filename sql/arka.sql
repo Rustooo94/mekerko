@@ -63,10 +63,10 @@ drop policy if exists "arketare pa ndryshim profili" on public.staff_profiles;
 create policy "arketare pa ndryshim profili" on public.staff_profiles as restrictive for update to authenticated
   using (not public.is_arketare());
 
--- Skedarët (foto, video, PDF): asnjë akses për arkëtaren.
+-- Skedarët (foto, video, PDF): asnjë akses për arkëtaren, përveç tutorialit të saj.
 drop policy if exists "arketare pa skedare" on storage.objects;
 create policy "arketare pa skedare" on storage.objects as restrictive for select to authenticated
-  using (not public.is_arketare());
+  using (not public.is_arketare() or bucket_id = 'tutorialet');
 drop policy if exists "arketare pa ngarkim" on storage.objects;
 create policy "arketare pa ngarkim" on storage.objects as restrictive for insert to authenticated
   with check (not public.is_arketare());
