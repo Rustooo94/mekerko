@@ -496,6 +496,12 @@ body.arka #tutPage{top:0;left:0}
 .mvpin::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;background:#fff;border-radius:50%}
 body.moving .pane,body.moving #addBtn{visibility:hidden}
 @media (min-width:1024px){#movebar{left:calc(var(--panew) + 16px);right:16px;max-width:680px;margin:0 auto}body.moving .pane{visibility:visible}}
+/* Numri i kateve te pallati */
+.flrs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.flrs button{min-width:46px;min-height:40px;padding:0 10px;background:#fff;color:var(--ink);border:1px solid #9AA7B6;font-size:15px}
+.flrs button:hover{background:var(--foam);border-color:var(--ink-2)}
+.flrs button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.flrs input{width:96px;min-height:40px}
 /* Small screens */
 @media (max-width:560px){
   .ab-user{display:none}
@@ -686,6 +692,8 @@ body.moving .pane,body.moving #addBtn{visibility:hidden}
     <h2 id="ftitle">Shto pikë</h2>
     <label for="n">Emri</label><input id="n" maxlength="80">
     <div class="row"><div><label for="catMain">Kategoria</label><select id="catMain"></select></div><div><label for="catSub">Nënkategoria</label><select id="catSub"></select></div></div>
+    <div id="floorBox" class="hide"><label>Numri i kateve të pallatit</label><div class="flrs" role="radiogroup" aria-label="Numri i kateve">
+      <button type="button" data-flr="2">2</button><button type="button" data-flr="3">3</button><button type="button" data-flr="4">4</button><button type="button" data-flr="5">5</button><button type="button" data-flr="6">6</button><input id="flrX" type="number" min="1" max="40" inputmode="numeric" placeholder="Tjetër" aria-label="Numër tjetër katesh"></div></div>
     <div id="multiNote" class="upbox hide" style="margin:10px 0 0;padding:10px 12px"><label class="chk"><input type="checkbox" id="ownData"> Kjo pikë ka edhe të dhënat e veta (kontratë, matës, vulë)</label><p class="meta" style="margin:4px 0 0">Për pallatet dhe kolektorët, kontrata, matësi dhe statusi shtohen te çdo abonent, brenda pikës.</p></div>
     <div id="ownFields">
     <div class="row" style="margin-top:10px"><div><label for="cst">Statusi i kontratës</label><select id="cst"><option value="">– Zgjidh –</option><option value="aktiv">Aktiv</option><option value="pasiv">Pasiv</option><option value="prere">Prerë</option></select></div>
@@ -782,7 +790,7 @@ function matchFilter(b){
   return !subFilter || cs.indexOf(subFilter) >= 0 || (subFilter === "Shtëpi private" && cs.indexOf("Familje") >= 0) || (subFilter === "Guest house / Bujtinë" && cs.indexOf("Guest house") >= 0) || (subFilter === "Institucione të tjera" && cs.indexOf("Institucion") >= 0 && cs.length === 1);
 }
 function badges(b){
-  return shownCats(b).map(c => '<span class="badge">' + esc(c) + "</span>").join("") +
+  return shownCats(b).map(c => '<span class="badge">' + esc(c) + "</span>").join("") + (b.floors ? '<span class="badge">' + b.floors + (b.floors === 1 ? " kat" : " kate") + "</span>" : "") +
     (b.contract_no ? '<span class="badge">Kontratë: ' + esc(b.contract_no) + "</span>" : "") +
     (b.meter_no ? '<span class="badge">Matës: ' + esc(b.meter_no) + "</span>" : "") +
     (b.debtor ? '<span class="badge red">Debitor</span>' : "") + (stOf(b) === "prere" ? '<span class="badge dark">Prerë</span>' : stOf(b) === "pasiv" ? '<span class="badge dark">Pasiv</span>' : "");
@@ -913,7 +921,18 @@ function syncOwn(){
   $("fLbl").textContent = cas ? "Foto e hyrjes së pallatit (opsionale)" : "Foto e pikës (ndërtesa ose kolektori, opsionale)";
   $("multiNote").classList.toggle("hide", !multi);
   $("ownFields").classList.toggle("hide", multi && !$("ownData").checked);
+  $("floorBox").classList.toggle("hide", !isPallat());
 }
+/* Numri i kateve: vetëm për pallatet */
+let floors = null;
+function isPallat(){ const s = $("catSub").value; return $("catMain").value === "Banesa" && (s === "Pallat" || s === "Pallat me kasetë të përbashkët"); }
+function setFloors(n){
+  floors = n && n > 0 ? Math.min(40, Math.round(n)) : null;
+  document.querySelectorAll("[data-flr]").forEach(b => { const on = +b.getAttribute("data-flr") === floors; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+  $("flrX").value = floors && !document.querySelector('[data-flr="' + floors + '"]') ? floors : "";
+}
+document.querySelectorAll("[data-flr]").forEach(b => b.onclick = () => { const n = +b.getAttribute("data-flr"); setFloors(floors === n ? null : n); });
+$("flrX").addEventListener("input", () => { const n = parseInt($("flrX").value, 10); floors = n > 0 ? Math.min(40, n) : null; document.querySelectorAll("[data-flr]").forEach(b => { b.classList.toggle("on", +b.getAttribute("data-flr") === floors && !$("flrX").value); }); });
 $("catMain").addEventListener("change", () => { fillSub($("catMain").value, ""); syncOwn(); });
 $("catSub").addEventListener("change", syncOwn);
 $("ownData").addEventListener("change", syncOwn);
@@ -925,7 +944,7 @@ function openForm(b){
   $("fhint").textContent = b && b.photo_path ? "Lëre bosh për të mbajtur foton aktuale." : "";
   buildCats(b ? cats(b) : []);
   $("ownData").checked = !!(b && (b.contract_no || b.phone || b.meter_no || b.seal_no || b.debtor || b.is_cut || b.contract_status));
-  $("f2").value = ""; $("fhint2").textContent = b && b.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : ""; syncOwn();
+  $("f2").value = ""; $("fhint2").textContent = b && b.meter_photo_path ? "Lëre bosh për të mbajtur foton aktuale." : ""; setFloors(b ? b.floors : null); syncOwn();
   if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
   picked = b ? {lat: b.lat, lng: b.lng} : null;
   $("coords").textContent = b ? "Pika aktuale: " + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) : "Pika nuk është zgjedhur.";
@@ -1143,15 +1162,20 @@ $("add").onclick = async () => {
       if (old && (old.meter_no || old.seal_no)) { fields.meter_no = ""; fields.seal_no = ""; } else { delete fields.meter_no; delete fields.seal_no; }
     }
     if (newCas) fields.meter_photo_path = cas_path;
+    if (isPallat() ? floors : (old && old.floors)) fields.floors = isPallat() ? floors : null;
+    let flWarn = "";
+    const noFloors = err => err && /floors/.test(err.message || "") && "floors" in fields;
     if (editingId) {
-      const {data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select();
+      let {data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select();
+      if (noFloors(error)) { delete fields.floors; flWarn = "1"; ({data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select()); }
       if (error) throw new Error(error.message);
       if (!data || !data.length) throw new Error("Nuk ke leje ta ndryshosh këtë pikë.");
       if (newPhoto && old && old.photo_path) await sb.storage.from("photos").remove([old.photo_path]);
       if (newCas && old && old.meter_photo_path) await sb.storage.from("photos").remove([old.meter_photo_path]);
     } else {
       fields.owner = me.id; fields.owner_name = (me.user_metadata && me.user_metadata.username) || me.email;
-      const {error} = await sb.from("businesses").insert(fields);
+      let {error} = await sb.from("businesses").insert(fields);
+      if (noFloors(error)) { delete fields.floors; flWarn = "1"; ({error} = await sb.from("businesses").insert(fields)); }
       if (error) throw new Error(error.message);
     }
     const id = editingId;
@@ -1159,6 +1183,7 @@ $("add").onclick = async () => {
     if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
     await load();
     if (id) openDetail(id);
+    if (flWarn) alert("Pika u ruajt, por numri i kateve jo: administratori duhet të ekzekutojë sql/katet.sql te Supabase.");
   } catch (e) { say("msg", "S’u ruajt: " + e.message, true); }
   $("add").disabled = false;
 };
