@@ -381,6 +381,7 @@ body.klient #ivBox,body.klient #debtBtn,body.klient #defBtn,body.klient .dbanner
 .badge.pay-pagoi{background:var(--ok-t);color:var(--ok);border-color:#B8DCC6}
 .badge.pay-ne_pritje{background:var(--amber-t);color:var(--amber);border-color:var(--amber-l)}
 .badge.pay-nuk_pagoi{background:var(--err-t);color:var(--warn);border-color:#EBC0BA}
+.badge.pay-pjeserisht{background:var(--blue-t);color:var(--blue-d);border-color:var(--blue-t2)}
 #ivPayBox{margin-top:2px}
 /* Procesverbali dhe vulat */
 .ivph{display:flex;gap:6px;margin-top:8px}
@@ -467,6 +468,21 @@ body.arka > *:not(#arka):not(#gate2):not(script):not(#pbNtfToast):not(#stToast):
 .akrow .acts .no:hover{background:var(--err-t);border-color:var(--warn)}
 .akrow .acts .ghost{background:#fff;color:var(--ink-2);border:1px solid var(--line)}
 .akrow .acts .ghost:hover{background:var(--foam)}
+.akrow .acts .pt{background:#fff;color:var(--blue-d);border:1px solid var(--blue-t2)}
+.akrow .acts .pt:hover{background:var(--blue-t);border-color:var(--blue)}
+.akrow.st-pjeserisht{border-left-color:var(--blue-t2)}
+.akpaid{margin:8px 0 0;font-size:14px;color:var(--blue-d)}
+.akpart{margin-top:12px;padding:12px 14px;background:var(--blue-t);border:1px solid var(--blue-t2)}
+.akpart b{display:block;font-size:14.5px}
+.akpart .lb{font-size:12.5px;color:var(--ink-2);margin:10px 0 4px}
+.akpart .invs{display:flex;flex-wrap:wrap;gap:6px}
+.akpart .invs button{min-width:44px;min-height:40px;padding:0 8px;background:#fff;color:var(--ink);border:1px solid #9AA7B6}
+.akpart .invs button:hover,.akpart .invs button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.akpart .amt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.akpart .amt input{width:160px;min-height:40px}
+.akpart .ghost{background:#fff;color:var(--ink-2);border:1px solid var(--line)}
+.akpart .ghost:hover{background:var(--foam)}
+.akrow .acts button{white-space:nowrap}
 .akempty{padding:24px 14px;background:#fff;border:1px solid var(--line);margin-top:10px;color:var(--mut)}
 @media (max-width:640px){.akrow .dl2{grid-template-columns:1fr 1fr}.akh .bt small{display:none}.akrow .acts button{flex:1}}
 /* Tutorialet me video */
@@ -496,6 +512,10 @@ body.arka #tutPage{top:0;left:0}
 .mvpin::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;background:#fff;border-radius:50%}
 body.moving .pane,body.moving #addBtn{visibility:hidden}
 @media (min-width:1024px){#movebar{left:calc(var(--panew) + 16px);right:16px;max-width:680px;margin:0 auto}body.moving .pane{visibility:visible}}
+/* Kodi i pikës */
+.badge.code{background:var(--ink);color:#fff;border-color:var(--ink);letter-spacing:.02em}
+#pcode.bad{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn)}
+#pcodeHint .sbtn{min-height:28px;margin-left:6px}
 /* Numri i kateve te pallati */
 .flrs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .flrs button{min-width:46px;min-height:40px;padding:0 10px;background:#fff;color:var(--ink);border:1px solid #9AA7B6;font-size:15px}
@@ -842,7 +862,7 @@ function filterRows(){
   rows = allRows.filter(b => {
     if (!matchFilter(b)) return false;
     if (!t) return true;
-    return [b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone, b.meter_no, b.seal_no].join(" ").toLowerCase().includes(t);
+    return [b.code, b.name, cats(b).join(" "), b.note, b.owner_name, b.contract_no, b.phone, b.meter_no, b.seal_no].join(" ").toLowerCase().includes(t);
   });
   render(!!t);
 }
@@ -1131,6 +1151,8 @@ $("add").onclick = async () => {
   if (!name) return say("msg", "Shkruaj emrin.", true);
   if (!cs.length) return say("msg", "Zgjidh të paktën një kategori.", true);
   if (!picked) return say("msg", "Zgjidh një pikë: vendndodhjen tënde ose në hartë.", true);
+  const pc = window.pbCodeCheck ? window.pbCodeCheck() : {ok: true, code: ""};
+  if (!pc.ok) { $("pcode").focus(); return say("msg", pc.code + " është i zënë. Përdor " + pc.sug + " ose një kod tjetër të lirë.", true); }
   $("add").disabled = true; say("msg", "Duke ruajtur…");
   try {
     const old = editingId ? allRows.find(x => x.id === editingId) : null;
@@ -1163,11 +1185,18 @@ $("add").onclick = async () => {
     }
     if (newCas) fields.meter_photo_path = cas_path;
     if (isPallat() ? floors : (old && old.floors)) fields.floors = isPallat() ? floors : null;
+    if (pc.code || (old && old.code)) fields.code = pc.code || null;
     let flWarn = "";
-    const noFloors = err => err && /floors/.test(err.message || "") && "floors" in fields;
+    const noFloors = err => {
+      if (!err) return false;
+      if (/duplicate|unique|23505/i.test((err.message || "") + (err.code || "")) && fields.code) throw new Error(fields.code + " sapo u zu nga dikush tjetër. Provo " + (window.pbCodeSuggest ? window.pbCodeSuggest() : "një kod tjetër") + ".");
+      if (/\bcode\b/.test(err.message || "") && "code" in fields) { delete fields.code; flWarn = "1"; return true; }
+      if (/floors/.test(err.message || "") && "floors" in fields) { delete fields.floors; flWarn = "1"; return true; }
+      return false;
+    };
     if (editingId) {
       let {data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select();
-      if (noFloors(error)) { delete fields.floors; flWarn = "1"; ({data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select()); }
+      for (let k = 0; k < 2 && noFloors(error); k++) ({data, error} = await sb.from("businesses").update(fields).eq("id", editingId).select());
       if (error) throw new Error(error.message);
       if (!data || !data.length) throw new Error("Nuk ke leje ta ndryshosh këtë pikë.");
       if (newPhoto && old && old.photo_path) await sb.storage.from("photos").remove([old.photo_path]);
@@ -1175,7 +1204,7 @@ $("add").onclick = async () => {
     } else {
       fields.owner = me.id; fields.owner_name = (me.user_metadata && me.user_metadata.username) || me.email;
       let {error} = await sb.from("businesses").insert(fields);
-      if (noFloors(error)) { delete fields.floors; flWarn = "1"; ({error} = await sb.from("businesses").insert(fields)); }
+      for (let k = 0; k < 2 && noFloors(error); k++) ({error} = await sb.from("businesses").insert(fields));
       if (error) throw new Error(error.message);
     }
     const id = editingId;
@@ -1183,7 +1212,7 @@ $("add").onclick = async () => {
     if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
     await load();
     if (id) openDetail(id);
-    if (flWarn) alert("Pika u ruajt, por numri i kateve jo: administratori duhet të ekzekutojë sql/katet.sql te Supabase.");
+    if (flWarn) alert("Pika u ruajt, por kodi i pikës ose numri i kateve jo: administratori duhet të ekzekutojë sql/katet.sql dhe sql/kodet.sql te Supabase.");
   } catch (e) { say("msg", "S’u ruajt: " + e.message, true); }
   $("add").disabled = false;
 };
@@ -1776,8 +1805,41 @@ icons();
     '<button id="zNew" type="button">Krijo</button></div></div>' +
     '<p class="msg" id="zMsg"></p></div>';
   document.body.appendChild(ov);
-  $("t").insertAdjacentHTML("afterend", '<label for="zSel">Zona</label><select id="zSel"></select>');
+  /* Zona zgjidhet e para; kodi i pikës (PB-Zona-0001) plotësohet vetë me numrin e lirë më të afërt */
+  $("ftitle").insertAdjacentHTML("afterend", '<div class="row"><div><label for="zSel">Zona</label><select id="zSel"></select></div>' +
+    '<div><label for="pcode">Kodi i pikës</label><input id="pcode" maxlength="40" autocomplete="off" spellcheck="false"></div></div><p class="meta" id="pcodeHint" style="margin:4px 0 0"></p>');
   lucide.createIcons();
+  const slug = s => String(s || "").trim().replace(/\s+/g, "-").replace(/[^0-9A-Za-zÀ-ɏ-]/g, "");
+  const cnorm = c => String(c || "").trim().toUpperCase();
+  const cfmt = (p, n) => p + String(n).padStart(4, "0");
+  let codeAuto = true, codeFor = null;
+  function cprefix(){ const v = $("zSel").value, z = v ? zones.find(x => x.id === +v) : null; return "PB-" + (z ? slug(z.name) + "-" : ""); }
+  function ctaken(code){ const k = cnorm(code); return !!k && allRows.some(b => b.code && cnorm(b.code) === k && b.id !== codeFor); }
+  function cnearest(p, from){
+    if (!from) { for (let n = 1; n < 100000; n++) if (!ctaken(cfmt(p, n))) return cfmt(p, n); }
+    for (let d = 1; d < 100000; d++) for (const n of [from + d, from - d]) if (n >= 1 && !ctaken(cfmt(p, n))) return cfmt(p, n);
+    return "";
+  }
+  function cparse(code){ const m = String(code || "").trim().match(/^(.*?)(\d+)$/); return m ? {p: m[1], n: +m[2]} : null; }
+  function ccheck(){
+    const el = $("pcode"), h = $("pcodeHint"), code = el.value.trim();
+    el.classList.remove("bad");
+    if (!code) { h.className = "meta"; h.textContent = "Kodi plotësohet vetë sipas zonës."; return {ok: true, code: ""}; }
+    if (ctaken(code)) {
+      const pr = cparse(code), sug = pr ? cnearest(pr.p, pr.n) : cnearest(cprefix(), 0);
+      el.classList.add("bad"); h.className = "msg err";
+      h.innerHTML = esc(code) + " është i zënë. Më i afërti i lirë: <b>" + esc(sug) + '</b> <button type="button" class="sbtn" data-usecode="' + esc(sug) + '">Përdor këtë</button>';
+      return {ok: false, code, sug};
+    }
+    h.className = "meta"; h.textContent = "Kodi " + code + " është i lirë.";
+    return {ok: true, code};
+  }
+  function cauto(){ if (!codeAuto) return; $("pcode").value = cnearest(cprefix(), 0); ccheck(); }
+  $("zSel").addEventListener("change", () => { const cur = $("pcode").value.trim(); if (!cur || codeAuto || !cur.toUpperCase().startsWith(cprefix().toUpperCase())) { codeAuto = true; cauto(); } else ccheck(); });
+  $("pcode").addEventListener("input", () => { codeAuto = false; ccheck(); });
+  $("pcodeHint").addEventListener("click", e => { const b = e.target.closest("[data-usecode]"); if (b) { $("pcode").value = b.getAttribute("data-usecode"); ccheck(); } });
+  window.pbCodeCheck = ccheck;
+  window.pbCodeSuggest = () => { const c = $("pcode").value.trim(), pr = cparse(c); return pr ? cnearest(pr.p, pr.n) : cnearest(cprefix(), 0); };
 
   function fillSel(){
     const o = g => zones.filter(z => z.kind === g).map(z => '<option value="' + z.id + '">' + esc(z.name) + "</option>").join("");
@@ -1824,9 +1886,13 @@ icons();
     try { pf(); } finally { allRows = full; }
   };
   const ob = badges;
-  badges = function(b){ return ob(b) + (b.zone_id && zname(b.zone_id) ? '<span class="badge">Zona: ' + esc(zname(b.zone_id)) + "</span>" : ""); };
+  badges = function(b){ return (b.code ? '<span class="badge code">' + esc(b.code) + "</span>" : "") + ob(b) + (b.zone_id && zname(b.zone_id) ? '<span class="badge">Zona: ' + esc(zname(b.zone_id)) + "</span>" : ""); };
   const oo = openForm;
-  openForm = function(b){ oo(b); $("zSel").value = b ? (b.zone_id || "") : (typeof activeZone === "number" ? activeZone : ""); };
+  openForm = function(b){
+    oo(b); $("zSel").value = b ? (b.zone_id || "") : (typeof activeZone === "number" ? activeZone : "");
+    codeFor = b ? b.id : null; $("pcode").value = b && b.code ? b.code : ""; codeAuto = !(b && b.code);
+    if (codeAuto) cauto(); else ccheck();
+  };
   const of = sb.from.bind(sb);
   sb.from = function(t){
     const q = of(t);
@@ -1998,14 +2064,17 @@ icons();
   sb.auth.getSession().then(({data}) => { if (data.session) startProfile(data.session.user); });
   sb.auth.onAuthStateChange((_e, s) => { setTimeout(() => { if (s) startProfile(s.user); if (!s) { profFor = null; shown = false; prof = null; isAdm = false; ov.classList.add("hide"); rp.classList.add("hide"); tk.classList.add("hide"); btn.classList.add("hide"); window.pbRole = null; window.dispatchEvent(new CustomEvent("pbprofile", {detail: null})); applyLimits(); } }, 0); });
 
-  const PAY = {ne_pritje: "Në pritje", pagoi: "Pagoi", nuk_pagoi: "Nuk pagoi"};
+  const PAY = {ne_pritje: "Në pritje", pagoi: "Pagoi", pjeserisht: "Pagoi pjesërisht", nuk_pagoi: "Nuk pagoi"};
+  /* Sasia e paguar te pagesa e pjesshme: fatura ose lekë */
+  const paidPart = r => r && r.payment_status === "pjeserisht" ? (r.paid_invoices ? r.paid_invoices + (r.paid_invoices == 1 ? " faturë" : " fatura") : r.paid_amount != null ? lekR(Number(r.paid_amount)) : "") : "";
+  window.pbPaidPart = paidPart;
   const PAY_ACTS = ["Kontroll", "Paralajmërim", "Prerje"];
   const DSTAT = {e_re: "E re", ne_pune: "Në punë", rregulluar: "E rregulluar"};
   const fmtD = d => (d || "").split("-").reverse().join(".");
   const hm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
   const lekR = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lekë";
   const ptName = id => { const b = allRows.find(x => String(x.id) === String(id)); return b ? b.name : ""; };
-  const payBadge = r => r.payment_status ? '<span class="badge pay-' + r.payment_status + '">Pagesa: ' + (PAY[r.payment_status] || r.payment_status) + "</span>" : "";
+  const payBadge = r => r.payment_status ? '<span class="badge pay-' + r.payment_status + '">Pagesa: ' + (PAY[r.payment_status] || r.payment_status) + (paidPart(r) ? " · " + paidPart(r) : "") + "</span>" : "";
   /* Pagoi / Nuk pagoi i shënon arka. Nga harta i shënon vetëm administratori. */
   const payAdm = () => isAdm && !window.pbObserver;
   const payBtns = r => !payAdm() ? (r.payment_status === "ne_pritje" ? '<span class="meta">Pret konfirmimin nga arka.</span>' : "") : (r.payment_status && r.payment_status !== "pagoi" ?
@@ -2045,7 +2114,7 @@ icons();
     const stat = (n, t, cls) => '<div class="wstat"><b' + (cls ? ' class="' + cls + '"' : "") + ">" + n + "</b><span>" + t + "</span></div>";
     let h = '<h3 class="rh">Ndërhyrjet e stafit · ' + fmtD(day) + "</h3>" +
       '<div class="wgrid g4">' + ACTIONS.map(a => stat(cnt[a], a)).join("") + "</div>" +
-      '<div class="wgrid g4">' + stat(pc("pagoi"), "Pagoi", "c-ok") + stat(pc("ne_pritje"), "Në pritje të pagesës", "c-am") + stat(pc("nuk_pagoi"), "Nuk pagoi", "c-err") + stat(debtSum ? lekR(debtSum) : "0", "Borxhi i kontrolluar") + "</div>" +
+      '<div class="wgrid g4">' + stat(pc("pagoi") + (pc("pjeserisht") ? " + " + pc("pjeserisht") : ""), pc("pjeserisht") ? "Pagoi + pjesërisht" : "Pagoi", "c-ok") + stat(pc("ne_pritje"), "Në pritje të pagesës", "c-am") + stat(pc("nuk_pagoi"), "Nuk pagoi", "c-err") + stat(debtSum ? lekR(debtSum) : "0", "Borxhi i kontrolluar") + "</div>" +
       (cutSum ? '<p class="meta" style="margin:-4px 0 10px">Borxhi i abonentëve të prerë: <b>' + lekR(cutSum) + "</b></p>" : "") +
       (repRows.length ? repRows.map(r => '<div class="drow"><b>' + esc(r.action) + " · " + esc(r.subscriber_name || ptName(r.point_id) || "–") + "</b> " + payBadge(r) +
         '<div class="meta">' + esc(ptName(r.point_id) || "–") + (r.contract_no ? " · Kontratë: " + esc(r.contract_no) : "") + (r.staff_name ? " · " + esc(r.staff_name) : "") + (r.created_name ? " · regjistroi " + esc(r.created_name) : "") + "</div>" +
@@ -2071,7 +2140,7 @@ icons();
     $("rBody").className = ""; $("rBody").innerHTML = h;
     lucide.createIcons();
   }
-  function ivRow(r){ return {"Data": fmtD(r.check_date), "Veprimi": r.action, "Pika": ptName(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Debi (lekë)": r.debt_amount != null ? Number(r.debt_amount) : "", "Pagesa": PAY[r.payment_status] || "", "Konfirmuar më": fmtD(r.payment_date), "Konfirmoi": r.payment_by || "", "Vula e vjetër": r.old_seal || "", "Vula e re": r.new_seal || "", "Nr. procesverbali": "PV-" + r.id, "Stafi shoqërues": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""}; }
+  function ivRow(r){ return {"Data": fmtD(r.check_date), "Veprimi": r.action, "Pika": ptName(r.point_id), "Abonenti": r.subscriber_name || "", "Kontrata": r.contract_no || "", "Debi (lekë)": r.debt_amount != null ? Number(r.debt_amount) : "", "Pagesa": (PAY[r.payment_status] || "") + (paidPart(r) ? " · " + paidPart(r) : ""), "Konfirmuar më": fmtD(r.payment_date), "Konfirmoi": r.payment_by || "", "Vula e vjetër": r.old_seal || "", "Vula e re": r.new_seal || "", "Nr. procesverbali": "PV-" + r.id, "Stafi shoqërues": r.staff_name || "", "Shënim": r.note || "", "Regjistruar nga": r.created_name || ""}; }
   function exportXls(){
     const day = $("rDay").value, wb = XLSX.utils.book_new();
     const sheet = (rows, cols, name) => { const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [cols.reduce((o, c) => (o[c] = "", o), {})], {header: cols}); ws["!cols"] = cols.map(c => ({wch: Math.max(12, c.length + 4)})); XLSX.utils.book_append_sheet(wb, ws, name); };
@@ -2096,7 +2165,7 @@ icons();
     const pend = repPend.filter(r => r.check_date !== day).map(r => { const o = ivRow(r); o["Debi (lekë)"] = r.debt_amount != null ? lekR(Number(r.debt_amount)) : ""; return o; });
     let body = '<div class="hd">SHOQËRIA RAJONALE UJËSJELLËS KANALIZIME GJIROKASTËR SH.A.<br>NJËSIA PËRMET</div>' +
       '<div class="tt"><b>RAPORTI DITOR</b><span>Data: ' + e2(fmtD(day)) + "</span></div>" +
-      '<h3>1. Ndërhyrjet e stafit</h3><p class="sum">' + ACTIONS.map(a => a + ": <b>" + cnt(a) + "</b>").join(" &nbsp;·&nbsp; ") + "<br>Pagoi: <b>" + pc("pagoi") + "</b> &nbsp;·&nbsp; Në pritje: <b>" + pc("ne_pritje") + "</b> &nbsp;·&nbsp; Nuk pagoi: <b>" + pc("nuk_pagoi") + "</b></p>" +
+      '<h3>1. Ndërhyrjet e stafit</h3><p class="sum">' + ACTIONS.map(a => a + ": <b>" + cnt(a) + "</b>").join(" &nbsp;·&nbsp; ") + "<br>Pagoi: <b>" + pc("pagoi") + "</b> &nbsp;·&nbsp; Pagoi pjesërisht: <b>" + pc("pjeserisht") + "</b> &nbsp;·&nbsp; Në pritje: <b>" + pc("ne_pritje") + "</b> &nbsp;·&nbsp; Nuk pagoi: <b>" + pc("nuk_pagoi") + "</b></p>" +
       tbl(ivCols, ivRows) +
       "<h3>2. Pagesat në pritje nga ditët e mëparshme</h3>" + tbl(["Data", "Veprimi", "Abonenti", "Kontrata", "Debi (lekë)", "Pagesa"], pend);
     if (isAdm) {
@@ -3415,7 +3484,7 @@ window.addEventListener("DOMContentLoaded", function(){
   const NB = $("ntfBtn"), NC = $("ntfCount");
   const pad2 = n => String(n).padStart(2, "0");
   const fmtD = d => (d || "").split("-").reverse().join(".");
-  const PAYL = {ne_pritje: "Në pritje", pagoi: "Pagoi", nuk_pagoi: "Nuk pagoi"};
+  const PAYL = {ne_pritje: "Në pritje", pagoi: "Pagoi", pjeserisht: "Pagoi pjesërisht", nuk_pagoi: "Nuk pagoi"};
   let uid = null, role = null, list = [], lastId = 0, chan = null, poll = null, panel = null, ready = false;
 
   /* Tingulli: krijohet në shfletues, pa skedarë. Shfletuesi e lejon pas prekjes së parë të faqes. */
@@ -3566,7 +3635,7 @@ window.addEventListener("DOMContentLoaded", function(){
   document.addEventListener("keydown", e => { if (e.key === "Escape" && panel && !panel.classList.contains("hide")) { closePanel(); NB.focus(); } });
 
   /* Arka */
-  let ak = null, akRows = [], akTab = "pritje", akQ = "", akErr = "", akFresh = new Set(), akBusy = false, akWel = false;
+  let ak = null, akRows = [], akTab = "pritje", akQ = "", akErr = "", akFresh = new Set(), akBusy = false, akWel = false, akPart = null;
   function akHead(){
     const p = window.pbProf || {};
     return '<header class="akh"><span class="logo" aria-hidden="true"></span><div class="bt"><b>PikaBlu · Arka</b><small>Konfirmimi i pagesave të debisë</small></div>' +
@@ -3639,7 +3708,7 @@ window.addEventListener("DOMContentLoaded", function(){
     const pend = akRows.filter(r => r.payment_status === "ne_pritje");
     const sum = pend.reduce((t, r) => t + (Number(r.debt_amount) || 0), 0);
     const st = (n, t, c) => '<div class="wstat"><b' + (c ? ' class="' + c + '"' : "") + ">" + n + "</b><span>" + t + "</span></div>";
-    el.innerHTML = '<div class="wgrid g4">' + st(pend.length, "Në pritje", "c-am") + st(akRows.filter(r => r.payment_status === "pagoi" && r.payment_date === td).length, "Pagoi sot", "c-ok") +
+    el.innerHTML = '<div class="wgrid g4">' + st(pend.length, "Në pritje", "c-am") + st(akRows.filter(r => (r.payment_status === "pagoi" || r.payment_status === "pjeserisht") && r.payment_date === td).length, "Pagoi sot (plotë ose pjesërisht)", "c-ok") +
       st(akRows.filter(r => r.payment_status === "nuk_pagoi" && r.payment_date === td).length, "Nuk pagoi sot", "c-err") + st(sum ? lekF(sum) : "0", "Debia në pritje") + "</div>";
     const tb = ak.querySelectorAll("[data-aktab]");
     tb[0].textContent = "Në pritje (" + pend.length + ")"; tb[1].textContent = "Të shënuara (60 ditët e fundit)";
@@ -3655,15 +3724,23 @@ window.addEventListener("DOMContentLoaded", function(){
     if (!rows.length) { el.innerHTML = '<div class="akempty">' + (q ? "Asnjë rezultat për këtë kërkim." : akTab === "pritje" ? "Asnjë pagesë në pritje. Kur specialisti regjistron një ndërhyrje me debi, ju vjen njoftim me tingull." : "Asnjë pagesë e shënuar në 60 ditët e fundit.") + "</div>"; return; }
     el.innerHTML = rows.map(r => {
       const s = r.payment_status, id = esc(r.id);
-      const acts = s === "ne_pritje" ? '<button type="button" data-ak="pagoi" data-id="' + id + '"><i data-lucide="check"></i> Pagoi</button><button type="button" class="no" data-ak="nuk_pagoi" data-id="' + id + '"><i data-lucide="x"></i> Nuk pagoi</button>'
-        : s === "nuk_pagoi" ? '<button type="button" data-ak="pagoi" data-id="' + id + '"><i data-lucide="check"></i> Pagoi tani</button><button type="button" class="ghost" data-ak="ne_pritje" data-id="' + id + '">Kthe në pritje</button>'
-        : '<button type="button" class="ghost" data-ak="ne_pritje" data-id="' + id + '">Kthe në pritje</button>';
+      const full = lbl => '<button type="button" data-ak="pagoi" data-id="' + id + '"><i data-lucide="check"></i> ' + lbl + "</button>";
+      const part = lbl => '<button type="button" class="pt" data-akpart="' + id + '"><i data-lucide="split"></i> ' + lbl + "</button>";
+      const back = '<button type="button" class="ghost" data-ak="ne_pritje" data-id="' + id + '">Kthe në pritje</button>';
+      const acts = s === "ne_pritje" ? full("Pagoi të gjithë faturën") + part("Pagoi pjesërisht") + '<button type="button" class="no" data-ak="nuk_pagoi" data-id="' + id + '"><i data-lucide="x"></i> Nuk pagoi</button>'
+        : s === "nuk_pagoi" ? full("Pagoi të gjithë tani") + part("Pagoi pjesërisht") + back
+        : s === "pjeserisht" ? full("Pagoi pjesën tjetër") + part("Ndrysho pagesën") + back
+        : back;
+      const pp = akPart === String(r.id) ? '<div class="akpart"><b>Sa pagoi abonenti?</b><div class="lb">Numri i faturave të paguara</div><div class="invs">' +
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => '<button type="button" data-akinv="' + n + '" data-id="' + id + '"' + (r.paid_invoices == n ? ' class="on"' : "") + ">" + n + "</button>").join("") + "</div>" +
+        '<div class="lb">ose shuma e paguar në lekë</div><div class="amt"><input id="akAmt" inputmode="decimal" maxlength="12" placeholder="p.sh. 5000" value="' + (r.paid_amount != null ? esc(Math.round(r.paid_amount)) : "") + '"><button type="button" data-akamt="' + id + '">Ruaj shumën</button><button type="button" class="ghost" data-akpart="">Anulo</button></div></div>' : "";
       return '<div class="akrow st-' + esc(s) + (akFresh.has(String(r.id)) && s === "ne_pritje" ? " fresh" : "") + '">' +
         '<div class="t"><b>' + esc(r.subscriber_name || "Abonent pa emër") + '</b><span class="badge pay-' + esc(s) + '">' + (PAYL[s] || esc(s)) + "</span>" + (akFresh.has(String(r.id)) && s === "ne_pritje" ? '<span class="badge" style="background:var(--blue);color:#fff;border-color:var(--blue)">E re</span>' : "") + "</div>" +
         '<div class="dl2"><div><small>Kontrata</small>' + esc(r.contract_no || "–") + '</div><div><small>Debia</small><span class="debt">' + (r.debt_amount != null ? lekF(r.debt_amount) : "–") + "</span></div>" +
         "<div><small>Veprimi</small>" + esc(r.action || "–") + " · " + esc(fmtD(r.check_date)) + "</div><div><small>Specialisti</small>" + esc(r.specialist || "–") + "</div></div>" +
+        (s === "pjeserisht" && window.pbPaidPart(r) ? '<p class="akpaid">Pagoi: <b>' + esc(window.pbPaidPart(r)) + "</b>" + (r.debt_amount != null && r.paid_amount != null ? " nga " + lekF(r.debt_amount) : "") + "</p>" : "") +
         (s !== "ne_pritje" && r.payment_date ? '<p class="meta" style="margin:8px 0 0">Shënuar më ' + esc(fmtD(r.payment_date)) + (r.payment_by ? " nga " + esc(r.payment_by) : "") + "</p>" : "") +
-        '<div class="acts">' + acts + "</div></div>";
+        '<div class="acts">' + acts + "</div>" + pp + "</div>";
     }).join("");
     lucide.createIcons();
   }
@@ -3681,17 +3758,35 @@ window.addEventListener("DOMContentLoaded", function(){
       try { localStorage.setItem("pbSnd", sndOn ? "1" : "0"); } catch (x) {}
       setTimeout(akSnd, 120); return;
     }
-    const b = e.target.closest("[data-ak]"); if (!b || akBusy) return;
-    const st = b.getAttribute("data-ak"), id = b.getAttribute("data-id"), r = akRows.find(x => String(x.id) === id); if (!r) return;
+    const pb = e.target.closest("[data-akpart]");
+    if (pb) { const v = pb.getAttribute("data-akpart"); akPart = v && akPart !== v ? v : null; akList(); const a = $("akAmt"); if (a) a.scrollIntoView({block: "nearest"}); return; }
+    const ib = e.target.closest("[data-akinv]"), mb = e.target.closest("[data-akamt]");
+    if (ib) { await akSave(ib, ib.getAttribute("data-id"), "pjeserisht", +ib.getAttribute("data-akinv"), null); return; }
+    if (mb) {
+      const v = parseFloat(String(($("akAmt") || {}).value || "").replace(/[^\d.,]/g, "").replace(/\./g, "").replace(",", "."));
+      if (!(v > 0)) { alert("Shkruani shumën e paguar në lekë."); const a = $("akAmt"); if (a) a.focus(); return; }
+      await akSave(mb, mb.getAttribute("data-akamt"), "pjeserisht", null, v); return;
+    }
+    const b = e.target.closest("[data-ak]"); if (!b) return;
+    await akSave(b, b.getAttribute("data-id"), b.getAttribute("data-ak"), null, null);
+  }
+  /* Ruajtja te arka: e plotë, e pjesshme (fatura ose lekë), nuk pagoi ose kthim në pritje */
+  async function akSave(b, id, st, inv, amt){
+    if (akBusy) return;
+    const r = akRows.find(x => String(x.id) === id); if (!r) return;
     const nm = r.subscriber_name || "abonentin";
     if (st === "nuk_pagoi" && !confirm("Ta shënoj “Nuk pagoi” për " + nm + "?\nSpecialisti " + (r.specialist || "") + " do të njoftohet.")) return;
     if (st === "ne_pritje" && !confirm("Ta kthej në pritje pagesën e " + nm + "?")) return;
     akBusy = true; b.disabled = true;
-    const {error} = await sb.rpc("arka_pagesa", {p_id: id, p_status: st});
+    const args = {p_id: id, p_status: st};
+    if (st === "pjeserisht") { args.p_invoices = inv; args.p_amount = amt; }
+    let {error} = await sb.rpc("arka_pagesa", args);
+    if (error && st !== "pjeserisht" && /arka_pagesa|function|schema cache/i.test(error.message || "")) ({error} = await sb.rpc("arka_pagesa", {p_id: id, p_status: st}));
     akBusy = false;
-    if (error) { b.disabled = false; alert("Nuk u ruajt: " + error.message); return; }
-    akFresh.delete(id);
-    toast({kind: st, title: st === "pagoi" ? nm + ": Pagoi" : st === "nuk_pagoi" ? nm + ": Nuk pagoi" : nm + ": u kthye në pritje", body: st === "ne_pritje" ? "" : "Specialisti u njoftua."});
+    if (error) { b.disabled = false; alert("Nuk u ruajt: " + error.message + (st === "pjeserisht" ? "\nAdministratori duhet të ekzekutojë përsëri sql/arka.sql te Supabase." : "")); return; }
+    akFresh.delete(id); akPart = null;
+    const what = st === "pjeserisht" ? (inv ? inv + (inv === 1 ? " faturë" : " fatura") : lekF(amt)) : "";
+    toast({kind: st, title: st === "pagoi" ? nm + ": Pagoi të gjithë faturën" : st === "pjeserisht" ? nm + ": Pagoi " + what : st === "nuk_pagoi" ? nm + ": Nuk pagoi" : nm + ": u kthye në pritje", body: st === "ne_pritje" ? "" : "Specialisti u njoftua."});
     akLoad();
   }
 

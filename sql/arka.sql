@@ -77,6 +77,13 @@ drop policy if exists "arketare pa fshirje skedaresh" on storage.objects;
 create policy "arketare pa fshirje skedaresh" on storage.objects as restrictive for delete to authenticated
   using (not public.is_arketare());
 
+-- 2b. Pagesa e pjesshme: arkëtarja shënon sa fatura ose sa lekë pagoi abonenti.
+alter table public.interventions add column if not exists paid_invoices smallint;
+alter table public.interventions add column if not exists paid_amount numeric;
+alter table public.interventions drop constraint if exists interventions_payment_status_check;
+alter table public.interventions add constraint interventions_payment_status_check
+  check (payment_status is null or payment_status in ('ne_pritje', 'pagoi', 'pjeserisht', 'nuk_pagoi'));
+
 -- 3. Njoftimet
 create table if not exists public.njoftimet (
   id bigint generated always as identity primary key,
@@ -143,7 +150,7 @@ drop trigger if exists pb_njofto_arken on public.interventions;
 create trigger pb_njofto_arken after insert on public.interventions
   for each row execute function public.pb_njofto_arken();
 
--- 3b. Pagesa u shënua "Pagoi" ose "Nuk pagoi": njoftim për specialistin që bëri ndërhyrjen.
+-- 3b. Pagesa u shënua "Pagoi", "Pagoi pjesërisht" ose "Nuk pagoi": njoftim për specialistin.
 create or replace function public.pb_njofto_specialistin()
 returns trigger
 language plpgsql
@@ -152,15 +159,22 @@ set search_path = public
 as $$
 declare emri text;
 begin
-  if new.payment_status is distinct from old.payment_status
-     and new.payment_status in ('pagoi', 'nuk_pagoi')
+  if (new.payment_status is distinct from old.payment_status
+      or new.paid_invoices is distinct from old.paid_invoices
+      or new.paid_amount is distinct from old.paid_amount)
+     and new.payment_status in ('pagoi', 'pjeserisht', 'nuk_pagoi')
      and new.created_by is not null
      and new.created_by is distinct from auth.uid() then
     emri := coalesce(nullif(new.subscriber_name, ''), 'Abonenti' || case when coalesce(new.contract_no, '') <> '' then ' me kontratë ' || new.contract_no else '' end);
     insert into public.njoftimet (user_id, kind, title, body, intervention_id)
     values (new.created_by,
-      case when new.payment_status = 'pagoi' then 'pagoi' else 'nuk_pagoi' end,
-      case when new.payment_status = 'pagoi' then emri || ' pagoi'
+      new.payment_status,
+      case new.payment_status
+        when 'pagoi' then emri || ' pagoi të gjithë faturën'
+        when 'pjeserisht' then emri || ' pagoi ' || case
+          when new.paid_invoices is not null then new.paid_invoices || case when new.paid_invoices = 1 then ' faturë' else ' fatura' end
+          when new.paid_amount is not null then public.pb_leke(new.paid_amount)
+          else 'pjesërisht' end
         else emri || ' nuk ka paguar pas lajmërimit tuaj' end,
       concat_ws(' · ', new.action || ' më ' || to_char(new.check_date, 'DD.MM.YYYY'),
         case when new.debt_amount is not null then 'Debi ' || public.pb_leke(new.debt_amount::numeric) end,
@@ -171,7 +185,7 @@ begin
 end;
 $$;
 drop trigger if exists pb_njofto_specialistin on public.interventions;
-create trigger pb_njofto_specialistin after update of payment_status on public.interventions
+create trigger pb_njofto_specialistin after update of payment_status, paid_invoices, paid_amount on public.interventions
   for each row execute function public.pb_njofto_specialistin();
 
 -- 4. Lista e arkës: vetëm të dhënat që i duhen arkëtares, asgjë tjetër.
@@ -181,7 +195,7 @@ create or replace function public.arka_lista()
 returns table (
   id text, check_date date, action text, subscriber_name text, contract_no text,
   debt_amount numeric, specialist text, payment_status text, payment_date date,
-  payment_by text, created_at timestamptz
+  payment_by text, created_at timestamptz, paid_invoices smallint, paid_amount numeric
 )
 language sql
 stable
@@ -190,7 +204,7 @@ set search_path = public
 as $$
   select i.id::text, i.check_date, i.action, i.subscriber_name, i.contract_no,
     i.debt_amount::numeric, i.created_name, i.payment_status, i.payment_date,
-    i.payment_by, i.created_at
+    i.payment_by, i.created_at, i.paid_invoices, i.paid_amount
   from public.interventions i
   where (public.is_arketare() or exists (select 1 from public.uploaders u where u.user_id = auth.uid()))
     and i.payment_status is not null
@@ -199,8 +213,9 @@ as $$
   limit 500;
 $$;
 
--- 5. Konfirmimi nga arka: Pagoi, Nuk pagoi ose kthim në pritje.
-create or replace function public.arka_pagesa(p_id text, p_status text)
+-- 5. Konfirmimi nga arka: Pagoi të gjithë, Pagoi pjesërisht (fatura ose lekë), Nuk pagoi ose kthim në pritje.
+drop function if exists public.arka_pagesa(text, text);
+create or replace function public.arka_pagesa(p_id text, p_status text, p_invoices integer default null, p_amount numeric default null)
 returns void
 language plpgsql
 security definer
@@ -211,14 +226,19 @@ begin
   if not (public.is_arketare() or exists (select 1 from public.uploaders u where u.user_id = auth.uid())) then
     raise exception 'Nuk keni leje për këtë veprim';
   end if;
-  if p_status not in ('ne_pritje', 'pagoi', 'nuk_pagoi') then
+  if p_status not in ('ne_pritje', 'pagoi', 'pjeserisht', 'nuk_pagoi') then
     raise exception 'Status i panjohur';
+  end if;
+  if p_status = 'pjeserisht' and not ((p_invoices between 1 and 99) or (p_amount > 0)) then
+    raise exception 'Shënoni numrin e faturave ose shumën në lekë';
   end if;
   select full_name into emri from public.staff_profiles where user_id = auth.uid();
   update public.interventions
      set payment_status = p_status,
          payment_date = case when p_status = 'ne_pritje' then null else current_date end,
-         payment_by = case when p_status = 'ne_pritje' then null else coalesce(emri, 'Arka') end
+         payment_by = case when p_status = 'ne_pritje' then null else coalesce(emri, 'Arka') end,
+         paid_invoices = case when p_status = 'pjeserisht' and p_invoices between 1 and 99 then p_invoices end,
+         paid_amount = case when p_status = 'pjeserisht' and (p_invoices is null or p_invoices not between 1 and 99) and p_amount > 0 then round(p_amount, 2) end
    where id::text = p_id and payment_status is not null;
   if not found then
     raise exception 'Ndërhyrja nuk u gjet';
@@ -227,9 +247,9 @@ end;
 $$;
 
 revoke all on function public.arka_lista() from public, anon;
-revoke all on function public.arka_pagesa(text, text) from public, anon;
+revoke all on function public.arka_pagesa(text, text, integer, numeric) from public, anon;
 grant execute on function public.arka_lista() to authenticated;
-grant execute on function public.arka_pagesa(text, text) to authenticated;
+grant execute on function public.arka_pagesa(text, text, integer, numeric) to authenticated;
 
 notify pgrst, 'reload schema';
 

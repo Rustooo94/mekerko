@@ -7,7 +7,7 @@ alter table public.interventions add column if not exists payment_by text;
 
 alter table public.interventions drop constraint if exists interventions_payment_status_check;
 alter table public.interventions add constraint interventions_payment_status_check
-  check (payment_status is null or payment_status in ('ne_pritje', 'pagoi', 'nuk_pagoi'));
+  check (payment_status is null or payment_status in ('ne_pritje', 'pagoi', 'pjeserisht', 'nuk_pagoi'));
 
 create index if not exists interventions_payment_idx on public.interventions (payment_status);
 
