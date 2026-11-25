@@ -724,7 +724,7 @@ body.moving .pane,body.moving #addBtn{visibility:hidden}
     </div>
     <label for="t">Shënim</label><input id="t" maxlength="120">
     <label for="f" id="fLbl">Foto e pikës (ndërtesa ose kolektori, opsionale)</label><input id="f" type="file" accept="image/*">
-    <div id="casBox" class="hide"><label for="f2">Foto e kasetës së përbashkët (opsionale)</label><input id="f2" type="file" accept="image/*"><p class="meta" id="fhint2" style="margin:4px 0 0"></p></div>
+    <div id="casBox" class="hide"><label for="f2" id="f2Lbl">Foto e kasetës së përbashkët (opsionale)</label><input id="f2" type="file" accept="image/*"><p class="meta" id="fhint2" style="margin:4px 0 0"></p></div>
     <p class="meta" id="fhint" style="margin:4px 0 0"></p>
     <p class="meta" id="coords" style="margin:10px 0 0">Pika nuk është zgjedhur.</p>
     <div class="bar"><button id="loc" type="button" class="alt"><i data-lucide="locate-fixed"></i> Vendndodhja ime</button><button id="pickmap" type="button" class="alt"><i data-lucide="crosshair"></i> Zgjidh në hartë</button></div>
@@ -912,7 +912,7 @@ function openDetail(id){
     '<dl class="dl">' + (hideOwn ? "" : '<dt>Nr. i kontratës</dt><dd>' + (b.contract_no ? esc(b.contract_no) : "–") + "</dd><dt>Statusi i kontratës</dt><dd>" + (ST_LBL[stOf(b)] || "–") + "</dd><dt>Debitor</dt><dd>" + debtTxt(b) + "</dd>" +
     "<dt>Nr. i matësit</dt><dd>" + (b.meter_no ? esc(b.meter_no) : "–") + "</dd><dt>Nr. i vulës</dt><dd>" + (b.seal_no ? esc(b.seal_no) : "–") + "</dd><dt>Telefoni</dt><dd>" + tel + "</dd>") + "<dt>Shënim</dt><dd>" + (b.note ? esc(b.note) : "–") + "</dd><dt>Shtuar nga</dt><dd>" + esc(b.owner_name || "–") + "</dd>" +
     "<dt>Koordinatat</dt><dd>" + b.lat.toFixed(5) + ", " + b.lng.toFixed(5) + "</dd></dl>" +
-    (b.casUrl ? '<h3>Foto e kasetës së përbashkët</h3><a href="' + esc(b.casUrl) + '" target="_blank" rel="noopener"><img alt="Foto e kasetës" src="' + esc(b.casUrl) + '" style="width:100%;border-radius:0;max-height:50vh;object-fit:cover;margin-bottom:8px"></a>' : "") +
+    (b.casUrl ? '<h3>' + (cats(b).indexOf("Pallat me kasetë të përbashkët") >= 0 ? "Foto e kasetës së përbashkët" : "Foto e sahatit") + '</h3><a href="' + esc(b.casUrl) + '" target="_blank" rel="noopener"><img alt="Foto e sahatit ose e kasetës" src="' + esc(b.casUrl) + '" style="width:100%;border-radius:0;max-height:50vh;object-fit:cover;margin-bottom:8px"></a>' : "") +
     '<div class="dbar"><a class="dbtn" target="_blank" rel="noopener" href="' + dirUrl(b) + '">' + ic("navigation") + ' Më ço atje</a>' +
     '<button class="alt" type="button" data-dgo="' + b.id + '">' + ic("map-pin") + " Shfaq në hartë</button>" +
     (own ? '<button type="button" data-edit="' + b.id + '">' + ic("pencil") + ' Ndrysho</button><button class="red" type="button" data-ddel="' + b.id + '">' + ic("trash-2") + " Fshij</button>" : "") +
@@ -937,7 +937,10 @@ function isMultiPoint(b){ return cats(b).some(c => MULTI.indexOf(c) >= 0); }
 function isMulti(){ const m = $("catMain").value, sb2 = $("catSub").value; return m === "Kolektor" || (m === "Banesa" && (sb2 === "Pallat" || sb2 === "Pallat me kasetë të përbashkët")); }
 function syncOwn(){
   const multi = isMulti(), cas = $("catMain").value === "Banesa" && $("catSub").value === "Pallat me kasetë të përbashkët";
-  $("casBox").classList.toggle("hide", !cas);
+  /* Foto e dytë: kaseta e përbashkët te pallatet me kasetë, sahati te shtëpitë, bizneset dhe institucionet */
+  const meterPh = !multi && !!$("catMain").value;
+  $("casBox").classList.toggle("hide", !cas && !meterPh);
+  $("f2Lbl").textContent = cas ? "Foto e kasetës së përbashkët (opsionale)" : "Foto e sahatit, me numrin e matësit të lexueshëm (opsionale)";
   $("fLbl").textContent = cas ? "Foto e hyrjes së pallatit (opsionale)" : "Foto e pikës (ndërtesa ose kolektori, opsionale)";
   $("multiNote").classList.toggle("hide", !multi);
   $("ownFields").classList.toggle("hide", multi && !$("ownData").checked);
@@ -1166,7 +1169,7 @@ $("add").onclick = async () => {
     }
     let cas_path = old ? (old.meter_photo_path || null) : null, newCas = false;
     const file2 = $("f2").files[0], isCas = cs.indexOf("Pallat me kasetë të përbashkët") >= 0;
-    if (file2 && isCas) {
+    if (file2 && (isCas || !isMulti())) {
       const blob2 = await shrink(file2), path2 = me.id + "/k" + Date.now() + ".jpg";
       const {error: upErr2} = await sb.storage.from("photos").upload(path2, blob2, {contentType: "image/jpeg"});
       if (upErr2) throw new Error("Foto e kasetës nuk u ngarkua: " + upErr2.message);
